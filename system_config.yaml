@@ -1,0 +1,20 @@
+# System Configuration
+# Version: 2.0 - Multiple spreadsheets support
+
+google_sheets:
+  items_30:
+    spreadsheet_id: "1nCQ9k4flYCLouq5ZT1ZyTcuhVQVDIGtDPMqDBl5zMog"
+    sheet_name: "patients_data"
+  items_28:
+    spreadsheet_id: "116gLf-8qmx0b9oWNNaqSabgje6K07kaCOUThXQQrlcg"
+    sheet_name: "patients_data"
+  rehab:
+    spreadsheet_id: "1IUIG-IicVvbBidnCyPBeI0pUVuEY3lrzSWICHKIoRKE"
+    sheet_name: "patients_data"
+  interrater:
+    spreadsheet_id: "1dy-Y6FU-zH4S9pdqTHLQJDqW_1rWD-3p12v1fz9Av1c"
+    sheet_name: "inter-rater_data"
+
+authentication:
+  cache_folder: ".secrets"
+  email_auth: "zen@komiyake.com"

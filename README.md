@@ -1,1 +1,1 @@
-# Development-of-Likert-type-scales-in-nursing
+# Development-of-a-scale-to-assess-readiness-for-discharge3

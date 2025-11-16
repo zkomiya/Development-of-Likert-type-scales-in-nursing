@@ -1,0 +1,195 @@
+# ===================================================
+# EFA Main Controller
+# Version: 11.0 - Polychoric + Pearson comparison
+# Changes from v10.0:
+#   - Both Polychoric and Pearson correlations calculated
+#   - Pearson solution aligned to Polychoric
+#   - Comparison display implemented
+# ===================================================
+
+# Main EFA analysis function
+analyze_efa <- function(data_obj,
+                        n_factors,  # REQUIRED argument
+                        verbose = TRUE) {
+  
+  # Extract data from keyed structure
+  source("data_structure.R")
+  data <- get_data(data_obj)
+  keys <- get_keys(data_obj)
+  
+  cat("\n========================================\n")
+  cat("EXPLORATORY FACTOR ANALYSIS\n")
+  cat("========================================\n")
+  
+  # Load configuration
+  config <- load_config()
+  efa_config <- config$analysis$efa_settings
+  
+  # Read all parameters from YAML
+  missing <- efa_config$missing
+  extraction <- efa_config$extraction_methods
+  gamma_values <- efa_config$gamma_values
+  kaiser_normalize <- efa_config$kaiser_normalize
+  max_iterations <- efa_config$max_iterations
+  
+  if (verbose) {
+    cat("\nUsing EFA settings from configuration:\n")
+    cat("  Missing data handling:", missing, "\n")
+    cat("  Extraction methods:", paste(extraction, collapse = ", "), "\n")
+    cat("  Gamma values:", paste(gamma_values, collapse = ", "), "\n")
+    cat("  Kaiser normalization:", kaiser_normalize, "\n")
+    cat("  Max iterations:", max_iterations, "\n")
+    cat("  Correlation methods: Polychoric AND Pearson\n")
+  }
+  
+  # Validate n_factors
+  if (missing(n_factors)) {
+    stop("n_factors is required. Run determine_n_factors() first to determine appropriate number.")
+  }
+  
+  if (!is.numeric(n_factors) || n_factors < 1) {
+    stop("n_factors must be a positive integer")
+  }
+  
+  # Validate missing parameter
+  if (!missing %in% c("listwise", "pairwise")) {
+    stop("missing must be 'listwise' or 'pairwise'")
+  }
+  
+  # Step 1: Data Preprocessing
+  cat("\nStep 1: Data Preprocessing\n")
+  cat("----------------------------\n")
+  
+  # Preprocessing for FA
+  source("data_preprocessor.R")
+  data_fa <- preprocess_for_fa(data, method = missing, verbose = verbose)
+  
+  # Validate n_factors against data
+  if (n_factors > ncol(data_fa)) {
+    stop("n_factors (", n_factors, ") cannot exceed number of variables (", ncol(data_fa), ")")
+  }
+  
+  cat("Number of factors to extract:", n_factors, "\n")
+  
+  # Step 2: Compute both correlation matrices
+  cat("\nStep 2: Computing correlation matrices\n")
+  cat("------------------------------------------\n")
+  cat("  Computing Polychoric correlation...\n")
+  
+  source("efa_calculator.R")
+  cor_poly <- calculate_correlation_for_efa(data_fa, "polychoric", missing)
+  
+  cat("  Computing Pearson correlation...\n")
+  cor_pear <- calculate_correlation_for_efa(data_fa, "pearson", missing)
+  
+  if (verbose) {
+    cat("  Polychoric: ", nrow(cor_poly), "x", ncol(cor_poly), "\n")
+    cat("  Pearson: ", nrow(cor_pear), "x", ncol(cor_pear), "\n")
+  }
+  
+  # Step 3: EFA with Polychoric correlation
+  cat("\nStep 3: Factor Extraction and Rotation (Polychoric)\n")
+  cat("----------------------------------------\n")
+  cat("Extracting", n_factors, "factors...\n")
+  
+  efa_poly <- perform_efa(
+    cor_matrix = cor_poly,
+    n_factors = n_factors,
+    extraction = extraction,
+    gamma_values = gamma_values,
+    kaiser_normalize = kaiser_normalize,
+    max_iter = max_iterations,
+    verbose = verbose
+  )
+  
+  # Step 4: EFA with Pearson correlation
+  cat("\nStep 4: Factor Extraction and Rotation (Pearson)\n")
+  cat("----------------------------------------\n")
+  cat("Extracting", n_factors, "factors...\n")
+  
+  efa_pear <- perform_efa(
+    cor_matrix = cor_pear,
+    n_factors = n_factors,
+    extraction = extraction,
+    gamma_values = gamma_values,
+    kaiser_normalize = kaiser_normalize,
+    max_iter = max_iterations,
+    verbose = verbose
+  )
+  
+  # Step 5: Align Pearson solution to Polychoric
+  cat("\nStep 5: Aligning Pearson solution to Polychoric\n")
+  cat("------------------------------------------------\n")
+  
+  efa_pear_aligned <- efa_pear  # Copy structure
+  
+  for (method in extraction) {
+    for (gamma in gamma_values) {
+      gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
+      
+      # Get pattern matrices
+      poly_pattern <- efa_poly[[method]]$rotations[[gamma_key]]$pattern
+      pear_pattern <- efa_pear[[method]]$rotations[[gamma_key]]$pattern
+      
+      # Determine factor alignment
+      alignment_result <- align_factors(poly_pattern, pear_pattern)
+      factor_mapping <- alignment_result$factor_mapping
+      
+      # Align entire solution
+      efa_pear_aligned[[method]]$rotations[[gamma_key]] <- 
+        align_efa_solution(
+          efa_poly[[method]]$rotations[[gamma_key]],
+          efa_pear[[method]]$rotations[[gamma_key]],
+          factor_mapping
+        )
+    }
+  }
+  
+  cat("  Alignment completed\n")
+  
+  # Step 6: Results integration
+  results <- list(
+    polychoric = list(
+      correlation_matrix = cor_poly,
+      efa = efa_poly
+    ),
+    pearson = list(
+      correlation_matrix = cor_pear,
+      efa = efa_pear_aligned  # Aligned version
+    ),
+    data = data_fa,
+    n_factors = n_factors,
+    config_used = list(
+      missing = missing,
+      extraction = extraction,
+      gamma_values = gamma_values,
+      kaiser_normalize = kaiser_normalize,
+      max_iterations = max_iterations
+    )
+  )
+  
+  # Step 7: Display Results
+  cat("\nStep 6: Results\n")
+  cat("----------------\n")
+  
+  source("efa_display.R")
+  display_efa_comparison(results)
+  
+  # Return results
+  cat("\n========================================\n")
+  cat("EFA ANALYSIS COMPLETE\n")
+  cat("Configuration used:\n")
+  cat("  Missing data:", missing, "\n")
+  cat("  Extraction methods:", paste(extraction, collapse = ", "), "\n")
+  cat("  Kaiser normalization:", kaiser_normalize, "\n")
+  cat("  Correlation methods: Polychoric AND Pearson (aligned)\n")
+  cat("========================================\n")
+  
+  invisible(results)
+}
+
+# Function to display specific results
+show_efa <- function(results, method = "MINRES", gamma = 0) {
+  source("efa_display.R")
+  display_specific_result(results$efa, method, gamma)
+}
