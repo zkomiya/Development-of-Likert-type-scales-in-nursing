@@ -1,0 +1,1 @@
+# Development-of-Likert-type-scales-in-nursing
