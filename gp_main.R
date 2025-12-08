@@ -11,7 +11,6 @@
 analyze_gp <- function(data_obj) {
   
   # Extract data from keyed structure
-  source("data_structure.R")
   data <- get_data(data_obj)
   keys <- get_keys(data_obj)
   

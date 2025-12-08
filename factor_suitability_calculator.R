@@ -1,7 +1,9 @@
 # ===================================================
 # Factor Suitability Calculator (Model Layer)
-# Version: 1.0
+# Version: 2.0
 # Description: Calculate correlation matrices and FA suitability
+# Changes from v1.0:
+#   - Bartlett uses Pearson correlation only
 # ===================================================
 
 library(psych)
@@ -22,28 +24,30 @@ calculate_both_correlations <- function(data) {
   ))
 }
 
-# Calculate FA suitability for both correlation methods
+# Calculate FA suitability
+# Bartlett: Pearson only
+# KMO: Both Polychoric and Pearson
 calculate_fa_suitability_both <- function(data, cor_poly, cor_pearson) {
   
-  # Polychoric correlation check
   source("factor_prerequisites.R")
+  
+  # Polychoric correlation check (KMO only)
   prereq_poly <- check_fa_prerequisites(data, cor_poly, verbose = FALSE)
   
-  # Pearson correlation check
+  # Pearson correlation check (Bartlett and KMO)
   prereq_pearson <- check_fa_prerequisites(data, cor_pearson, verbose = FALSE)
   
   # Format and return results
   return(list(
     sample_size = prereq_poly$sample_size,
-    polychoric = list(
-      kmo = prereq_poly$kmo,
-      bartlett = prereq_poly$bartlett,
-      cor_matrix = cor_poly
+    bartlett = prereq_pearson$bartlett,
+    kmo = list(
+      polychoric = prereq_poly$kmo,
+      pearson = prereq_pearson$kmo
     ),
-    pearson = list(
-      kmo = prereq_pearson$kmo,
-      bartlett = prereq_pearson$bartlett,
-      cor_matrix = cor_pearson
+    cor_matrix = list(
+      polychoric = cor_poly,
+      pearson = cor_pearson
     ),
     data = data
   ))
