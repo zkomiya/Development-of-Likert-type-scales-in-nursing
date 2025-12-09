@@ -60,37 +60,6 @@ ir_display_item_results <- function(item_results, scale_range = c(1, 4)) {
   cat(sprintf("Mean p_o:    %.1f%%\n", mean(valid_p_o)))
   cat(sprintf("Mean κ_w:    %.3f\n", mean(valid_kappa)))
   cat(sprintf("Mean AC2:    %.3f\n", mean(valid_ac2)))
-  
-  # Items with low agreement
-  low_kappa_items <- item_results$item[which(item_results$kappa_w < 0.4)]
-  moderate_kappa_items <- item_results$item[which(item_results$kappa_w >= 0.4 & item_results$kappa_w < 0.6)]
-  
-  low_ac2_items <- item_results$item[which(item_results$ac2_value < 0.4)]
-  moderate_ac2_items <- item_results$item[which(item_results$ac2_value >= 0.4 & item_results$ac2_value < 0.6)]
-  
-  cat(sprintf("\nItems with κ_w < 0.4 (poor): %d", length(low_kappa_items)))
-  if (length(low_kappa_items) > 0) {
-    cat(" (", paste(low_kappa_items, collapse = ", "), ")")
-  }
-  cat("\n")
-  
-  cat(sprintf("Items with 0.4 ≤ κ_w < 0.6 (moderate): %d", length(moderate_kappa_items)))
-  if (length(moderate_kappa_items) > 0) {
-    cat(" (", paste(moderate_kappa_items, collapse = ", "), ")")
-  }
-  cat("\n")
-  
-  cat(sprintf("Items with AC2 < 0.4 (poor): %d", length(low_ac2_items)))
-  if (length(low_ac2_items) > 0) {
-    cat(" (", paste(low_ac2_items, collapse = ", "), ")")
-  }
-  cat("\n")
-  
-  cat(sprintf("Items with 0.4 ≤ AC2 < 0.6 (moderate): %d", length(moderate_ac2_items)))
-  if (length(moderate_ac2_items) > 0) {
-    cat(" (", paste(moderate_ac2_items, collapse = ", "), ")")
-  }
-  cat("\n")
 }
 
 # Display scale-level results with AC2
@@ -137,19 +106,4 @@ ir_display_scale_results <- function(scale_results) {
               scale_results$bland_altman$limits[1],
               scale_results$bland_altman$limits[2]))
   
-  # Interpretation guide
-  cat("\nInterpretation Guide\n")
-  cat("--------------------\n")
-  cat("p_o:  Percent agreement (no chance correction)\n")
-  cat("κ_w:  Weighted kappa (quadratic weights)\n")
-  cat("AC2:  Gwet's AC2 (quadratic weights)\n")
-  cat("      < 0.20: Poor agreement\n")
-  cat("      0.21-0.40: Fair agreement\n")
-  cat("      0.41-0.60: Moderate agreement\n")
-  cat("      0.61-0.80: Substantial agreement\n")
-  cat("      0.81-1.00: Almost perfect agreement\n")
-  cat("\nICC:  < 0.50: Poor reliability\n")
-  cat("      0.50-0.74: Moderate reliability\n")
-  cat("      0.75-0.90: Good reliability\n")
-  cat("      > 0.90: Excellent reliability\n")
 }
