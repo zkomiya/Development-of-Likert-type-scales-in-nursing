@@ -1,5 +1,5 @@
 # Analysis Configuration
-# Version: 2.7 - Item-Item correlation: both methods calculated
+# Version: 2.8 - Single extraction method for EFA
 
 # ===== DATA SOURCE =====
 data_source:
@@ -50,10 +50,10 @@ item_total_analysis:
 # ===== EFA SETTINGS =====
 efa_settings:
   missing: "listwise"
-  extraction_methods:
-    - "ULS"
-    - "MINRES"
-  gamma_values: [0, -0.2, -0.5, -0.8]
+  # Single extraction method (psych::fa fm argument)
+  # Available: "minres", "uls", "pa", "ml", "wls", "gls"
+  extraction_method: "ml"
+  gamma_values: [0, 0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
   kaiser_normalize: true
   max_iterations: 1000
     

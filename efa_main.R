@@ -1,18 +1,16 @@
 # ===================================================
 # EFA Main Controller
-# Version: 11.0 - Polychoric + Pearson comparison
-# Changes from v10.0:
-#   - Both Polychoric and Pearson correlations calculated
-#   - Pearson solution aligned to Polychoric
-#   - Comparison display implemented
+# Version: 13.0 - Single extraction method
+# Changes from v12.0:
+#   - extraction_methods (list) -> extraction_method (single value)
+#   - Simplified result structure
 # ===================================================
 
 # Main EFA analysis function
 analyze_efa <- function(data_obj,
-                        n_factors,  # REQUIRED argument
+                        n_factors,
                         verbose = TRUE) {
   
-  # Extract data from keyed structure
   source("data_structure.R")
   data <- get_data(data_obj)
   keys <- get_keys(data_obj)
@@ -25,9 +23,9 @@ analyze_efa <- function(data_obj,
   config <- load_config()
   efa_config <- config$analysis$efa_settings
   
-  # Read all parameters from YAML
+  # Read parameters from YAML
   missing <- efa_config$missing
-  extraction <- efa_config$extraction_methods
+  extraction_method <- efa_config$extraction_method
   gamma_values <- efa_config$gamma_values
   kaiser_normalize <- efa_config$kaiser_normalize
   max_iterations <- efa_config$max_iterations
@@ -35,7 +33,7 @@ analyze_efa <- function(data_obj,
   if (verbose) {
     cat("\nUsing EFA settings from configuration:\n")
     cat("  Missing data handling:", missing, "\n")
-    cat("  Extraction methods:", paste(extraction, collapse = ", "), "\n")
+    cat("  Extraction method:", extraction_method, "\n")
     cat("  Gamma values:", paste(gamma_values, collapse = ", "), "\n")
     cat("  Kaiser normalization:", kaiser_normalize, "\n")
     cat("  Max iterations:", max_iterations, "\n")
@@ -60,18 +58,16 @@ analyze_efa <- function(data_obj,
   cat("\nStep 1: Data Preprocessing\n")
   cat("----------------------------\n")
   
-  # Preprocessing for FA
   source("data_preprocessor.R")
   data_fa <- preprocess_for_fa(data, method = missing, verbose = verbose)
   
-  # Validate n_factors against data
   if (n_factors > ncol(data_fa)) {
     stop("n_factors (", n_factors, ") cannot exceed number of variables (", ncol(data_fa), ")")
   }
   
   cat("Number of factors to extract:", n_factors, "\n")
   
-  # Step 2: Compute both correlation matrices
+  # Step 2: Compute correlation matrices
   cat("\nStep 2: Computing correlation matrices\n")
   cat("------------------------------------------\n")
   cat("  Computing Polychoric correlation...\n")
@@ -95,7 +91,7 @@ analyze_efa <- function(data_obj,
   efa_poly <- perform_efa(
     cor_matrix = cor_poly,
     n_factors = n_factors,
-    extraction = extraction,
+    fm = extraction_method,
     gamma_values = gamma_values,
     kaiser_normalize = kaiser_normalize,
     max_iter = max_iterations,
@@ -110,7 +106,7 @@ analyze_efa <- function(data_obj,
   efa_pear <- perform_efa(
     cor_matrix = cor_pear,
     n_factors = n_factors,
-    extraction = extraction,
+    fm = extraction_method,
     gamma_values = gamma_values,
     kaiser_normalize = kaiser_normalize,
     max_iter = max_iterations,
@@ -121,28 +117,23 @@ analyze_efa <- function(data_obj,
   cat("\nStep 5: Aligning Pearson solution to Polychoric\n")
   cat("------------------------------------------------\n")
   
-  efa_pear_aligned <- efa_pear  # Copy structure
+  efa_pear_aligned <- efa_pear
   
-  for (method in extraction) {
-    for (gamma in gamma_values) {
-      gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
-      
-      # Get pattern matrices
-      poly_pattern <- efa_poly[[method]]$rotations[[gamma_key]]$pattern
-      pear_pattern <- efa_pear[[method]]$rotations[[gamma_key]]$pattern
-      
-      # Determine factor alignment
-      alignment_result <- align_factors(poly_pattern, pear_pattern)
-      factor_mapping <- alignment_result$factor_mapping
-      
-      # Align entire solution
-      efa_pear_aligned[[method]]$rotations[[gamma_key]] <- 
-        align_efa_solution(
-          efa_poly[[method]]$rotations[[gamma_key]],
-          efa_pear[[method]]$rotations[[gamma_key]],
-          factor_mapping
-        )
-    }
+  for (gamma in gamma_values) {
+    gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
+    
+    poly_pattern <- efa_poly$rotations[[gamma_key]]$pattern
+    pear_pattern <- efa_pear$rotations[[gamma_key]]$pattern
+    
+    alignment_result <- align_factors(poly_pattern, pear_pattern)
+    factor_mapping <- alignment_result$factor_mapping
+    
+    efa_pear_aligned$rotations[[gamma_key]] <- 
+      align_efa_solution(
+        efa_poly$rotations[[gamma_key]],
+        efa_pear$rotations[[gamma_key]],
+        factor_mapping
+      )
   }
   
   cat("  Alignment completed\n")
@@ -155,13 +146,13 @@ analyze_efa <- function(data_obj,
     ),
     pearson = list(
       correlation_matrix = cor_pear,
-      efa = efa_pear_aligned  # Aligned version
+      efa = efa_pear_aligned
     ),
     data = data_fa,
     n_factors = n_factors,
     config_used = list(
       missing = missing,
-      extraction = extraction,
+      extraction_method = extraction_method,
       gamma_values = gamma_values,
       kaiser_normalize = kaiser_normalize,
       max_iterations = max_iterations
@@ -180,7 +171,7 @@ analyze_efa <- function(data_obj,
   cat("EFA ANALYSIS COMPLETE\n")
   cat("Configuration used:\n")
   cat("  Missing data:", missing, "\n")
-  cat("  Extraction methods:", paste(extraction, collapse = ", "), "\n")
+  cat("  Extraction method:", extraction_method, "\n")
   cat("  Kaiser normalization:", kaiser_normalize, "\n")
   cat("  Correlation methods: Polychoric AND Pearson (aligned)\n")
   cat("========================================\n")
@@ -189,7 +180,13 @@ analyze_efa <- function(data_obj,
 }
 
 # Function to display specific results
-show_efa <- function(results, method = "MINRES", gamma = 0) {
+show_efa <- function(results, gamma = 0) {
   source("efa_display.R")
-  display_specific_result(results$efa, method, gamma)
+  display_specific_result(results, gamma)
+}
+
+# Function to display EFA evaluation (all gamma values)
+show_efa_evaluation <- function(results) {
+  source("efa_display.R")
+  display_efa_evaluation(results)
 }

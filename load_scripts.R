@@ -1,6 +1,6 @@
 # ===================================================
 # Master Script Loader
-# Version: 26.0 - Added visualization module
+# Version: 27.0 - Updated for single extraction method EFA
 # ===================================================
 
 suppressPackageStartupMessages({
@@ -19,7 +19,6 @@ suppressPackageStartupMessages({
   library(lavaan)
   library(effectsize)
   library(openxlsx)
-  library(gridExtra)
 })
 
 source("config_loader.R")
@@ -27,9 +26,6 @@ source("data_structure.R")
 source("google_sheets_connector.R")
 source("data_cleaner.R")
 source("prepare_data.R")
-source("visualization_calculator.R")
-source("visualization_display.R")
-source("visualization_main.R")
 source("gp_calculator.R")
 source("gp_display.R")
 source("gp_main.R")
@@ -75,9 +71,6 @@ cat("\n")
 cat("# Data preparation\n")
 cat("data <- prepare_data()\n")
 cat("\n")
-cat("# Data visualization\n")
-cat("visualize_data(data$target)\n")
-cat("\n")
 cat("# Item analysis\n")
 cat("analyze_gp(data$target)\n")
 cat("analyze_item_correlations(data$target)\n")
@@ -90,7 +83,9 @@ cat("\n")
 cat("# Factor analysis\n")
 cat("check_fa_suitability(data$target)\n")
 cat("determine_factors(data$target)\n")
-cat("analyze_efa(data$target, n_factors = 5)\n")
+cat("efa_results <- analyze_efa(data$target, n_factors = 5)\n")
+cat("show_efa(efa_results, gamma = 0)      # Show specific gamma result\n")
+cat("show_efa_evaluation(efa_results)      # Show evaluation for all gamma\n")
 cat("analyze_cfa(data$target)\n")
 cat("\n")
 cat("# Validity analysis\n")
@@ -98,3 +93,6 @@ cat("analyze_validity(data$target, data$rehab)\n")
 cat("\n")
 cat("# Interrater reliability\n")
 cat("analyze_interrater(data$interrater)\n")
+cat("\n")
+cat("# EFA extraction method is set in analysis_config.yaml:\n")
+cat("#   extraction_method: 'minres'  # or 'uls', 'pa', 'ml', 'wls', 'gls'\n")
