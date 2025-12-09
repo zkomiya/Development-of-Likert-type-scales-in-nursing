@@ -1,6 +1,6 @@
 # ===================================================
 # Master Script Loader
-# Version: 25.0 - Silent loading with usage examples
+# Version: 26.0 - Added visualization module
 # ===================================================
 
 suppressPackageStartupMessages({
@@ -19,6 +19,7 @@ suppressPackageStartupMessages({
   library(lavaan)
   library(effectsize)
   library(openxlsx)
+  library(gridExtra)
 })
 
 source("config_loader.R")
@@ -26,6 +27,9 @@ source("data_structure.R")
 source("google_sheets_connector.R")
 source("data_cleaner.R")
 source("prepare_data.R")
+source("visualization_calculator.R")
+source("visualization_display.R")
+source("visualization_main.R")
 source("gp_calculator.R")
 source("gp_display.R")
 source("gp_main.R")
@@ -70,6 +74,9 @@ cat("# ===================================================\n")
 cat("\n")
 cat("# Data preparation\n")
 cat("data <- prepare_data()\n")
+cat("\n")
+cat("# Data visualization\n")
+cat("visualize_data(data$target)\n")
 cat("\n")
 cat("# Item analysis\n")
 cat("analyze_gp(data$target)\n")
