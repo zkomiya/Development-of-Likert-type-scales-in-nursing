@@ -1,7 +1,10 @@
 # ===================================================
 # Factor Suitability Main (Controller Layer)
-# Version: 1.0
+# Version: 2.0
 # Description: Main controller for FA suitability check
+# Changes from v1.0:
+#   - Added show_fa_evaluation function
+#   - Separated result display and evaluation
 # ===================================================
 
 # Main function to check factor analysis suitability
@@ -27,10 +30,16 @@ check_fa_suitability <- function(data_obj) {
     correlations$pearson
   )
   
-  # Display results
+  # Display results only
   source("factor_suitability_display.R")
   fs_display_results(results)
   
   # Return results invisibly
   invisible(results)
+}
+
+# Function to display evaluation and suggestions
+show_fa_evaluation <- function(results) {
+  source("factor_suitability_display.R")
+  fs_display_evaluation(results)
 }

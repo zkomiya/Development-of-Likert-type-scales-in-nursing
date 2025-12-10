@@ -1,6 +1,6 @@
 # ===================================================
 # Master Script Loader
-# Version: 27.0 - Updated for single extraction method EFA
+# Version: 28.0 - Added GP analysis evaluation display
 # ===================================================
 
 suppressPackageStartupMessages({
@@ -72,7 +72,8 @@ cat("# Data preparation\n")
 cat("data <- prepare_data()\n")
 cat("\n")
 cat("# Item analysis\n")
-cat("analyze_gp(data$target)\n")
+cat("gp_results <- analyze_gp(data$target)\n")
+cat("show_gp_evaluation(gp_results)         # Show GP evaluation separately\n")
 cat("analyze_item_correlations(data$target)\n")
 cat("analyze_item_total(data$target)\n")
 cat("analyze_ceiling_floor(data$target)\n")

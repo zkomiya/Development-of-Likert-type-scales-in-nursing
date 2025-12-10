@@ -1,9 +1,9 @@
 # ===================================================
 # GP Main (Controller Layer)
-# Version: 7.0
-# Changes from v6.0:
-#   - Removed cutoff_percentile and scale_range from arguments
-#   - Now reads these parameters from YAML configuration
+# Version: 8.0
+# Changes from v7.0:
+#   - Added gp_display_evaluation() call
+#   - Added show_gp_evaluation() function
 # Description: Main controller for GP analysis
 # ===================================================
 
@@ -61,6 +61,9 @@ analyze_gp <- function(data_obj) {
   # Display summary
   gp_display_summary(summary_stats)
   
+  # Display evaluation
+  gp_display_evaluation(discrimination_results)
+  
   # Return results as invisible list
   invisible(list(
     discrimination_indices = discrimination_results,
@@ -69,4 +72,9 @@ analyze_gp <- function(data_obj) {
     total_scores = total_scores,
     item_cols = item_cols
   ))
+}
+
+# Function to display GP evaluation separately
+show_gp_evaluation <- function(gp_results) {
+  gp_display_evaluation(gp_results$discrimination_indices)
 }
