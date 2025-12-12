@@ -1,6 +1,6 @@
 # ===================================================
 # Master Script Loader
-# Version: 28.0 - Added GP analysis evaluation display
+# Version: 29.0 - Updated ceiling-floor evaluation usage
 # ===================================================
 
 suppressPackageStartupMessages({
@@ -77,6 +77,7 @@ cat("show_gp_evaluation(gp_results)         # Show GP evaluation separately\n")
 cat("analyze_item_correlations(data$target)\n")
 cat("analyze_item_total(data$target)\n")
 cat("analyze_ceiling_floor(data$target)\n")
+cat("show_cf_evaluation(data$target)        # Show CF evaluation separately\n")
 cat("\n")
 cat("# Reliability analysis\n")
 cat("analyze_reliability(data$target)\n")
