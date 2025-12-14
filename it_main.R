@@ -1,12 +1,63 @@
 # ===================================================
 # Item-Total Correlation Main (Controller Layer)
-# Version: 5.0 - YAML-based configuration only
+# Version: 6.0 - Added evaluation functions
 # Description: Main controller for I-T correlation analysis
-# Changes from v4.0:
-#   - Removed enable_subscales and subscale_config from arguments
-#   - Now reads all configuration from YAML only
-#   - Consistent with other analysis functions
+# Changes from v5.0:
+#   - Added evaluate_it_results() function
+#   - Added show_it_evaluation() standalone function
 # ===================================================
+
+# Evaluate I-T correlation results
+evaluate_it_results <- function(it_results) {
+  
+  # Thresholds (hardcoded)
+  threshold_poor <- 0.20
+  threshold_marginal <- 0.30
+  threshold_good <- 0.40
+  
+  # Evaluation function
+  categorize <- function(r) {
+    dplyr::case_when(
+      is.na(r) ~ "NA",
+      r < threshold_poor ~ "Poor",
+      r < threshold_marginal ~ "Marginal",
+      r < threshold_good ~ "Good",
+      TRUE ~ "Excellent"
+    )
+  }
+  
+  # Evaluate both methods (corrected only)
+  evaluation <- data.frame(
+    item = it_results$item,
+    pearson_r = it_results$cor_corrected_pearson,
+    pearson_eval = categorize(it_results$cor_corrected_pearson),
+    polyserial_r = it_results$cor_corrected_polyserial,
+    polyserial_eval = categorize(it_results$cor_corrected_polyserial),
+    stringsAsFactors = FALSE
+  )
+  
+  # Summary counts
+  pearson_counts <- table(factor(evaluation$pearson_eval, 
+                                 levels = c("Poor", "Marginal", "Good", "Excellent", "NA")))
+  polyserial_counts <- table(factor(evaluation$polyserial_eval,
+                                    levels = c("Poor", "Marginal", "Good", "Excellent", "NA")))
+  
+  # Problem items
+  problem_items <- evaluation$item[evaluation$pearson_eval %in% c("Poor", "Marginal") |
+                                     evaluation$polyserial_eval %in% c("Poor", "Marginal")]
+  
+  list(
+    evaluation = evaluation,
+    pearson_counts = pearson_counts,
+    polyserial_counts = polyserial_counts,
+    problem_items = problem_items,
+    thresholds = list(
+      poor = threshold_poor,
+      marginal = threshold_marginal,
+      good = threshold_good
+    )
+  )
+}
 
 # Main Item-Total correlation analysis function
 analyze_item_total <- function(data_obj) {
@@ -116,4 +167,22 @@ analyze_item_total <- function(data_obj) {
   )
   
   invisible(results)
+}
+
+# Show I-T evaluation (standalone function)
+show_it_evaluation <- function(data_obj) {
+  
+  # Extract data from keyed structure
+  data <- get_data(data_obj)
+  
+  # Calculate I-T correlations
+  it_results <- calculate_item_total_correlations(data)
+  
+  # Evaluate results
+  eval_results <- evaluate_it_results(it_results)
+  
+  # Display evaluation
+  display_it_evaluation(eval_results)
+  
+  invisible(eval_results)
 }

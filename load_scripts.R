@@ -1,6 +1,6 @@
 # ===================================================
 # Master Script Loader
-# Version: 30.0 - Added show_ii_evaluation usage
+# Version: 31.0 - Added show_it_evaluation usage
 # ===================================================
 
 suppressPackageStartupMessages({
@@ -75,8 +75,9 @@ cat("# Item analysis\n")
 cat("gp_results <- analyze_gp(data$target)\n")
 cat("show_gp_evaluation(gp_results)         # Show GP evaluation separately\n")
 cat("analyze_item_correlations(data$target)\n")
-cat("show_ii_evaluation(data$target)          # Show II evaluation separately\n")
+cat("show_ii_evaluation(data$target)        # Show II evaluation separately\n")
 cat("analyze_item_total(data$target)\n")
+cat("show_it_evaluation(data$target)        # Show IT evaluation separately\n")
 cat("analyze_ceiling_floor(data$target)\n")
 cat("show_cf_evaluation(data$target)        # Show CF evaluation separately\n")
 cat("\n")
