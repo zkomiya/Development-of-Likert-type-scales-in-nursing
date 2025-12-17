@@ -1,11 +1,9 @@
 # ===================================================
 # Item-Item Correlation Display (View Layer)
-# Version: 5.0 - Polychoric + Pearson comparison display
+# Version: 6.0 - Added evaluation display
 # Description: Display functions for item-item correlation analysis
-# Changes from v4.0:
-#   - Added ii_display_miic_comparison() without Difference column
-#   - Added ii_display_correlation_comparison()
-#   - Removed old summary statistics display
+# Changes from v5.0:
+#   - Added ii_display_evaluation()
 # ===================================================
 
 # Display header
@@ -77,4 +75,85 @@ ii_display_correlation_comparison <- function(cor_poly, cor_pear) {
   cat("Difference (Polychoric - Pearson):\n")
   cor_diff <- cor_poly - cor_pear
   print(round(cor_diff, 3))
+}
+
+# Display evaluation results
+ii_display_evaluation <- function(miic_poly, miic_pear, cor_poly, cor_pear) {
+  cat("\n========================================\n")
+  cat("II CORRELATION EVALUATION\n")
+  cat("========================================\n\n")
+  
+  # MIIC evaluation
+  cat("MIIC:\n")
+  
+  # Polychoric MIIC
+  poly_range <- if (miic_poly$miic < 0.15) {
+    "< 0.15"
+  } else if (miic_poly$miic > 0.50) {
+    "> 0.50"
+  } else {
+    "0.15-0.50"
+  }
+  cat(sprintf("  Polychoric: %.3f [%s]\n", miic_poly$miic, poly_range))
+  
+  # Pearson MIIC
+  pear_range <- if (miic_pear$miic < 0.15) {
+    "< 0.15"
+  } else if (miic_pear$miic > 0.50) {
+    "> 0.50"
+  } else {
+    "0.15-0.50"
+  }
+  cat(sprintf("  Pearson:    %.3f [%s]\n", miic_pear$miic, pear_range))
+  
+  # Item pairs with r > 0.70 (Polychoric)
+  cat("\nItem Pairs with r > 0.70 (Polychoric):\n")
+  high_pairs <- which(cor_poly > 0.70 & upper.tri(cor_poly), arr.ind = TRUE)
+  if (nrow(high_pairs) > 0) {
+    for (i in seq_len(nrow(high_pairs))) {
+      row_idx <- high_pairs[i, 1]
+      col_idx <- high_pairs[i, 2]
+      cat(sprintf("  %s-%s: %.2f\n", 
+                  rownames(cor_poly)[row_idx],
+                  colnames(cor_poly)[col_idx],
+                  cor_poly[row_idx, col_idx]))
+    }
+  } else {
+    cat("  None\n")
+  }
+  
+  # Item pairs with r < 0.10 (Polychoric)
+  cat("\nItem Pairs with r < 0.10 (Polychoric):\n")
+  low_pairs <- which(cor_poly < 0.10 & upper.tri(cor_poly), arr.ind = TRUE)
+  if (nrow(low_pairs) > 0) {
+    for (i in seq_len(nrow(low_pairs))) {
+      row_idx <- low_pairs[i, 1]
+      col_idx <- low_pairs[i, 2]
+      cat(sprintf("  %s-%s: %.2f\n",
+                  rownames(cor_poly)[row_idx],
+                  colnames(cor_poly)[col_idx],
+                  cor_poly[row_idx, col_idx]))
+    }
+  } else {
+    cat("  None\n")
+  }
+  
+  # Pairs with large difference
+  cat("\nPairs with |Polychoric - Pearson| > 0.15:\n")
+  cor_diff <- abs(cor_poly - cor_pear)
+  diff_pairs <- which(cor_diff > 0.15 & upper.tri(cor_diff), arr.ind = TRUE)
+  if (nrow(diff_pairs) > 0) {
+    for (i in seq_len(nrow(diff_pairs))) {
+      row_idx <- diff_pairs[i, 1]
+      col_idx <- diff_pairs[i, 2]
+      cat(sprintf("  %s-%s: Poly=%.2f, Pear=%.2f, Diff=%.2f\n",
+                  rownames(cor_poly)[row_idx],
+                  colnames(cor_poly)[col_idx],
+                  cor_poly[row_idx, col_idx],
+                  cor_pear[row_idx, col_idx],
+                  cor_diff[row_idx, col_idx]))
+    }
+  } else {
+    cat("  None\n")
+  }
 }

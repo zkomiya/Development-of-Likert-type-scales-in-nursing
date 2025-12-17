@@ -1,12 +1,9 @@
 # ===================================================
 # Item-Total Correlation Display (View Layer)
-# Version: 4.0 - Pearson + Polyserial concurrent display (4-column)
+# Version: 5.0 - Added evaluation display function
 # Description: Display functions for I-T correlation analysis with both methods
-# Changes from v2.0:
-#   - Updated it_display_calculation_info() to show both methods
-#   - Updated it_display_results() for 4-column display
-#   - Updated it_display_summary() to show both methods + comparison
-#   - Updated subscale display functions for 4-column support
+# Changes from v4.0:
+#   - Added display_it_evaluation() function
 # ===================================================
 
 # Display header
@@ -126,4 +123,66 @@ it_display_subscale_results <- function(subscale_results) {
   formatted[formatted == "NA"] <- "  NA"
   
   print(formatted, row.names = FALSE)
+}
+
+# Display I-T evaluation results
+display_it_evaluation <- function(eval_results) {
+  cat("\n========================================\n")
+  cat("Item-Total Correlation Evaluation\n")
+  cat("========================================\n\n")
+  
+  # Display thresholds
+  cat("Evaluation Criteria (Corrected I-T Correlation):\n")
+  cat(sprintf("  Poor:      r < %.2f (consider deletion)\n", eval_results$thresholds$poor))
+  cat(sprintf("  Marginal:  %.2f <= r < %.2f (caution)\n", 
+              eval_results$thresholds$poor, eval_results$thresholds$marginal))
+  cat(sprintf("  Good:      %.2f <= r < %.2f (acceptable)\n",
+              eval_results$thresholds$marginal, eval_results$thresholds$good))
+  cat(sprintf("  Excellent: r >= %.2f (good)\n", eval_results$thresholds$good))
+  
+  # Display item-level evaluation
+  cat("\n----------------------------------------\n")
+  cat("Item-Level Evaluation\n")
+  cat("----------------------------------------\n\n")
+  
+  eval_df <- eval_results$evaluation
+  formatted <- data.frame(
+    Item = eval_df$item,
+    Pear_r = sprintf("%.3f", eval_df$pearson_r),
+    Pear_Eval = eval_df$pearson_eval,
+    Poly_r = sprintf("%.3f", eval_df$polyserial_r),
+    Poly_Eval = eval_df$polyserial_eval,
+    stringsAsFactors = FALSE
+  )
+  
+  print(formatted, row.names = FALSE)
+  
+  # Display summary counts
+  cat("\n----------------------------------------\n")
+  cat("Summary Counts\n")
+  cat("----------------------------------------\n\n")
+  
+  cat("Pearson:\n")
+  cat(sprintf("  Excellent: %d, Good: %d, Marginal: %d, Poor: %d\n",
+              eval_results$pearson_counts["Excellent"],
+              eval_results$pearson_counts["Good"],
+              eval_results$pearson_counts["Marginal"],
+              eval_results$pearson_counts["Poor"]))
+  
+  cat("\nPolyserial:\n")
+  cat(sprintf("  Excellent: %d, Good: %d, Marginal: %d, Poor: %d\n",
+              eval_results$polyserial_counts["Excellent"],
+              eval_results$polyserial_counts["Good"],
+              eval_results$polyserial_counts["Marginal"],
+              eval_results$polyserial_counts["Poor"]))
+  
+  # Display problem items
+  if (length(eval_results$problem_items) > 0) {
+    cat("\n----------------------------------------\n")
+    cat("Problem Items (Poor or Marginal)\n")
+    cat("----------------------------------------\n")
+    cat(paste(eval_results$problem_items, collapse = ", "), "\n")
+  } else {
+    cat("\nNo problem items detected.\n")
+  }
 }
