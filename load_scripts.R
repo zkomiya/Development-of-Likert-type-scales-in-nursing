@@ -1,6 +1,6 @@
 # ===================================================
 # Master Script Loader
-# Version: 29.0 - Updated ceiling-floor evaluation usage
+# Version: 32.0 - Added factor_number_display and show_fn_evaluation
 # ===================================================
 
 suppressPackageStartupMessages({
@@ -48,6 +48,7 @@ source("factor_suitability_calculator.R")
 source("factor_suitability_display.R")
 source("factor_suitability_main.R")
 source("factor_number_calculator.R")
+source("factor_number_display.R")
 source("factor_number_main.R")
 source("data_preprocessor.R")
 source("efa_calculator.R")
@@ -75,7 +76,9 @@ cat("# Item analysis\n")
 cat("gp_results <- analyze_gp(data$target)\n")
 cat("show_gp_evaluation(gp_results)         # Show GP evaluation separately\n")
 cat("analyze_item_correlations(data$target)\n")
+cat("show_ii_evaluation(data$target)        # Show II evaluation separately\n")
 cat("analyze_item_total(data$target)\n")
+cat("show_it_evaluation(data$target)        # Show IT evaluation separately\n")
 cat("analyze_ceiling_floor(data$target)\n")
 cat("show_cf_evaluation(data$target)        # Show CF evaluation separately\n")
 cat("\n")
@@ -85,9 +88,10 @@ cat("\n")
 cat("# Factor analysis\n")
 cat("check_fa_suitability(data$target)\n")
 cat("determine_factors(data$target)\n")
+cat("show_fn_evaluation(data$target)        # Show FN evaluation separately\n")
 cat("efa_results <- analyze_efa(data$target, n_factors = 5)\n")
-cat("show_efa(efa_results, gamma = 0)      # Show specific gamma result\n")
-cat("show_efa_evaluation(efa_results)      # Show evaluation for all gamma\n")
+cat("show_efa(efa_results, gamma = 0)       # Show specific gamma result\n")
+cat("show_efa_evaluation(efa_results)       # Show evaluation for all gamma\n")
 cat("analyze_cfa(data$target)\n")
 cat("\n")
 cat("# Validity analysis\n")
