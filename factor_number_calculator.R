@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Determination for EFA
-# Version: 6.0 (Calculator only - No display)
+# Version: 6.1 (Calculator only - MAP fix)
 # Description: Factor number determination for Exploratory Factor Analysis
 # ===================================================
 
@@ -56,7 +56,7 @@ determine_n_factors <- function(data,
   pa_sim_eigenvalues <- pa_result$fa.sim
   
   map_values <- vss_result$map
-  map_n <- which.min(map_values)
+  map_n <- which.min(map_values) - 1
   
   kaiser_result <- list(
     n_factors = kaiser_n,

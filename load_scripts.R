@@ -1,12 +1,3 @@
-# ===================================================
-# Master Script Loader
-<<<<<<< HEAD
-# Version: 32.0 - Added factor_number_display and show_fn_evaluation
-=======
-# Version: 31.0 - Added show_it_evaluation usage
->>>>>>> 8cf731396617da35378ce804c7287b194663602d
-# ===================================================
-
 suppressPackageStartupMessages({
   library(googlesheets4)
   library(tidyverse)
