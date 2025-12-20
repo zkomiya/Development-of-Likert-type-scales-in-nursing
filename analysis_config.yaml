@@ -210,3 +210,21 @@ cfa_settings:
   se: "robust"
   standardized: true
   rsquare: true
+  
+# ===================================================
+# Satisficing Analysis Settings
+# ===================================================
+satisficing:
+  longstring:
+    threshold: 10
+  irv:
+    percentile_threshold: 5
+  mahalanobis:
+    p_threshold: 0.001
+
+# ===================================================
+# Response Styles Analysis Settings
+# ===================================================
+response_styles:
+  extreme_percentile: 95
+
