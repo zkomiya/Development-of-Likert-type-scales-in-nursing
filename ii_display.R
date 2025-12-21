@@ -1,9 +1,9 @@
 # ===================================================
 # Item-Item Correlation Display (View Layer)
-# Version: 7.0 - Added pair count summary
+# Version: 6.0 - Added evaluation display
 # Description: Display functions for item-item correlation analysis
-# Changes from v6.0:
-#   - Added pair count summary to evaluation display
+# Changes from v5.0:
+#   - Added ii_display_evaluation()
 # ===================================================
 
 # Display header
@@ -83,10 +83,6 @@ ii_display_evaluation <- function(miic_poly, miic_pear, cor_poly, cor_pear) {
   cat("II CORRELATION EVALUATION\n")
   cat("========================================\n\n")
   
-  # Calculate total pairs
-  n_items <- nrow(cor_poly)
-  total_pairs <- n_items * (n_items - 1) / 2
-  
   # MIIC evaluation
   cat("MIIC:\n")
   
@@ -111,12 +107,10 @@ ii_display_evaluation <- function(miic_poly, miic_pear, cor_poly, cor_pear) {
   cat(sprintf("  Pearson:    %.3f [%s]\n", miic_pear$miic, pear_range))
   
   # Item pairs with r > 0.70 (Polychoric)
+  cat("\nItem Pairs with r > 0.70 (Polychoric):\n")
   high_pairs <- which(cor_poly > 0.70 & upper.tri(cor_poly), arr.ind = TRUE)
-  n_high <- nrow(high_pairs)
-  cat(sprintf("\nItem Pairs with r > 0.70 (Polychoric): %d / %d pairs\n", 
-              n_high, total_pairs))
-  if (n_high > 0) {
-    for (i in seq_len(n_high)) {
+  if (nrow(high_pairs) > 0) {
+    for (i in seq_len(nrow(high_pairs))) {
       row_idx <- high_pairs[i, 1]
       col_idx <- high_pairs[i, 2]
       cat(sprintf("  %s-%s: %.2f\n", 
@@ -129,12 +123,10 @@ ii_display_evaluation <- function(miic_poly, miic_pear, cor_poly, cor_pear) {
   }
   
   # Item pairs with r < 0.10 (Polychoric)
+  cat("\nItem Pairs with r < 0.10 (Polychoric):\n")
   low_pairs <- which(cor_poly < 0.10 & upper.tri(cor_poly), arr.ind = TRUE)
-  n_low <- nrow(low_pairs)
-  cat(sprintf("\nItem Pairs with r < 0.10 (Polychoric): %d / %d pairs\n",
-              n_low, total_pairs))
-  if (n_low > 0) {
-    for (i in seq_len(n_low)) {
+  if (nrow(low_pairs) > 0) {
+    for (i in seq_len(nrow(low_pairs))) {
       row_idx <- low_pairs[i, 1]
       col_idx <- low_pairs[i, 2]
       cat(sprintf("  %s-%s: %.2f\n",
@@ -147,13 +139,11 @@ ii_display_evaluation <- function(miic_poly, miic_pear, cor_poly, cor_pear) {
   }
   
   # Pairs with large difference
+  cat("\nPairs with |Polychoric - Pearson| > 0.15:\n")
   cor_diff <- abs(cor_poly - cor_pear)
   diff_pairs <- which(cor_diff > 0.15 & upper.tri(cor_diff), arr.ind = TRUE)
-  n_diff <- nrow(diff_pairs)
-  cat(sprintf("\nPairs with |Polychoric - Pearson| > 0.15: %d / %d pairs\n",
-              n_diff, total_pairs))
-  if (n_diff > 0) {
-    for (i in seq_len(n_diff)) {
+  if (nrow(diff_pairs) > 0) {
+    for (i in seq_len(nrow(diff_pairs))) {
       row_idx <- diff_pairs[i, 1]
       col_idx <- diff_pairs[i, 2]
       cat(sprintf("  %s-%s: Poly=%.2f, Pear=%.2f, Diff=%.2f\n",
