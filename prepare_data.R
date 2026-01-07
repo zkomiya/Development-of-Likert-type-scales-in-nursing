@@ -1,6 +1,6 @@
 # ===================================================
 # Data Preparation Function - With Type Conversion
-# Version: 10.0 - YAML-based connector
+# Version: 11.0 - Simplified data_keys access
 # ===================================================
 
 prepare_data <- function() {
@@ -29,10 +29,10 @@ prepare_data <- function() {
   cat("Loading Interrater dataset...\n")
   raw_interrater <- get_sheets_data("interrater")
   
-  # Get key column names from config
-  target_key_column <- config$analysis$data_keys[[target_dataset_name]][1]
-  rehab_key_column <- config$analysis$data_keys$rehab[1]
-  interrater_key_column <- config$analysis$data_keys$interrater[1]
+  # Get key column names from config (simplified access)
+  target_key_column <- config$analysis$data_keys[[target_dataset_name]]
+  rehab_key_column <- config$analysis$data_keys$rehab
+  interrater_key_column <- config$analysis$data_keys$interrater
   
   cat(sprintf("\nProcessing datasets with type conversion...\n"))
   

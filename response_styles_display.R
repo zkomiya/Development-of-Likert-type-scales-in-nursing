@@ -1,16 +1,15 @@
 # ===================================================
 # Response Styles Display (View Layer)
-# Version: 1.1
+# Version: 1.3
 # Description: Display functions for response styles analysis
-# Changes from v1.0:
-#   - Display ID instead of row index
-#   - Display all flagged cases
+# Changes from v1.2:
+#   - Added dataset_name parameter to header function
 # ===================================================
 
 # Display header
-response_styles_display_header <- function() {
+response_styles_display_header <- function(dataset_name) {
   cat("========================================\n")
-  cat("RESPONSE STYLES ANALYSIS\n")
+  cat(sprintf("RESPONSE STYLES ANALYSIS: %s\n", dataset_name))
   cat("(ERS and MRS Estimation)\n")
   cat("========================================\n\n")
 }
@@ -127,7 +126,7 @@ format_p_value <- function(p) {
 }
 
 # Display flagged cases detail (all cases)
-response_styles_display_flagged_cases <- function(indices, flags) {
+response_styles_display_flagged_cases <- function(indices, flags, key_name) {
   # Get flagged rows for each type
   ers_flagged <- which(flags$ers_flag)
   mrs_flagged <- which(flags$mrs_flag)
@@ -135,7 +134,7 @@ response_styles_display_flagged_cases <- function(indices, flags) {
   if (length(ers_flagged) > 0) {
     cat("--- High ERS Cases ---\n\n")
     
-    cat("ID                ERS      MRS\n")
+    cat(sprintf("%-14s    ERS      MRS\n", key_name))
     cat("-------------------------------\n")
     
     for (i in seq_along(ers_flagged)) {
@@ -159,7 +158,7 @@ response_styles_display_flagged_cases <- function(indices, flags) {
   if (length(mrs_flagged) > 0) {
     cat("--- High MRS Cases ---\n\n")
     
-    cat("ID                ERS      MRS\n")
+    cat(sprintf("%-14s    ERS      MRS\n", key_name))
     cat("-------------------------------\n")
     
     for (i in seq_along(mrs_flagged)) {

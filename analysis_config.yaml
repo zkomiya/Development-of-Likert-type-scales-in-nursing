@@ -1,9 +1,9 @@
 # Analysis Configuration
-# Version: 2.8 - Single extraction method for EFA
+# Version: 2.9 - Simplified data_keys structure
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_30    # "items_30", "items_28"
+  dataset: items_28    # "items_30", "items_28"
 
 # ===== GLOBAL SETTINGS =====
 global:
@@ -14,10 +14,10 @@ global:
   
 # Data key definitions
 data_keys:
-  items_30: ["患者ID"]
-  items_28: ["患者ID"]
-  rehab: ["患者ID"]
-  interrater: ["患者ID"]
+  items_30: "患者ID"
+  items_28: "患者ID"
+  rehab: "患者ID"
+  interrater: "患者ID"
 
 # ===== ANALYSIS SPECIFIC =====
 gp_analysis:
@@ -227,4 +227,3 @@ satisficing:
 # ===================================================
 response_styles:
   extreme_percentile: 95
-

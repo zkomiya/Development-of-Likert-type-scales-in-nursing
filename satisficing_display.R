@@ -1,16 +1,15 @@
 # ===================================================
 # Satisficing Display (View Layer)
-# Version: 1.1
+# Version: 1.3
 # Description: Display functions for satisficing analysis
-# Changes from v1.0:
-#   - Display all flagged cases (removed max_display limit)
-#   - Display ID instead of row index
+# Changes from v1.2:
+#   - Added dataset_name parameter to header function
 # ===================================================
 
 # Display header
-satisficing_display_header <- function() {
+satisficing_display_header <- function(dataset_name) {
   cat("========================================\n")
-  cat("SATISFICING ANALYSIS\n")
+  cat(sprintf("SATISFICING ANALYSIS: %s\n", dataset_name))
   cat("(Careless/Insufficient Effort Responding)\n")
   cat("========================================\n\n")
 }
@@ -95,7 +94,7 @@ satisficing_display_summary <- function(summary) {
 }
 
 # Display flagged cases detail (all cases)
-satisficing_display_flagged_cases <- function(indices, flags) {
+satisficing_display_flagged_cases <- function(indices, flags, key_name) {
   flagged_rows <- which(flags$any_flag)
   n_flagged <- length(flagged_rows)
   
@@ -106,7 +105,7 @@ satisficing_display_flagged_cases <- function(indices, flags) {
   
   cat("--- Flagged Cases Detail ---\n\n")
   
-  cat("ID                LS    IRV     D^2        p      Flags\n")
+  cat(sprintf("%-14s    LS    IRV     D^2        p      Flags\n", key_name))
   cat("--------------------------------------------------------\n")
   
   for (i in seq_along(flagged_rows)) {
