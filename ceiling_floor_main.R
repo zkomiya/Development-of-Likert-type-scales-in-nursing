@@ -1,6 +1,6 @@
 # ===================================================
 # Ceiling-Floor Effect Main (Controller Layer)
-# Version: 11.0 - Separated analysis and evaluation
+# Version: 12.0 - Added CSV output functionality
 # ===================================================
 
 # Main Ceiling-Floor effect analysis function (results only, no evaluation)
@@ -32,6 +32,16 @@ analyze_ceiling_floor <- function(data_obj) {
   
   # Display results only (no evaluation)
   display_ceiling_floor_results(cf_results, parameters)
+  
+  # Output to CSV
+  output_dir <- "output"
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir)
+  }
+  
+  output_file <- file.path(output_dir, "ceiling_floor_results.csv")
+  write.csv(cf_results, output_file, row.names = FALSE)
+  cat(sprintf("\nResults saved to: %s\n", output_file))
   
   # Calculate summary
   summary_stats <- calculate_cf_summary(cf_results)
@@ -72,6 +82,16 @@ show_cf_evaluation <- function(data_obj) {
   
   # Display evaluation
   display_ceiling_floor_evaluation(evaluation)
+  
+  # Output to CSV
+  output_dir <- "output"
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir)
+  }
+  
+  output_file <- file.path(output_dir, "ceiling_floor_evaluation.csv")
+  write.csv(evaluation, output_file, row.names = FALSE)
+  cat(sprintf("\nEvaluation saved to: %s\n", output_file))
   
   # Return evaluation invisibly
   invisible(list(

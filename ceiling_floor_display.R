@@ -1,6 +1,6 @@
 # ===================================================
 # Ceiling-Floor Effect Display (View Layer)
-# Version: 10.0 - Added evaluation functions
+# Version: 12.0 - Fixed evaluation display order
 # ===================================================
 
 # Unified display function for all ceiling-floor results
@@ -22,10 +22,10 @@ display_ceiling_floor_results <- function(results, parameters) {
     SD = sprintf("%.2f", results$sd),
     Skewness = sprintf("%+.2f", results$skewness),
     Kurtosis = sprintf("%+.2f", results$kurtosis),
-    `Mean+SD` = sprintf("%.2f", results$mean_plus_sd),
     `Mean-SD` = sprintf("%.2f", results$mean_minus_sd),
-    `Ceiling(%)` = sprintf("%.1f", results$ceiling_pct),
+    `Mean+SD` = sprintf("%.2f", results$mean_plus_sd),
     `Floor(%)` = sprintf("%.1f", results$floor_pct),
+    `Ceiling(%)` = sprintf("%.1f", results$ceiling_pct),
     check.names = FALSE
   )
   
@@ -64,20 +64,20 @@ display_ceiling_floor_evaluation <- function(evaluation) {
   cat("Evaluation Results\n")
   cat("========================================\n\n")
   
-  # Display evaluation table (Floor before Ceiling)
-  cat(sprintf("%-6s %8s %8s %10s %10s %9s %9s\n",
-              "Item", "Floor", "Ceiling", "Skewness", "Kurtosis", "Mean-SD", "Mean+SD"))
+  # Display evaluation table (same order as results: Skewness, Kurtosis, Mean-SD, Mean+SD, Floor, Ceiling)
+  cat(sprintf("%-6s %10s %10s %9s %9s %8s %8s\n",
+              "Item", "Skewness", "Kurtosis", "Mean-SD", "Mean+SD", "Floor", "Ceiling"))
   cat(paste(rep("-", 62), collapse = ""), "\n")
   
   for (i in seq_len(nrow(evaluation))) {
-    cat(sprintf("%-6s %8s %8s %10s %10s %9s %9s\n",
+    cat(sprintf("%-6s %10s %10s %9s %9s %8s %8s\n",
                 evaluation$item[i],
-                evaluation$floor_flag[i],
-                evaluation$ceiling_flag[i],
                 evaluation$skewness_flag[i],
                 evaluation$kurtosis_flag[i],
                 evaluation$mean_minus_sd_flag[i],
-                evaluation$mean_plus_sd_flag[i]))
+                evaluation$mean_plus_sd_flag[i],
+                evaluation$floor_flag[i],
+                evaluation$ceiling_flag[i]))
   }
   
   # Summary (Floor before Ceiling)

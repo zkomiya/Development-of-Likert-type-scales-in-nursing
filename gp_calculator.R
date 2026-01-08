@@ -12,7 +12,7 @@
 library(psych)
 
 # Calculate cutoffs for Good-Poor groups
-calculate_cutoffs <- function(scores, pct = 0.27) {
+calculate_cutoffs <- function(scores, pct) {
   list(
     lower = quantile(scores, pct, na.rm = TRUE),
     upper = quantile(scores, 1 - pct, na.rm = TRUE)

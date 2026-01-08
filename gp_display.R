@@ -49,7 +49,7 @@ gp_format_results <- function(discrimination_results) {
   formatted$Hedges_g <- sprintf("%.6f", discrimination_results$Hedges_g) 
   formatted$D_star <- sprintf("%.3f", discrimination_results$D_star)  
   
-  return(formatted[, c("item", "M_good", "M_poor", "SD_good", "SD_poor","Cohens_d", "Hedges_g","D_star")])
+  return(formatted[, c("item", "M_poor", "M_good", "SD_poor", "SD_good", "Cohens_d", "Hedges_g", "D_star")])
 }
 
 # Function to display main results

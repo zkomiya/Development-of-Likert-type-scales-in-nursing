@@ -1,10 +1,9 @@
 # ===================================================
 # Response Styles Main (Controller Layer)
-# Version: 2.0
+# Version: 2.1
 # Description: Main controller for response styles analysis
-# Changes from v1.2:
-#   - Accept entire data object from prepare_data()
-#   - Analyze both target and rehab datasets automatically
+# Changes from v2.0:
+#   - Pass thresholds to display functions for threshold-at-maximum handling
 # ===================================================
 
 # Internal function to analyze single dataset
@@ -47,9 +46,9 @@ analyze_response_styles_single <- function(data, dataset_name, key_name, config)
   # Display results
   response_styles_display_descriptives(stats)
   response_styles_display_thresholds(flag_results$thresholds)
-  response_styles_display_summary(flag_results$summary)
+  response_styles_display_summary(flag_results$summary, flag_results$thresholds)
   response_styles_display_correlations(correlations)
-  response_styles_display_flagged_cases(indices, flag_results$flags, key_name)
+  response_styles_display_flagged_cases(indices, flag_results$flags, key_name, flag_results$thresholds)
   
   # Footer
   cat("========================================\n")

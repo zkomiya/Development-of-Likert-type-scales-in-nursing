@@ -1,6 +1,6 @@
 # ===================================================
 # Ceiling-Floor Effect Analyzer (Model Layer)
-# Version: 9.0 - Added kurtosis calculation
+# Version: 10.0 - Fixed column order (Mean-SD before Mean+SD, Floor before Ceiling)
 # ===================================================
 
 library(psych)
@@ -13,8 +13,8 @@ calculate_item_statistics <- function(item_data) {
     sd = numeric(),
     skewness = numeric(),
     kurtosis = numeric(),
-    mean_plus_sd = numeric(),
     mean_minus_sd = numeric(),
+    mean_plus_sd = numeric(),
     n_valid = integer(),
     stringsAsFactors = FALSE
   )
@@ -34,8 +34,8 @@ calculate_item_statistics <- function(item_data) {
       sd = sd_val,
       skewness = skew_val,
       kurtosis = kurt_val,
-      mean_plus_sd = mean_val + sd_val,
       mean_minus_sd = mean_val - sd_val,
+      mean_plus_sd = mean_val + sd_val,
       n_valid = length(valid_values)
     ))
   }
@@ -47,8 +47,8 @@ calculate_item_statistics <- function(item_data) {
 calculate_ceiling_floor_percentages <- function(item_data, min_val, max_val) {
   percentages <- data.frame(
     item = character(),
-    ceiling_pct = numeric(),
     floor_pct = numeric(),
+    ceiling_pct = numeric(),
     stringsAsFactors = FALSE
   )
   
@@ -62,8 +62,8 @@ calculate_ceiling_floor_percentages <- function(item_data, min_val, max_val) {
     
     percentages <- rbind(percentages, data.frame(
       item = col_name,
-      ceiling_pct = ceiling_pct,
-      floor_pct = floor_pct
+      floor_pct = floor_pct,
+      ceiling_pct = ceiling_pct
     ))
   }
   
@@ -80,6 +80,10 @@ analyze_ceiling_floor_effects <- function(item_data, scale_min, scale_max) {
   
   # Merge all results
   results <- merge(stats, percentages, by = "item")
+  
+  # Reorder columns for output
+  results <- results[, c("item", "mean", "sd", "skewness", "kurtosis", 
+                         "mean_minus_sd", "mean_plus_sd", "floor_pct", "ceiling_pct")]
   
   # Add metadata
   attr(results, "scale_range") <- c(scale_min, scale_max)
