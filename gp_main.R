@@ -1,9 +1,8 @@
 # ===================================================
 # GP Main (Controller Layer)
-# Version: 8.0
-# Changes from v7.0:
-#   - Added gp_display_evaluation() call
-#   - Added show_gp_evaluation() function
+# Version: 9.2
+# Changes from v9.1:
+#   - Updated CSV export column order
 # Description: Main controller for GP analysis
 # ===================================================
 
@@ -49,7 +48,7 @@ analyze_gp <- function(data_obj) {
   # Display group info
   gp_display_group_info(cutoff_percentile, n_good, n_poor, cutoffs$upper, cutoffs$lower)
   
-  # Step 4: Calculate discrimination indices (now with 4 effect sizes)
+  # Step 4: Calculate discrimination indices
   discrimination_results <- calculate_gp_indices(data, gp_group, scale_range)
   
   # Display results
@@ -61,8 +60,15 @@ analyze_gp <- function(data_obj) {
   # Display summary
   gp_display_summary(summary_stats)
   
-  # Display evaluation
-  gp_display_evaluation(discrimination_results)
+  # Export results to CSV
+  output_dir <- "output"
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir)
+  }
+  output_file <- file.path(output_dir, "gp_analysis_results.csv")
+  col_order <- c("item", "n_poor", "n_good", "M_poor", "SD_poor", "M_good", "SD_good", "D_star", "Cohens_d", "Hedges_g")
+  write.csv(discrimination_results[, col_order], output_file, row.names = FALSE)
+  cat(sprintf("\nResults exported to: %s\n", output_file))
   
   # Return results as invisible list
   invisible(list(

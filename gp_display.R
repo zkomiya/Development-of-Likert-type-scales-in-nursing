@@ -1,8 +1,8 @@
 # ===================================================
 # GP Display (View Layer)
-# Version: 7.0
-# Changes from v6.0:
-#   - Added gp_display_evaluation() function
+# Version: 8.0
+# Changes from v7.0:
+#   - Updated column order in gp_format_results
 # Description: Display functions for GP analysis results
 # Note: All function names have gp_ prefix
 # ===================================================
@@ -49,7 +49,7 @@ gp_format_results <- function(discrimination_results) {
   formatted$Hedges_g <- sprintf("%.6f", discrimination_results$Hedges_g) 
   formatted$D_star <- sprintf("%.3f", discrimination_results$D_star)  
   
-  return(formatted[, c("item", "M_poor", "M_good", "SD_poor", "SD_good", "Cohens_d", "Hedges_g", "D_star")])
+  return(formatted[, c("item", "n_poor", "n_good", "M_poor", "SD_poor", "M_good", "SD_good", "D_star", "Cohens_d", "Hedges_g")])
 }
 
 # Function to display main results
