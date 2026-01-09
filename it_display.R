@@ -1,9 +1,9 @@
 # ===================================================
 # Item-Total Correlation Display (View Layer)
-# Version: 5.0 - Added evaluation display function
+# Version: 5.1 - Added comparison display function
 # Description: Display functions for I-T correlation analysis with both methods
-# Changes from v4.0:
-#   - Added display_it_evaluation() function
+# Changes from v5.0:
+#   - Added it_display_comparison() function
 # ===================================================
 
 # Display header
@@ -185,4 +185,39 @@ display_it_evaluation <- function(eval_results) {
   } else {
     cat("\nNo problem items detected.\n")
   }
+}
+
+# Display Total vs Subscale comparison
+it_display_comparison <- function(comparison) {
+  cat("\n========================================\n")
+  cat("RESULTS: Total vs Subscale Comparison\n")
+  cat("========================================\n\n")
+  
+  # Format for display
+  formatted <- data.frame(
+    Item = comparison$item,
+    Subscale = substr(comparison$subscale, 1, 20),
+    Total_Corr = sprintf("%.3f", comparison$total_corr),
+    Subscale_Corr = sprintf("%.3f", comparison$subscale_corr),
+    Diff = sprintf("%+.3f", comparison$diff),
+    Flag = comparison$flag,
+    stringsAsFactors = FALSE
+  )
+  
+  # Handle NA subscale
+  
+  formatted$Subscale[is.na(comparison$subscale)] <- "(none)"
+  formatted$Subscale_Corr[is.na(comparison$subscale_corr)] <- "   NA"
+  formatted$Diff[is.na(comparison$diff)] <- "    NA"
+  
+  print(formatted, row.names = FALSE)
+  
+  cat("\nFlag Legend:\n")
+  cat("  * : Total > Subscale (item may cross-load on multiple factors)\n")
+  
+  # Summary
+  n_atypical <- sum(comparison$flag == "*", na.rm = TRUE)
+  n_total <- sum(!is.na(comparison$diff))
+  cat(sprintf("\nSummary: %d/%d items show atypical pattern (Total > Subscale)\n",
+              n_atypical, n_total))
 }

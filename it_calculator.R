@@ -1,14 +1,10 @@
 # ===================================================
 # Item-Total Correlation Calculator (Model Layer)
-# Version: 4.0 - Pearson + Polyserial concurrent calculation
+# Version: 4.2 - Added comparison function
 # Description: Calculate both Pearson and Polyserial I-T correlations
 # Note: Always calculates both methods for numerical comparison
-# Changes from v3.0:
-#   - Added calculate_item_total_polyserial() function
-#   - Modified calculate_item_total_correlations() to return 4-column structure
-#   - Updated calculate_it_summary() to handle 4 columns + difference stats
-#   - Updated subscale functions for 4-column support
-#   - Uses polycor::polyserial() instead of psych::polyserial()
+# Changes from v4.1:
+#   - Added create_it_comparison() function
 # ===================================================
 
 library(psych)
@@ -62,7 +58,7 @@ calculate_item_total_correlations <- function(item_data) {
   alpha_result <- psych::alpha(item_data, check.keys = FALSE)
   
   pearson_corrected <- alpha_result$item.stats[, "r.drop"]
-  pearson_uncorrected <- alpha_result$item.stats[, "r.cor"]
+  pearson_uncorrected <- alpha_result$item.stats[, "raw.r"]
   
   # Polyserial (new implementation)
   polyserial_results <- calculate_item_total_polyserial(item_data)
@@ -128,4 +124,41 @@ calculate_subscale_summary <- function(subscale_results, subscale_name) {
   summary_stats <- calculate_it_summary(subscale_results)
   summary_stats$subscale_name <- subscale_name
   summary_stats
+}
+
+# Create comparison data frame (Total vs Subscale)
+create_it_comparison <- function(total_results, subscale_results, subscale_config) {
+  
+  # Build item-to-subscale mapping
+  item_subscale_map <- list()
+  item_subscale_corr <- list()
+  
+  for (subscale_id in names(subscale_results)) {
+    subscale_name <- subscale_results[[subscale_id]]$name
+    subscale_corr <- subscale_results[[subscale_id]]$correlations
+    
+    for (i in seq_len(nrow(subscale_corr))) {
+      item <- subscale_corr$item[i]
+      item_subscale_map[[item]] <- subscale_name
+      item_subscale_corr[[item]] <- subscale_corr$cor_corrected_pearson[i]
+    }
+  }
+  
+  # Build comparison data frame
+  comparison <- data.frame(
+    item = total_results$item,
+    subscale = sapply(total_results$item, function(x) {
+      if (x %in% names(item_subscale_map)) item_subscale_map[[x]] else NA
+    }),
+    total_corr = total_results$cor_corrected_pearson,
+    subscale_corr = sapply(total_results$item, function(x) {
+      if (x %in% names(item_subscale_corr)) item_subscale_corr[[x]] else NA
+    }),
+    stringsAsFactors = FALSE
+  )
+  
+  comparison$diff <- comparison$subscale_corr - comparison$total_corr
+  comparison$flag <- ifelse(comparison$diff < 0, "*", "")
+  
+  return(comparison)
 }

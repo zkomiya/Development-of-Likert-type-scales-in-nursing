@@ -1,9 +1,9 @@
 # ===================================================
 # Item-Total Correlation Main (Controller Layer)
-# Version: 7.0 - Added CSV output
+# Version: 7.1 - Added comparison display
 # Description: Main controller for I-T correlation analysis
-# Changes from v6.0:
-#   - Added CSV output to output/ directory
+# Changes from v7.0:
+#   - Added comparison display (Total vs Subscale)
 # ===================================================
 
 # Evaluate I-T correlation results
@@ -152,6 +152,13 @@ analyze_item_total <- function(data_obj) {
     }
   }
   
+  # Step 5: Display comparison (if subscales exist)
+  comparison <- NULL
+  if (!is.null(subscale_results) && length(subscale_results) > 0) {
+    comparison <- create_it_comparison(it_results, subscale_results, subscale_config)
+    it_display_comparison(comparison)
+  }
+  
   # ===== CSV Output =====
   # Create output directory if not exists
   if (!dir.exists("output")) {
@@ -173,11 +180,18 @@ analyze_item_total <- function(data_obj) {
     cat("CSV exported: output/it_subscale_correlations.csv\n")
   }
   
+  # Output 3: Comparison (if exists)
+  if (!is.null(comparison)) {
+    write.csv(comparison, "output/it_comparison.csv", row.names = FALSE)
+    cat("CSV exported: output/it_comparison.csv\n")
+  }
+  
   # Return results
   results <- list(
     correlations = it_results,
     summary = summary_stats,
     subscale_results = subscale_results,
+    comparison = comparison,
     item_data = data,
     item_names = item_names,
     config_used = list(
