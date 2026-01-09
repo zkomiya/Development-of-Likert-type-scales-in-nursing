@@ -1,8 +1,8 @@
 # ===================================================
 # GP Main (Controller Layer)
-# Version: 9.2
-# Changes from v9.1:
-#   - Updated CSV export column order
+# Version: 9.3
+# Changes from v9.2:
+#   - Modified show_gp_evaluation to accept data_obj directly
 # Description: Main controller for GP analysis
 # ===================================================
 
@@ -81,6 +81,19 @@ analyze_gp <- function(data_obj) {
 }
 
 # Function to display GP evaluation separately
-show_gp_evaluation <- function(gp_results) {
-  gp_display_evaluation(gp_results$discrimination_indices)
+show_gp_evaluation <- function(data_obj) {
+  data <- get_data(data_obj)
+  
+  config <- load_config()
+  cutoff_percentile <- config$analysis$gp_analysis$cutoff_percentile
+  scale_min <- config$analysis$global$scale$min
+  scale_max <- config$analysis$global$scale$max
+  scale_range <- c(scale_min, scale_max)
+  
+  total_scores <- rowSums(data, na.rm = TRUE)
+  cutoffs <- calculate_cutoffs(total_scores, cutoff_percentile)
+  gp_group <- assign_gp_groups(total_scores, cutoffs)
+  discrimination_results <- calculate_gp_indices(data, gp_group, scale_range)
+  
+  gp_display_evaluation(discrimination_results)
 }
