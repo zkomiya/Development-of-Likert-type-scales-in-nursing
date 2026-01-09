@@ -1,8 +1,8 @@
 # ===================================================
 # GP Display (View Layer)
-# Version: 8.0
-# Changes from v7.0:
-#   - Updated column order in gp_format_results
+# Version: 9.1
+# Changes from v9.0:
+#   - Added Cohen's d evaluation section
 # Description: Display functions for GP analysis results
 # Note: All function names have gp_ prefix
 # ===================================================
@@ -115,11 +115,7 @@ gp_display_evaluation <- function(discrimination_results) {
   # --- D* Evaluation ---
   cat("\nDISCRIMINATION INDEX (D*) EVALUATION\n")
   cat("------------------------------------\n")
-  cat(sprintf("Threshold: Excellent >= %.2f, Good >= %.2f, Acceptable >= %.2f\n\n",
-              THRESH$d_star_excellent, THRESH$d_star_good, THRESH$d_star_acceptable))
-  
-  cat(sprintf("%-8s %8s   %-12s %s\n", "Item", "D*", "Category", "Status"))
-  cat(paste(rep("-", 45), collapse = ""), "\n")
+  cat(sprintf("Threshold: Acceptable >= %.2f\n\n", THRESH$d_star_acceptable))
   
   d_star_categories <- character(n_items)
   d_star_poor_items <- character(0)
@@ -140,9 +136,20 @@ gp_display_evaluation <- function(discrimination_results) {
     }
     
     d_star_categories[i] <- category
-    status <- if (category == "Poor") "[!]" else ""
+  }
+  
+  # Display only items below threshold
+  if (length(d_star_poor_items) > 0) {
+    cat(sprintf("%-8s %8s   %-12s\n", "Item", "D*", "Category"))
+    cat(paste(rep("-", 35), collapse = ""), "\n")
     
-    cat(sprintf("%-8s %8.3f   %-12s %s\n", item, d_star, category, status))
+    for (item in d_star_poor_items) {
+      idx <- which(discrimination_results$item == item)
+      d_star <- discrimination_results$D_star[idx]
+      cat(sprintf("%-8s %8.3f   %-12s\n", item, d_star, "Poor"))
+    }
+  } else {
+    cat("No items below threshold.\n")
   }
   
   # D* Summary
@@ -157,17 +164,66 @@ gp_display_evaluation <- function(discrimination_results) {
   cat(sprintf("  Excellent: %d, Good: %d, Acceptable: %d, Poor: %d\n",
               n_excellent, n_good, n_acceptable, n_poor))
   
-  # --- Effect Size Evaluation (Hedges' g) ---
+  # --- Cohen's d Evaluation ---
+  cat("\nEFFECT SIZE (Cohen's d) EVALUATION\n")
+  cat("----------------------------------\n")
+  cat(sprintf("Threshold: Small >= %.2f\n\n", THRESH$effect_small))
+  
+  cohens_d_categories <- character(n_items)
+  cohens_d_negligible_items <- character(0)
+  
+  for (i in 1:n_items) {
+    item <- discrimination_results$item[i]
+    cohens_d <- discrimination_results$Cohens_d[i]
+    
+    if (cohens_d >= THRESH$effect_large) {
+      category <- "Large"
+    } else if (cohens_d >= THRESH$effect_medium) {
+      category <- "Medium"
+    } else if (cohens_d >= THRESH$effect_small) {
+      category <- "Small"
+    } else {
+      category <- "Negligible"
+      cohens_d_negligible_items <- c(cohens_d_negligible_items, item)
+    }
+    
+    cohens_d_categories[i] <- category
+  }
+  
+  # Display only items below threshold
+  if (length(cohens_d_negligible_items) > 0) {
+    cat(sprintf("%-8s %10s   %-12s\n", "Item", "Cohen's d", "Category"))
+    cat(paste(rep("-", 35), collapse = ""), "\n")
+    
+    for (item in cohens_d_negligible_items) {
+      idx <- which(discrimination_results$item == item)
+      cohens_d <- discrimination_results$Cohens_d[idx]
+      cat(sprintf("%-8s %10.3f   %-12s\n", item, cohens_d, "Negligible"))
+    }
+  } else {
+    cat("No items below threshold.\n")
+  }
+  
+  # Cohen's d Summary
+  n_large_d <- sum(cohens_d_categories == "Large")
+  n_medium_d <- sum(cohens_d_categories == "Medium")
+  n_small_d <- sum(cohens_d_categories == "Small")
+  n_negligible_d <- sum(cohens_d_categories == "Negligible")
+  n_effect_ok_d <- n_items - n_negligible_d
+  pct_effect_ok_d <- round(100 * n_effect_ok_d / n_items, 1)
+  
+  cat(sprintf("\nSummary: %d/%d items with small+ effect (%.1f%%)\n", 
+              n_effect_ok_d, n_items, pct_effect_ok_d))
+  cat(sprintf("  Large: %d, Medium: %d, Small: %d, Negligible: %d\n",
+              n_large_d, n_medium_d, n_small_d, n_negligible_d))
+  
+  # --- Hedges' g Evaluation ---
   cat("\nEFFECT SIZE (Hedges' g) EVALUATION\n")
   cat("----------------------------------\n")
-  cat(sprintf("Threshold: Large >= %.2f, Medium >= %.2f, Small >= %.2f\n\n",
-              THRESH$effect_large, THRESH$effect_medium, THRESH$effect_small))
+  cat(sprintf("Threshold: Small >= %.2f\n\n", THRESH$effect_small))
   
-  cat(sprintf("%-8s %10s   %-12s %s\n", "Item", "Hedges_g", "Category", "Status"))
-  cat(paste(rep("-", 45), collapse = ""), "\n")
-  
-  effect_categories <- character(n_items)
-  effect_negligible_items <- character(0)
+  hedges_g_categories <- character(n_items)
+  hedges_g_negligible_items <- character(0)
   
   for (i in 1:n_items) {
     item <- discrimination_results$item[i]
@@ -181,60 +237,54 @@ gp_display_evaluation <- function(discrimination_results) {
       category <- "Small"
     } else {
       category <- "Negligible"
-      effect_negligible_items <- c(effect_negligible_items, item)
+      hedges_g_negligible_items <- c(hedges_g_negligible_items, item)
     }
     
-    effect_categories[i] <- category
-    status <- if (category == "Negligible") "[!]" else ""
-    
-    cat(sprintf("%-8s %10.3f   %-12s %s\n", item, hedges_g, category, status))
+    hedges_g_categories[i] <- category
   }
   
-  # Effect Size Summary
-  n_large <- sum(effect_categories == "Large")
-  n_medium <- sum(effect_categories == "Medium")
-  n_small <- sum(effect_categories == "Small")
-  n_negligible <- sum(effect_categories == "Negligible")
-  n_effect_ok <- n_items - n_negligible
-  pct_effect_ok <- round(100 * n_effect_ok / n_items, 1)
+  # Display only items below threshold
+  if (length(hedges_g_negligible_items) > 0) {
+    cat(sprintf("%-8s %10s   %-12s\n", "Item", "Hedges' g", "Category"))
+    cat(paste(rep("-", 35), collapse = ""), "\n")
+    
+    for (item in hedges_g_negligible_items) {
+      idx <- which(discrimination_results$item == item)
+      hedges_g <- discrimination_results$Hedges_g[idx]
+      cat(sprintf("%-8s %10.3f   %-12s\n", item, hedges_g, "Negligible"))
+    }
+  } else {
+    cat("No items below threshold.\n")
+  }
+  
+  # Hedges' g Summary
+  n_large_g <- sum(hedges_g_categories == "Large")
+  n_medium_g <- sum(hedges_g_categories == "Medium")
+  n_small_g <- sum(hedges_g_categories == "Small")
+  n_negligible_g <- sum(hedges_g_categories == "Negligible")
+  n_effect_ok_g <- n_items - n_negligible_g
+  pct_effect_ok_g <- round(100 * n_effect_ok_g / n_items, 1)
   
   cat(sprintf("\nSummary: %d/%d items with small+ effect (%.1f%%)\n", 
-              n_effect_ok, n_items, pct_effect_ok))
+              n_effect_ok_g, n_items, pct_effect_ok_g))
   cat(sprintf("  Large: %d, Medium: %d, Small: %d, Negligible: %d\n",
-              n_large, n_medium, n_small, n_negligible))
-  
-  # --- Items Requiring Attention ---
-  problem_items <- union(d_star_poor_items, effect_negligible_items)
-  
-  if (length(problem_items) > 0) {
-    cat("\nITEMS REQUIRING ATTENTION\n")
-    cat("-------------------------\n")
-    
-    for (item in problem_items) {
-      idx <- which(discrimination_results$item == item)
-      d_star <- discrimination_results$D_star[idx]
-      hedges_g <- discrimination_results$Hedges_g[idx]
-      d_cat <- d_star_categories[idx]
-      e_cat <- effect_categories[idx]
-      
-      cat(sprintf("[!] %s: D* = %.3f (%s), Hedges' g = %.3f (%s)\n",
-                  item, d_star, d_cat, hedges_g, e_cat))
-    }
-  }
+              n_large_g, n_medium_g, n_small_g, n_negligible_g))
   
   # --- Overall Assessment ---
+  problem_items <- union(d_star_poor_items, 
+                         union(cohens_d_negligible_items, hedges_g_negligible_items))
+  
   cat("\nOVERALL ASSESSMENT\n")
   cat("------------------\n")
   
   if (length(problem_items) == 0) {
     cat("[OK] All items show adequate discrimination.\n")
   } else if (length(problem_items) <= 3) {
-    cat(sprintf("[OK] Majority of items show adequate discrimination.\n"))
-    cat(sprintf("[!] %d item(s) may need review: %s\n", 
+    cat(sprintf("[WARN] %d item(s) may need review: %s\n", 
                 length(problem_items), paste(problem_items, collapse = ", ")))
   } else {
-    cat(sprintf("[!] %d items show inadequate discrimination.\n", length(problem_items)))
-    cat(sprintf("    Items: %s\n", paste(problem_items, collapse = ", ")))
+    cat(sprintf("[WARN] %d items show inadequate discrimination: %s\n", 
+                length(problem_items), paste(problem_items, collapse = ", ")))
   }
   
   cat("\n========================================\n")
@@ -242,13 +292,16 @@ gp_display_evaluation <- function(discrimination_results) {
   # Return evaluation summary (invisible)
   invisible(list(
     d_star_categories = d_star_categories,
-    effect_categories = effect_categories,
+    cohens_d_categories = cohens_d_categories,
+    hedges_g_categories = hedges_g_categories,
     problem_items = problem_items,
     summary = list(
       d_star = list(excellent = n_excellent, good = n_good, 
                     acceptable = n_acceptable, poor = n_poor),
-      effect = list(large = n_large, medium = n_medium, 
-                    small = n_small, negligible = n_negligible)
+      cohens_d = list(large = n_large_d, medium = n_medium_d, 
+                      small = n_small_d, negligible = n_negligible_d),
+      hedges_g = list(large = n_large_g, medium = n_medium_g, 
+                      small = n_small_g, negligible = n_negligible_g)
     )
   ))
 }
