@@ -1,10 +1,9 @@
 # ===================================================
 # Item-Total Correlation Main (Controller Layer)
-# Version: 6.0 - Added evaluation functions
+# Version: 7.0 - Added CSV output
 # Description: Main controller for I-T correlation analysis
-# Changes from v5.0:
-#   - Added evaluate_it_results() function
-#   - Added show_it_evaluation() standalone function
+# Changes from v6.0:
+#   - Added CSV output to output/ directory
 # ===================================================
 
 # Evaluate I-T correlation results
@@ -151,6 +150,27 @@ analyze_item_total <- function(data_obj) {
         }
       }
     }
+  }
+  
+  # ===== CSV Output =====
+  # Create output directory if not exists
+  if (!dir.exists("output")) {
+    dir.create("output")
+  }
+  
+  # Output 1: Main correlations
+  write.csv(it_results, "output/it_correlations.csv", row.names = FALSE)
+  cat("\nCSV exported: output/it_correlations.csv\n")
+  
+  # Output 2: Subscale results (if exists)
+  if (!is.null(subscale_results) && length(subscale_results) > 0) {
+    subscale_all <- do.call(rbind, lapply(names(subscale_results), function(id) {
+      df <- subscale_results[[id]]$correlations
+      df$subscale <- subscale_results[[id]]$name
+      df
+    }))
+    write.csv(subscale_all, "output/it_subscale_correlations.csv", row.names = FALSE)
+    cat("CSV exported: output/it_subscale_correlations.csv\n")
   }
   
   # Return results
