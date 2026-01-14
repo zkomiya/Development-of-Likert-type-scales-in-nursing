@@ -1,10 +1,10 @@
 # ===================================================
 # Item-Total Correlation Calculator (Model Layer)
-# Version: 4.2 - Added comparison function
+# Version: 4.3 - Removed flag (judgment)
 # Description: Calculate both Pearson and Polyserial I-T correlations
 # Note: Always calculates both methods for numerical comparison
-# Changes from v4.1:
-#   - Added create_it_comparison() function
+# Changes from v4.2:
+#   - Removed flag column from create_it_comparison()
 # ===================================================
 
 library(psych)
@@ -158,7 +158,6 @@ create_it_comparison <- function(total_results, subscale_results, subscale_confi
   )
   
   comparison$diff <- comparison$subscale_corr - comparison$total_corr
-  comparison$flag <- ifelse(comparison$diff < 0, "*", "")
   
   return(comparison)
 }

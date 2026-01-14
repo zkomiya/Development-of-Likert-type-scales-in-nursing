@@ -1,9 +1,10 @@
 # ===================================================
 # Item-Total Correlation Display (View Layer)
-# Version: 5.1 - Added comparison display function
+# Version: 5.2 - Removed judgment from comparison display
 # Description: Display functions for I-T correlation analysis with both methods
-# Changes from v5.0:
-#   - Added it_display_comparison() function
+# Changes from v5.1:
+#   - Removed Flag column and Legend from it_display_comparison()
+#   - Removed Summary count of atypical pattern
 # ===================================================
 
 # Display header
@@ -200,24 +201,13 @@ it_display_comparison <- function(comparison) {
     Total_Corr = sprintf("%.3f", comparison$total_corr),
     Subscale_Corr = sprintf("%.3f", comparison$subscale_corr),
     Diff = sprintf("%+.3f", comparison$diff),
-    Flag = comparison$flag,
     stringsAsFactors = FALSE
   )
   
   # Handle NA subscale
-  
   formatted$Subscale[is.na(comparison$subscale)] <- "(none)"
   formatted$Subscale_Corr[is.na(comparison$subscale_corr)] <- "   NA"
   formatted$Diff[is.na(comparison$diff)] <- "    NA"
   
   print(formatted, row.names = FALSE)
-  
-  cat("\nFlag Legend:\n")
-  cat("  * : Total > Subscale (item may cross-load on multiple factors)\n")
-  
-  # Summary
-  n_atypical <- sum(comparison$flag == "*", na.rm = TRUE)
-  n_total <- sum(!is.na(comparison$diff))
-  cat(sprintf("\nSummary: %d/%d items show atypical pattern (Total > Subscale)\n",
-              n_atypical, n_total))
 }
