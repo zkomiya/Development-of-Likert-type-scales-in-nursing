@@ -1,9 +1,7 @@
 # ===================================================
 # Item-Item Correlation Display (View Layer)
-# Version: 6.0 - Added evaluation display
+# Version: 9.0 - Removed Within-Between difference display
 # Description: Display functions for item-item correlation analysis
-# Changes from v5.0:
-#   - Added ii_display_evaluation()
 # ===================================================
 
 # Display header
@@ -77,83 +75,136 @@ ii_display_correlation_comparison <- function(cor_poly, cor_pear) {
   print(round(cor_diff, 3))
 }
 
-# Display evaluation results
-ii_display_evaluation <- function(miic_poly, miic_pear, cor_poly, cor_pear) {
+# Display correlation distribution
+ii_display_correlation_distribution <- function(dist_stats) {
+  cat("\n[1] Correlation Distribution\n")
+  cat(sprintf("  Polychoric correlations (%d pairs):\n", dist_stats$n_pairs))
+  cat(sprintf("    Mean:          %.2f\n", dist_stats$mean))
+  cat(sprintf("    Median:        %.2f\n", dist_stats$median))
+  cat(sprintf("    Range:         %.2f - %.2f\n", dist_stats$min, dist_stats$max))
+  cat("    Percentiles:\n")
+  cat(sprintf("      25th:        %.2f\n", dist_stats$q25))
+  cat(sprintf("      75th:        %.2f\n", dist_stats$q75))
+  cat(sprintf("      IQR:         %.2f\n", dist_stats$iqr))
+  cat("\n")
+  cat("  Pairs by strength:\n")
+  cat(sprintf("    r > 0.70:      %d pairs (%.1f%%)\n", 
+              dist_stats$strength_counts$very_high,
+              dist_stats$strength_counts$very_high / dist_stats$n_pairs * 100))
+  cat(sprintf("    0.50-0.70:     %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$high,
+              dist_stats$strength_counts$high / dist_stats$n_pairs * 100))
+  cat(sprintf("    0.30-0.50:     %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$moderate,
+              dist_stats$strength_counts$moderate / dist_stats$n_pairs * 100))
+  cat(sprintf("    < 0.30:        %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$low,
+              dist_stats$strength_counts$low / dist_stats$n_pairs * 100))
+}
+
+# Display subscale analysis
+ii_display_subscale_analysis <- function(subscale_stats) {
+  cat("\n[2] Subscale Correlations\n")
+  cat("  Within subscale (same factor):\n")
+  
+  for (sub_name in names(subscale_stats$within_stats)) {
+    stats <- subscale_stats$within_stats[[sub_name]]
+    
+    if (is.na(stats$mean)) {
+      cat(sprintf("    %-35s (insufficient items)\n", sub_name))
+    } else {
+      cat(sprintf("    %-35s Mean r = %.2f (range: %.2f-%.2f, n=%d pairs)\n",
+                  paste0(sub_name, ":"),
+                  stats$mean,
+                  stats$min,
+                  stats$max,
+                  stats$n_pairs))
+    }
+  }
+  
+  cat("\n")
+  cat(sprintf("  Overall within-subscale mean: %.2f\n",
+              subscale_stats$overall_within_mean))
+  cat("\n")
+  cat(sprintf("  Between subscales (different factors):\n"))
+  cat(sprintf("    Mean r = %.2f (range: %.2f-%.2f, n=%d pairs)\n",
+              subscale_stats$between_stats$mean,
+              subscale_stats$between_stats$min,
+              subscale_stats$between_stats$max,
+              subscale_stats$between_stats$n_pairs))
+}
+
+# Display cluster analysis
+ii_display_cluster_analysis <- function(clusters) {
+  cat(sprintf("\n[3] High Correlation Clusters (r > %.2f)\n", clusters$threshold))
+  
+  if (clusters$n_clusters == 0) {
+    cat("  No clusters found\n")
+    return()
+  }
+  
+  for (i in seq_along(clusters$clusters)) {
+    cluster <- clusters$clusters[[i]]
+    cat(sprintf("  Cluster %d: %s\n", i, paste(cluster$items, collapse = ", ")))
+    
+    # Display edges within cluster
+    for (j in 1:nrow(cluster$edges)) {
+      edge <- cluster$edges[j, ]
+      cat(sprintf("    %s-%s: %.2f\n", edge$item1, edge$item2, edge$correlation))
+    }
+    
+    # Calculate average within-cluster correlation
+    avg_r <- mean(cluster$edges$correlation)
+    cat(sprintf("    → Average within-cluster r = %.2f\n", avg_r))
+    cat("\n")
+  }
+}
+
+# Display overall assessment
+ii_display_overall_assessment <- function(miic_poly, miic_pear, dist_stats, 
+                                          subscale_stats, clusters) {
+  cat("\n[4] Summary Statistics\n")
+  
+  # MIIC Summary
+  cat("  MIIC:\n")
+  cat(sprintf("    Polychoric: %.3f\n", miic_poly$miic))
+  cat(sprintf("    Pearson:    %.3f\n", miic_pear$miic))
+  cat("\n")
+  
+  # Item Redundancy Summary
+  cat("  High correlations (r > 0.70):\n")
+  very_high_count <- dist_stats$strength_counts$very_high
+  very_high_pct <- very_high_count / dist_stats$n_pairs * 100
+  
+  cat(sprintf("    Count: %d pairs (%.1f%% of all pairs)\n",
+              very_high_count, very_high_pct))
+  
+  if (clusters$n_clusters > 0) {
+    cluster_names <- sapply(clusters$clusters, function(x) {
+      paste(x$items, collapse = "-")
+    })
+    cat(sprintf("    Clusters: %s\n", 
+                paste(cluster_names, collapse = ", ")))
+  }
+  cat("\n")
+  
+  # Subscale Summary
+  cat("  Subscale structure:\n")
+  cat(sprintf("    Within-subscale mean:  %.2f\n", subscale_stats$overall_within_mean))
+  cat(sprintf("    Between-subscale mean: %.2f\n", subscale_stats$between_stats$mean))
+}
+
+# Display evaluation results (extended version)
+ii_display_evaluation <- function(miic_poly, miic_pear, cor_poly, cor_pear,
+                                  dist_stats, subscale_stats, clusters) {
   cat("\n========================================\n")
   cat("II CORRELATION EVALUATION\n")
-  cat("========================================\n\n")
+  cat("========================================\n")
   
-  # MIIC evaluation
-  cat("MIIC:\n")
-  
-  # Polychoric MIIC
-  poly_range <- if (miic_poly$miic < 0.15) {
-    "< 0.15"
-  } else if (miic_poly$miic > 0.50) {
-    "> 0.50"
-  } else {
-    "0.15-0.50"
-  }
-  cat(sprintf("  Polychoric: %.3f [%s]\n", miic_poly$miic, poly_range))
-  
-  # Pearson MIIC
-  pear_range <- if (miic_pear$miic < 0.15) {
-    "< 0.15"
-  } else if (miic_pear$miic > 0.50) {
-    "> 0.50"
-  } else {
-    "0.15-0.50"
-  }
-  cat(sprintf("  Pearson:    %.3f [%s]\n", miic_pear$miic, pear_range))
-  
-  # Item pairs with r > 0.70 (Polychoric)
-  cat("\nItem Pairs with r > 0.70 (Polychoric):\n")
-  high_pairs <- which(cor_poly > 0.70 & upper.tri(cor_poly), arr.ind = TRUE)
-  if (nrow(high_pairs) > 0) {
-    for (i in seq_len(nrow(high_pairs))) {
-      row_idx <- high_pairs[i, 1]
-      col_idx <- high_pairs[i, 2]
-      cat(sprintf("  %s-%s: %.2f\n", 
-                  rownames(cor_poly)[row_idx],
-                  colnames(cor_poly)[col_idx],
-                  cor_poly[row_idx, col_idx]))
-    }
-  } else {
-    cat("  None\n")
-  }
-  
-  # Item pairs with r < 0.10 (Polychoric)
-  cat("\nItem Pairs with r < 0.10 (Polychoric):\n")
-  low_pairs <- which(cor_poly < 0.10 & upper.tri(cor_poly), arr.ind = TRUE)
-  if (nrow(low_pairs) > 0) {
-    for (i in seq_len(nrow(low_pairs))) {
-      row_idx <- low_pairs[i, 1]
-      col_idx <- low_pairs[i, 2]
-      cat(sprintf("  %s-%s: %.2f\n",
-                  rownames(cor_poly)[row_idx],
-                  colnames(cor_poly)[col_idx],
-                  cor_poly[row_idx, col_idx]))
-    }
-  } else {
-    cat("  None\n")
-  }
-  
-  # Pairs with large difference
-  cat("\nPairs with |Polychoric - Pearson| > 0.15:\n")
-  cor_diff <- abs(cor_poly - cor_pear)
-  diff_pairs <- which(cor_diff > 0.15 & upper.tri(cor_diff), arr.ind = TRUE)
-  if (nrow(diff_pairs) > 0) {
-    for (i in seq_len(nrow(diff_pairs))) {
-      row_idx <- diff_pairs[i, 1]
-      col_idx <- diff_pairs[i, 2]
-      cat(sprintf("  %s-%s: Poly=%.2f, Pear=%.2f, Diff=%.2f\n",
-                  rownames(cor_poly)[row_idx],
-                  colnames(cor_poly)[col_idx],
-                  cor_poly[row_idx, col_idx],
-                  cor_pear[row_idx, col_idx],
-                  cor_diff[row_idx, col_idx]))
-    }
-  } else {
-    cat("  None\n")
-  }
+  # Display all sections
+  ii_display_correlation_distribution(dist_stats)
+  ii_display_subscale_analysis(subscale_stats)
+  ii_display_cluster_analysis(clusters)
+  ii_display_overall_assessment(miic_poly, miic_pear, dist_stats, 
+                                subscale_stats, clusters)
 }

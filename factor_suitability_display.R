@@ -31,12 +31,7 @@ fs_display_results <- function(results) {
   
   cat(sprintf("%-12s %12.2f\n", "chi^2", results$bartlett$statistic))
   cat(sprintf("%-12s %12d\n", "df", results$bartlett$df))
-  
-  if (results$bartlett$p.value < 0.001) {
-    cat(sprintf("%-12s %12s\n", "p-value", "< 0.001"))
-  } else {
-    cat(sprintf("%-12s %12.6f\n", "p-value", results$bartlett$p.value))
-  }
+  cat(sprintf("%-12s %12.6e\n", "p-value", results$bartlett$p.value))
   
   # KMO Comparison
   cat("\n========================================\n")

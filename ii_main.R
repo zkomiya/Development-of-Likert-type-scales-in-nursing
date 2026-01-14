@@ -1,9 +1,7 @@
 # ===================================================
 # Item-Item Correlation Main (Controller Layer)
-# Version: 13.0 - Added show_ii_evaluation
+# Version: 14.0 - Enhanced show_ii_evaluation with full analysis
 # Description: Main controller for item-item correlation analysis
-# Changes from v12.0:
-#   - Added show_ii_evaluation() standalone function
 # ===================================================
 
 # Main item-item correlation analysis function
@@ -72,15 +70,19 @@ analyze_item_correlations <- function(data_obj) {
   invisible(results)
 }
 
-# Show II evaluation (standalone function)
+# Show II evaluation (standalone function with full analysis)
 show_ii_evaluation <- function(data_obj) {
   
   # Extract data from keyed structure
   data <- get_data(data_obj)
   
-  # Load configuration for parameters
+  # Load configuration
   config <- load_config()
   use <- config$analysis$correlation_analysis$use
+  subscale_def <- config$analysis$item_total_analysis
+  
+  # Remove enable_subscales flag from subscale definitions
+  subscale_def$enable_subscales <- NULL
   
   # Compute both correlation matrices
   cor_poly <- calculate_polychoric_correlation(data)
@@ -91,8 +93,18 @@ show_ii_evaluation <- function(data_obj) {
   miic_poly <- calculate_miic_from_correlation_matrix(cor_poly, n_obs)
   miic_pear <- calculate_miic_from_correlation_matrix(cor_pear, n_obs)
   
-  # Display evaluation
-  ii_display_evaluation(miic_poly, miic_pear, cor_poly, cor_pear)
+  # Calculate distribution statistics
+  dist_stats <- calculate_correlation_distribution(cor_poly)
+  
+  # Calculate subscale correlations
+  subscale_stats <- calculate_subscale_correlations(cor_poly, subscale_def)
+  
+  # Identify high correlation clusters
+  clusters <- identify_high_correlation_clusters(cor_poly, threshold = 0.70)
+  
+  # Display full evaluation
+  ii_display_evaluation(miic_poly, miic_pear, cor_poly, cor_pear,
+                        dist_stats, subscale_stats, clusters)
   
   invisible(NULL)
 }
