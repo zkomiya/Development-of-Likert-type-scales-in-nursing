@@ -1,11 +1,9 @@
 # ===================================================
 # EFA Calculator
-# Version: 6.0 - Single extraction method, no wrapper functions
+# Version: 6.1 - Fixed iterations field
 # Description: Perform EFA with psych package
-# Changes from v5.0:
-#   - Removed extract_factors_uls() and extract_factors_minres()
-#   - Added extract_factors() with fm parameter
-#   - perform_efa() now handles single extraction method
+# Changes from v6.0:
+#   - Fixed: rotation_result$iter -> nrow(rotation_result$Table)
 # ===================================================
 
 library(psych)
@@ -93,7 +91,7 @@ oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE,
     factor_correlation = factor_correlation,
     rotation_matrix = rotation_result$Th,
     converged = rotation_result$convergence,
-    iterations = rotation_result$iter,
+    iterations = nrow(rotation_result$Table),
     gamma = gamma,
     kaiser_normalized = normalize
   ))
