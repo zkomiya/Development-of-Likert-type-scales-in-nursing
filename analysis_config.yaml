@@ -1,5 +1,5 @@
 # Analysis Configuration
-# Version: 2.9 - Simplified data_keys structure
+# Version: 3.0 - Factor number settings added
 
 # ===== DATA SOURCE =====
 data_source:
@@ -46,6 +46,11 @@ item_total_analysis:
   awareness_of_illness_and_treatment_needs:
     name: "Awareness of Illness and Treatment Needs"
     items: ["Q01", "Q02", "Q03"]
+
+# ===== FACTOR NUMBER DETERMINATION =====
+factor_number:
+  parallel_analysis_iterations: 200
+  percentile: 95
 
 # ===== EFA SETTINGS =====
 efa_settings:

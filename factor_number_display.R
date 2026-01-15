@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Display
-# Version: 1.0
+# Version: 2.0 (Output order: PA -> MAP -> Kaiser)
 # Description: Display functions for factor number determination
 # ===================================================
 
@@ -17,7 +17,40 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   cat("  Variables:", n_vars, "\n")
   cat("  Observations:", n_obs, "\n\n")
   
-  # Kaiser's criterion
+  # Parallel Analysis (FIRST)
+  cat("Parallel Analysis (Factor Analysis)\n")
+  cat("------------------------------------\n")
+  cat("  Suggested:", results$pa$n_factors, "factors\n\n")
+  
+  pa_df <- results$pa$eigen_table
+  cat("  Comparison of Eigenvalues:\n")
+  for (i in 1:nrow(pa_df)) {
+    marker <- if (pa_df$Retain[i]) " *" else ""
+    cat(sprintf("    F%02d: Real=%6.3f | Simulated=%6.3f%s\n",
+                pa_df$Factor[i],
+                pa_df$Real[i],
+                pa_df$Simulated[i],
+                marker))
+  }
+  cat("\n")
+  
+  # MAP test (SECOND)
+  cat("MAP Test (Velicer's MAP)\n")
+  cat("------------------------\n")
+  cat("  Suggested:", results$map$n_factors, "factors\n\n")
+  
+  map_df <- results$map$map_table
+  cat("  MAP values:\n")
+  for (i in 1:nrow(map_df)) {
+    marker <- if (map_df$Factors[i] == results$map$n_factors) " *" else ""
+    cat(sprintf("    %d factors: %.6f%s\n", 
+                map_df$Factors[i], 
+                map_df$MAP[i],
+                marker))
+  }
+  cat("\n")
+  
+  # Kaiser's criterion (THIRD)
   cat("Kaiser's Criterion\n")
   cat("------------------\n")
   cat("  Eigenvalues > 1:", results$kaiser$n_factors, "\n\n")
@@ -35,34 +68,13 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   }
   cat("\n")
   
-  # Parallel Analysis
-  cat("Parallel Analysis (Factor Analysis)\n")
-  cat("------------------------------------\n")
-  cat("  Suggested:", results$pa$n_factors, "factors\n\n")
-  
-  # MAP test
-  cat("MAP Test (Velicer's MAP)\n")
-  cat("------------------------\n")
-  cat("  Suggested:", results$map$n_factors, "factors\n\n")
-  
-  map_df <- results$map$map_table
-  cat("  MAP values:\n")
-  for (i in 1:nrow(map_df)) {
-    marker <- if (map_df$Factors[i] == results$map$n_factors) " *" else ""
-    cat(sprintf("    %d factors: %.6f%s\n", 
-                map_df$Factors[i], 
-                map_df$MAP[i],
-                marker))
-  }
-  cat("\n")
-  
   # Summary
   cat("========================================\n")
   cat("SUMMARY\n")
   cat("========================================\n")
-  cat("Kaiser's criterion:      ", results$kaiser$n_factors, "factors\n")
   cat("Parallel Analysis (FA):  ", results$pa$n_factors, "factors\n")
   cat("MAP test:                ", results$map$n_factors, "factors\n")
+  cat("Kaiser's criterion:      ", results$kaiser$n_factors, "factors\n")
   cat("========================================\n")
   
   invisible(NULL)
@@ -80,7 +92,7 @@ show_factor_number_evaluation <- function(results) {
   map_n <- results$map$n_factors
   
   # Agreement check
-  all_values <- c(kaiser_n, pa_n, map_n)
+  all_values <- c(pa_n, map_n, kaiser_n)
   unique_values <- unique(all_values)
   
   cat("Method Agreement\n")
@@ -100,9 +112,9 @@ show_factor_number_evaluation <- function(results) {
   cat("\n")
   cat("Method Characteristics\n")
   cat("----------------------\n")
-  cat("  Kaiser: Tends to overextract\n")
   cat("  Parallel Analysis: Recommended for ordinal data\n")
   cat("  MAP: Minimizes partial correlations\n")
+  cat("  Kaiser: Tends to overextract\n")
   cat("========================================\n")
   
   invisible(NULL)

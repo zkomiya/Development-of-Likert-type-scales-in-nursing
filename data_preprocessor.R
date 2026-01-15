@@ -1,6 +1,6 @@
 # ===================================================
 # Data Preprocessor for Factor Analysis
-# Version: 2.0 (Revised - No auto-imputation)
+# Version: 2.1 (Verbose parameter support)
 # Description: EFA/CFA specific data preprocessing
 # ===================================================
 

@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Determination for EFA
-# Version: 6.1 (Calculator only - MAP fix)
+# Version: 7.0 (Progress display added)
 # Description: Factor number determination for Exploratory Factor Analysis
 # ===================================================
 
@@ -9,7 +9,8 @@ library(psych)
 determine_n_factors <- function(data,
                                 n_iterations,
                                 percentile,
-                                seed = NULL) {
+                                seed = NULL,
+                                verbose = TRUE) {
   
   if (!is.null(seed)) set.seed(seed)
   
@@ -17,9 +18,26 @@ determine_n_factors <- function(data,
   n_obs <- nrow(data)
   max_factors <- min(n_vars - 1, 10)
   
+  if (verbose) {
+    cat("\n========================================\n")
+    cat("FACTOR NUMBER DETERMINATION - PROGRESS\n")
+    cat("========================================\n")
+    cat("Variables:", n_vars, "\n")
+    cat("Observations:", n_obs, "\n")
+    cat("Iterations:", n_iterations, "\n\n")
+  }
+  
   # ========================================
   # Step 1: Parallel Analysis for FACTOR ANALYSIS
   # ========================================
+  if (verbose) {
+    cat("[1/3] Running Parallel Analysis...\n")
+    cat("      (This may take a while with", n_iterations, "iterations)\n")
+    flush.console()
+  }
+  
+  pa_start <- Sys.time()
+  
   pa_result <- fa.parallel(
     x = data,
     n.iter = n_iterations,
@@ -32,9 +50,24 @@ determine_n_factors <- function(data,
     show.legend = FALSE
   )
   
+  pa_end <- Sys.time()
+  
+  if (verbose) {
+    cat("      Completed in", round(difftime(pa_end, pa_start, units = "secs"), 1), "seconds\n\n")
+    flush.console()
+  }
+  
   # ========================================
   # Step 2: VSS for MAP test
   # ========================================
+  if (verbose) {
+    cat("[2/3] Running VSS (MAP test)...\n")
+    cat("      Testing", max_factors, "factor solutions\n")
+    flush.console()
+  }
+  
+  vss_start <- Sys.time()
+  
   vss_result <- VSS(
     x = data,
     n = max_factors,
@@ -43,11 +76,32 @@ determine_n_factors <- function(data,
     plot = FALSE
   )
   
+  vss_end <- Sys.time()
+  
+  if (verbose) {
+    cat("      Completed in", round(difftime(vss_end, vss_start, units = "secs"), 1), "seconds\n\n")
+    flush.console()
+  }
+  
   # ========================================
   # Step 3: Kaiser's Criterion
   # ========================================
+  if (verbose) {
+    cat("[3/3] Calculating Kaiser's criterion...\n")
+    flush.console()
+  }
+  
   eigenvalues <- pa_result$pc.values
   kaiser_n <- sum(eigenvalues > 1)
+  
+  if (verbose) {
+    cat("      Completed\n\n")
+    cat("========================================\n")
+    cat("All calculations finished!\n")
+    cat("Total time:", round(difftime(vss_end, pa_start, units = "secs"), 1), "seconds\n")
+    cat("========================================\n\n")
+    flush.console()
+  }
   
   # ========================================
   # Step 4: Format Results

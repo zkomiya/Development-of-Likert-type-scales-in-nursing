@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Main (Controller Layer)
-# Version: 2.0
+# Version: 4.0 (YAML config integration)
 # Description: Main controller for factor number determination
 # ===================================================
 
@@ -8,25 +8,49 @@ source("data_structure.R")
 source("data_preprocessor.R")
 source("factor_number_calculator.R")
 source("factor_number_display.R")
+source("config_loader.R")
 
 # Main function to determine number of factors
 determine_factors <- function(data_obj,
-                              n_iterations = 1000,
-                              percentile = 99,
-                              seed = NULL) {
+                              n_iterations = NULL,
+                              percentile = NULL,
+                              seed = NULL,
+                              verbose = TRUE) {
+  
+  # Load config
+  config <- load_config()
+  
+  # Get parameters from config (use argument if provided)
+  if (is.null(n_iterations)) {
+    n_iterations <- config$analysis$factor_number$parallel_analysis_iterations
+  }
+  
+  if (is.null(percentile)) {
+    percentile <- config$analysis$factor_number$percentile
+  }
+  
+  # Validate required parameters
+  if (is.null(n_iterations)) {
+    stop("parallel_analysis_iterations not found in analysis_config.yaml under factor_number section")
+  }
+  
+  if (is.null(percentile)) {
+    stop("percentile not found in analysis_config.yaml under factor_number section")
+  }
   
   # Extract data from keyed structure
   data <- get_data(data_obj)
   
   # Data preprocessing
-  data_fa <- preprocess_for_fa(data, method = "listwise", verbose = FALSE)
+  data_fa <- preprocess_for_fa(data, method = "listwise", verbose = verbose)
   
   # Run factor number determination
   results <- determine_n_factors(
     data_fa,
     n_iterations = n_iterations,
     percentile = percentile,
-    seed = seed
+    seed = seed,
+    verbose = verbose
   )
   
   # Display results
@@ -41,22 +65,45 @@ determine_factors <- function(data_obj,
 
 # Show evaluation separately
 show_fn_evaluation <- function(data_obj,
-                               n_iterations = 1000,
-                               percentile = 99,
-                               seed = NULL) {
+                               n_iterations = NULL,
+                               percentile = NULL,
+                               seed = NULL,
+                               verbose = TRUE) {
+  
+  # Load config
+  config <- load_config()
+  
+  # Get parameters from config (use argument if provided)
+  if (is.null(n_iterations)) {
+    n_iterations <- config$analysis$factor_number$parallel_analysis_iterations
+  }
+  
+  if (is.null(percentile)) {
+    percentile <- config$analysis$factor_number$percentile
+  }
+  
+  # Validate required parameters
+  if (is.null(n_iterations)) {
+    stop("parallel_analysis_iterations not found in analysis_config.yaml under factor_number section")
+  }
+  
+  if (is.null(percentile)) {
+    stop("percentile not found in analysis_config.yaml under factor_number section")
+  }
   
   # Extract data from keyed structure
   data <- get_data(data_obj)
   
   # Data preprocessing
-  data_fa <- preprocess_for_fa(data, method = "listwise", verbose = FALSE)
+  data_fa <- preprocess_for_fa(data, method = "listwise", verbose = verbose)
   
   # Run factor number determination
   results <- determine_n_factors(
     data_fa,
     n_iterations = n_iterations,
     percentile = percentile,
-    seed = seed
+    seed = seed,
+    verbose = verbose
   )
   
   # Display evaluation
