@@ -1,9 +1,11 @@
 # ===================================================
 # EFA Main Controller
-# Version: 13.0 - Single extraction method
-# Changes from v12.0:
-#   - extraction_methods (list) -> extraction_method (single value)
-#   - Simplified result structure
+# Version: 14.0 - Remove automatic display
+# Changes from v13.0:
+#   - Removed display_efa_comparison() call from analyze_efa()
+#   - analyze_efa() now only returns results without display
+#   - Use show_efa() or show_efa_evaluation() to view results
+#   - show_efa_evaluation() now displays all parameter sets with failure counts
 # ===================================================
 
 # Main EFA analysis function
@@ -186,7 +188,20 @@ show_efa <- function(results, gamma = 0) {
 }
 
 # Function to display EFA evaluation (all gamma values)
-show_efa_evaluation <- function(results) {
+show_efa_evaluation <- function(data_obj, n_factors) {
+  
+  if (missing(n_factors)) {
+    stop("n_factors is required. Run determine_factors() first to determine appropriate number.")
+  }
+  
+  cat("Running EFA analysis for evaluation...\n\n")
+  
+  # Run EFA analysis quietly
+  results <- analyze_efa(data_obj, n_factors = n_factors, verbose = FALSE)
+  
+  # Display evaluation
   source("efa_display.R")
   display_efa_evaluation(results)
+  
+  invisible(NULL)
 }

@@ -1,10 +1,10 @@
 # ===================================================
 # EFA Display
-# Version: 6.0 - Single extraction method structure
-# Description: Display EFA results only
-# Changes from v5.2:
-#   - Updated to single extraction method result structure
-#   - Removed method parameter from display functions
+# Version: 7.0 - Eligible parameter sets only
+# Description: Display EFA results only for parameter sets where ALL items meet criteria
+# Changes from v6.0:
+#   - Added check_all_items_eligible() function
+#   - Rewrote display_efa_evaluation() to show only eligible sets
 # ===================================================
 
 # Display pattern matrix
@@ -175,270 +175,212 @@ display_efa_comparison <- function(results) {
 }
 
 # ===================================================
-# Display EFA Evaluation (single gamma)
+# Evaluate items and return failure details
 # ===================================================
 
-display_efa_evaluation_single <- function(results, gamma, thresholds) {
-  
-  gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
-  poly_efa <- results$polychoric$efa
-  pattern <- poly_efa$rotations[[gamma_key]]$pattern
-  communalities <- poly_efa$extraction$communalities
-  factor_cor <- poly_efa$rotations[[gamma_key]]$factor_correlation
-  fa_object <- poly_efa$extraction$fa_object
+evaluate_items <- function(pattern, 
+                           primary_threshold = 0.4,
+                           cross_threshold = 0.3,
+                           diff_threshold = 0.1) {
   
   n_items <- nrow(pattern)
   n_factors <- ncol(pattern)
   
-  cat("\n----------------------------------------\n")
-  cat(sprintf("GAMMA: %.1f\n", gamma))
-  cat("----------------------------------------\n")
-  
-  # 1. Pattern Matrix
-  cat("\n1. PATTERN MATRIX\n")
-  cat(sprintf("   Threshold: primary >= %.2f (*), cross-loading >= %.2f (x)\n\n", 
-              thresholds$primary_loading, thresholds$cross_loading))
-  
-  cat(sprintf("   %-6s", "Item"))
-  for (f in 1:n_factors) {
-    cat(sprintf(" %7s", paste0("F", f)))
-  }
-  cat("  Status\n")
-  
-  cat("   ", paste(rep("-", 8 + n_factors * 8 + 20), collapse = ""), "\n", sep = "")
-  
-  problematic_items <- character(0)
+  failed_items <- list()
   
   for (i in 1:n_items) {
     item_name <- rownames(pattern)[i]
-    loadings <- pattern[i, ]
-    abs_loadings <- abs(loadings)
+    abs_loadings <- abs(pattern[i, ])
     sorted_idx <- order(abs_loadings, decreasing = TRUE)
+    
     primary <- abs_loadings[sorted_idx[1]]
-    primary_factor <- sorted_idx[1]
-    cross <- if (n_factors > 1) abs_loadings[sorted_idx[2]] else 0
+    second <- if (n_factors > 1) abs_loadings[sorted_idx[2]] else 0
     
-    has_primary <- primary >= thresholds$primary_loading
-    has_cross <- cross >= thresholds$cross_loading
+    # Check conditions
+    has_primary <- primary >= primary_threshold
+    is_cross_loading <- (second >= cross_threshold) && 
+      ((primary - second) <= diff_threshold)
     
-    cat(sprintf("   %-6s", item_name))
-    
-    for (f in 1:n_factors) {
-      val <- loadings[f]
-      abs_val <- abs(val)
-      
-      if (f == primary_factor && abs_val >= thresholds$primary_loading) {
-        marker <- "*"
-      } else if (abs_val >= thresholds$cross_loading) {
-        marker <- "x"
-      } else {
-        marker <- " "
-      }
-      
-      cat(sprintf(" %6.3f%s", val, marker))
+    # Record failure details
+    if (!has_primary) {
+      failed_items[[item_name]] <- list(
+        reason = "low_primary",
+        primary = primary,
+        second = second,
+        diff = primary - second
+      )
+    } else if (is_cross_loading) {
+      failed_items[[item_name]] <- list(
+        reason = "cross_loading",
+        primary = primary,
+        second = second,
+        diff = primary - second
+      )
     }
-    
-    if (!has_primary || has_cross) {
-      problematic_items <- c(problematic_items, item_name)
-      status <- if (!has_primary && has_cross) {
-        "[!] No primary + Cross"
-      } else if (!has_primary) {
-        "[!] No primary"
-      } else {
-        "[!] Cross-loading"
-      }
-      cat(sprintf("  %s", status))
-    }
-    cat("\n")
-  }
-  
-  n_simple <- n_items - length(problematic_items)
-  pct_simple <- round(100 * n_simple / n_items, 1)
-  cat(sprintf("\n   Simple structure: %d/%d items (%.1f%%)\n", n_simple, n_items, pct_simple))
-  cat(sprintf("   Legend: * = primary loading (>=%.2f), x = cross-loading (>=%.2f)\n",
-              thresholds$primary_loading, thresholds$cross_loading))
-  
-  # 2. Factor Correlations
-  cat("\n2. FACTOR CORRELATIONS\n")
-  cat(sprintf("   Threshold: < %.2f for discriminant validity\n\n", thresholds$factor_cor_max))
-  
-  high_cor_pairs <- list()
-  
-  if (n_factors > 1) {
-    cat("   ")
-    for (f in 1:n_factors) {
-      cat(sprintf(" %6s", paste0("F", f)))
-    }
-    cat("\n")
-    
-    for (i in 1:n_factors) {
-      cat(sprintf("   F%d", i))
-      for (j in 1:n_factors) {
-        if (j < i) {
-          r <- factor_cor[i, j]
-          marker <- if (abs(r) >= thresholds$factor_cor_max) "!" else " "
-          cat(sprintf(" %5.3f%s", r, marker))
-          if (abs(r) >= thresholds$factor_cor_max) {
-            high_cor_pairs[[length(high_cor_pairs) + 1]] <- c(j, i, r)
-          }
-        } else if (j == i) {
-          cat("  1.000 ")
-        } else {
-          cat("       ")
-        }
-      }
-      cat("\n")
-    }
-    
-    off_diag <- factor_cor[lower.tri(factor_cor)]
-    cat(sprintf("\n   Max |r|: %.3f, Mean |r|: %.3f\n", 
-                max(abs(off_diag)), mean(abs(off_diag))))
-    cat(sprintf("   Discriminant validity: %s\n", 
-                if (length(high_cor_pairs) == 0) "OK" else "CONCERN"))
-  } else {
-    cat("   Single factor solution - not applicable\n")
   }
   
   return(list(
-    gamma = gamma,
-    n_simple = n_simple,
-    pct_simple = pct_simple,
-    n_problematic = length(problematic_items),
-    problematic_items = problematic_items,
-    n_high_cor = length(high_cor_pairs)
+    n_failed = length(failed_items),
+    n_total = n_items,
+    pass_rate = (n_items - length(failed_items)) / n_items,
+    failed_items = failed_items
   ))
 }
 
 # ===================================================
-# Display EFA Evaluation (all gamma values)
+# Display EFA Evaluation (all parameter sets with details)
 # ===================================================
 
 display_efa_evaluation <- function(results) {
   
-  THRESH <- list(
-    primary_loading = 0.40,
-    cross_loading = 0.30,
-    communality_min = 0.30,
-    communality_good = 0.50,
-    rmsr_acceptable = 0.08,
-    tli_acceptable = 0.90,
-    rmsea_acceptable = 0.08,
-    factor_cor_max = 0.85
-  )
-  
   gamma_values <- results$config_used$gamma_values
-  poly_efa <- results$polychoric$efa
-  communalities <- poly_efa$extraction$communalities
-  fa_object <- poly_efa$extraction$fa_object
   extraction_method <- results$config_used$extraction_method
   
   cat("\n========================================\n")
-  cat("EFA EVALUATION\n")
+  cat("EFA EVALUATION SUMMARY\n")
   cat(sprintf("Extraction method: %s\n", extraction_method))
   cat("========================================\n")
+  cat("\nCriteria for ALL items:\n")
+  cat("  1. Primary loading >= 0.40\n")
+  cat("  2. NOT cross-loading (2nd < 0.30 OR diff > 0.10)\n")
+  cat("\n")
   
-  # Communalities
-  cat("\nCOMMUNALITIES\n")
-  cat("-------------\n")
-  cat(sprintf("Threshold: good >= %.2f, acceptable >= %.2f\n\n", 
-              THRESH$communality_good, THRESH$communality_min))
+  # Collect evaluation results for all sets
+  all_evaluations <- list()
   
-  low_comm_items <- character(0)
-  
-  for (i in seq_along(communalities)) {
-    item_name <- names(communalities)[i]
-    h2 <- communalities[i]
+  # Evaluate Polychoric solutions
+  for (gamma in gamma_values) {
+    gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
+    pattern <- results$polychoric$efa$rotations[[gamma_key]]$pattern
     
-    if (h2 < THRESH$communality_min) {
-      low_comm_items <- c(low_comm_items, item_name)
-      cat(sprintf("  [!] %s: %.3f (Low)\n", item_name, h2))
-    } else if (h2 < THRESH$communality_good) {
-      cat(sprintf("  [?] %s: %.3f (Acceptable)\n", item_name, h2))
-    }
+    eval_result <- evaluate_items(pattern)
+    
+    all_evaluations[[paste0("Polychoric_gamma_", gamma)]] <- list(
+      cor_type = "Polychoric",
+      gamma = gamma,
+      evaluation = eval_result,
+      results = results$polychoric
+    )
   }
   
-  cat(sprintf("\nMean: %.3f, Min: %.3f, Max: %.3f\n", 
-              mean(communalities), min(communalities), max(communalities)))
-  cat(sprintf("Low communality items: %d\n", length(low_comm_items)))
-  
-  # Model Fit
-  cat("\nMODEL FIT\n")
-  cat("---------\n")
-  
-  if (!is.null(fa_object)) {
-    rmsr <- if (!is.null(fa_object$rms)) fa_object$rms else NA
-    tli <- if (!is.null(fa_object$TLI)) fa_object$TLI else NA
-    rmsea <- if (!is.null(fa_object$RMSEA)) fa_object$RMSEA[1] else NA
+  # Evaluate Pearson solutions
+  for (gamma in gamma_values) {
+    gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
+    pattern <- results$pearson$efa$rotations[[gamma_key]]$pattern
     
-    if (!is.na(rmsr)) {
-      status <- if (rmsr <= THRESH$rmsr_acceptable) "OK" else "!"
-      cat(sprintf("  RMSR:  %.4f [%s] (threshold: < %.2f)\n", 
-                  rmsr, status, THRESH$rmsr_acceptable))
+    eval_result <- evaluate_items(pattern)
+    
+    all_evaluations[[paste0("Pearson_gamma_", gamma)]] <- list(
+      cor_type = "Pearson",
+      gamma = gamma,
+      evaluation = eval_result,
+      results = results$pearson
+    )
+  }
+  
+  # Display each parameter set
+  eligible_sets <- character(0)
+  
+  for (set_name in names(all_evaluations)) {
+    set_info <- all_evaluations[[set_name]]
+    eval <- set_info$evaluation
+    
+    cat("----------------------------------------\n")
+    cat(sprintf("PARAMETER SET: %s, gamma = %.1f\n", 
+                set_info$cor_type, set_info$gamma))
+    cat("----------------------------------------\n")
+    cat(sprintf("Items failing criteria: %d/%d (%.1f%% pass)\n", 
+                eval$n_failed, eval$n_total, eval$pass_rate * 100))
+    
+    if (eval$n_failed == 0) {
+      cat("\n*** ELIGIBLE SET ***\n\n")
+      eligible_sets <- c(eligible_sets, sprintf("%s, gamma = %.1f", 
+                                                set_info$cor_type, 
+                                                set_info$gamma))
+      
+      # Display full results for eligible sets
+      gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(set_info$gamma)))
+      rot_result <- set_info$results$efa$rotations[[gamma_key]]
+      ext_result <- set_info$results$efa$extraction
+      
+      cat("PATTERN MATRIX:\n")
+      print(round(rot_result$pattern, 3))
+      
+      cat("\nSTRUCTURE MATRIX:\n")
+      print(round(rot_result$structure, 3))
+      
+      cat("\nFACTOR CORRELATION:\n")
+      print(round(rot_result$factor_correlation, 3))
+      
+      cat("\nCOMMUNALITIES:\n")
+      comm_df <- data.frame(
+        Variable = names(ext_result$communalities),
+        Communality = round(ext_result$communalities, 3)
+      )
+      print(comm_df, row.names = FALSE)
+      
+      ss_loadings <- colSums(rot_result$pattern^2)
+      prop_var <- ss_loadings / nrow(rot_result$pattern)
+      cum_var <- cumsum(prop_var)
+      
+      var_df <- data.frame(
+        Factor = paste0("F", 1:length(ss_loadings)),
+        SS_Loadings = round(ss_loadings, 3),
+        Prop_Var = round(prop_var, 3),
+        Cum_Var = round(cum_var, 3)
+      )
+      
+      cat("\nVARIANCE EXPLAINED:\n")
+      print(var_df, row.names = FALSE)
+      
+    } else {
+      cat("\nFailed items:\n")
+      
+      for (item_name in names(eval$failed_items)) {
+        item_info <- eval$failed_items[[item_name]]
+        
+        if (item_info$reason == "low_primary") {
+          cat(sprintf("  %s: primary=%.2f (< 0.40)\n", 
+                      item_name, item_info$primary))
+        } else if (item_info$reason == "cross_loading") {
+          cat(sprintf("  %s: cross-loading (primary=%.2f, 2nd=%.2f, diff=%.2f)\n",
+                      item_name, item_info$primary, item_info$second, item_info$diff))
+        }
+      }
     }
     
-    if (!is.na(tli)) {
-      status <- if (tli >= THRESH$tli_acceptable) "OK" else "!"
-      cat(sprintf("  TLI:   %.4f [%s] (threshold: >= %.2f)\n", 
-                  tli, status, THRESH$tli_acceptable))
-    }
-    
-    if (!is.na(rmsea)) {
-      status <- if (rmsea <= THRESH$rmsea_acceptable) "OK" else "!"
-      cat(sprintf("  RMSEA: %.4f [%s] (threshold: < %.2f)\n", 
-                  rmsea, status, THRESH$rmsea_acceptable))
+    cat("\n")
+  }
+  
+  # Display summary
+  cat("========================================\n")
+  cat("SUMMARY\n")
+  cat("========================================\n")
+  
+  if (length(eligible_sets) > 0) {
+    cat(sprintf("Eligible sets (0 failed items): %d/%d\n", 
+                length(eligible_sets), length(all_evaluations)))
+    for (set_name in eligible_sets) {
+      cat(sprintf("  - %s\n", set_name))
     }
   } else {
-    cat("  Fit indices not available\n")
-  }
-  
-  # Rotation-specific evaluation
-  cat("\nROTATION-SPECIFIC EVALUATION\n")
-  cat("============================\n")
-  
-  gamma_summaries <- list()
-  
-  for (gamma in gamma_values) {
-    summary <- display_efa_evaluation_single(results, gamma, THRESH)
-    gamma_summaries[[as.character(gamma)]] <- summary
-  }
-  
-  # Comparison Summary
-  cat("\n========================================\n")
-  cat("COMPARISON ACROSS GAMMA VALUES\n")
-  cat("========================================\n\n")
-  
-  cat(sprintf("%-10s %15s %15s %15s\n", "Gamma", "Simple Structure", "Problematic", "High Cor"))
-  cat(paste(rep("-", 55), collapse = ""), "\n")
-  
-  for (gamma in gamma_values) {
-    s <- gamma_summaries[[as.character(gamma)]]
-    cat(sprintf("%-10.1f %12d/%d (%4.1f%%) %10d %15d\n", 
-                s$gamma, s$n_simple, s$n_simple + s$n_problematic, 
-                s$pct_simple, s$n_problematic, s$n_high_cor))
-  }
-  
-  # Overall Summary
-  cat("\nOVERALL SUMMARY\n")
-  cat("---------------\n")
-  
-  issues <- character(0)
-  
-  if (length(low_comm_items) > 0) {
-    issues <- c(issues, sprintf("Low communalities: %s", paste(low_comm_items, collapse = ", ")))
-  }
-  
-  any_high_cor <- any(sapply(gamma_summaries, function(x) x$n_high_cor > 0))
-  if (any_high_cor) {
-    issues <- c(issues, "High factor correlations detected in some rotations")
-  }
-  
-  if (length(issues) == 0) {
-    cat("  [OK] No major issues detected.\n")
-  } else {
-    for (issue in issues) {
-      cat(sprintf("  [!] %s\n", issue))
+    cat("Eligible sets (0 failed items): 0/", length(all_evaluations), "\n", sep = "")
+    
+    # Show best non-eligible sets (fewest failures)
+    failure_counts <- sapply(all_evaluations, function(x) x$evaluation$n_failed)
+    sorted_idx <- order(failure_counts)
+    
+    cat("\nBest non-eligible sets (fewest failed items):\n")
+    for (i in 1:min(3, length(sorted_idx))) {
+      idx <- sorted_idx[i]
+      set_info <- all_evaluations[[idx]]
+      cat(sprintf("  - %s, gamma = %.1f (%d failed items)\n",
+                  set_info$cor_type, set_info$gamma, 
+                  set_info$evaluation$n_failed))
     }
   }
   
-  cat("\n========================================\n")
+  cat("========================================\n")
+  
+  invisible(NULL)
 }
