@@ -61,6 +61,12 @@ efa_settings:
   gamma_values: [0, 0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
   kaiser_normalize: true
   max_iterations: 1000
+
+# ===== EFA EVALUATION SETTINGS =====
+efa_evaluation:
+  primary_threshold: 0.3
+  cross_threshold: 0.25
+  diff_threshold: 0.1
     
 # REHAB subscale definitions
 rehab_subscales:

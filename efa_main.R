@@ -1,11 +1,9 @@
 # ===================================================
 # EFA Main Controller
-# Version: 14.0 - Remove automatic display
-# Changes from v13.0:
-#   - Removed display_efa_comparison() call from analyze_efa()
-#   - analyze_efa() now only returns results without display
-#   - Use show_efa() or show_efa_evaluation() to view results
-#   - show_efa_evaluation() now displays all parameter sets with failure counts
+# Version: 15.0 - Configuration-based thresholds
+# Changes from v14.0:
+#   - show_efa_evaluation() now loads thresholds from config
+#   - Thresholds passed to display_efa_evaluation()
 # ===================================================
 
 # Main EFA analysis function
@@ -196,12 +194,23 @@ show_efa_evaluation <- function(data_obj, n_factors) {
   
   cat("Running EFA analysis for evaluation...\n\n")
   
+  # Load configuration for thresholds
+  config <- load_config()
+  efa_eval_config <- config$analysis$efa_evaluation
+  
+  primary_threshold <- efa_eval_config$primary_threshold
+  cross_threshold <- efa_eval_config$cross_threshold
+  diff_threshold <- efa_eval_config$diff_threshold
+  
   # Run EFA analysis quietly
   results <- analyze_efa(data_obj, n_factors = n_factors, verbose = FALSE)
   
-  # Display evaluation
+  # Display evaluation with configured thresholds
   source("efa_display.R")
-  display_efa_evaluation(results)
+  display_efa_evaluation(results,
+                         primary_threshold = primary_threshold,
+                         cross_threshold = cross_threshold,
+                         diff_threshold = diff_threshold)
   
   invisible(NULL)
 }

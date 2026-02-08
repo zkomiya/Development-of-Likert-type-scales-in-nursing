@@ -1,10 +1,11 @@
 # ===================================================
 # EFA Display
-# Version: 7.0 - Eligible parameter sets only
-# Description: Display EFA results only for parameter sets where ALL items meet criteria
-# Changes from v6.0:
-#   - Added check_all_items_eligible() function
-#   - Rewrote display_efa_evaluation() to show only eligible sets
+# Version: 8.0 - Configurable thresholds
+# Description: Display EFA results with configurable evaluation thresholds
+# Changes from v7.0:
+#   - Added threshold parameters to display_efa_evaluation()
+#   - Thresholds now passed from configuration file
+#   - Display uses configured threshold values
 # ===================================================
 
 # Display pattern matrix
@@ -231,7 +232,10 @@ evaluate_items <- function(pattern,
 # Display EFA Evaluation (all parameter sets with details)
 # ===================================================
 
-display_efa_evaluation <- function(results) {
+display_efa_evaluation <- function(results,
+                                   primary_threshold = 0.4,
+                                   cross_threshold = 0.3,
+                                   diff_threshold = 0.1) {
   
   gamma_values <- results$config_used$gamma_values
   extraction_method <- results$config_used$extraction_method
@@ -241,8 +245,9 @@ display_efa_evaluation <- function(results) {
   cat(sprintf("Extraction method: %s\n", extraction_method))
   cat("========================================\n")
   cat("\nCriteria for ALL items:\n")
-  cat("  1. Primary loading >= 0.40\n")
-  cat("  2. NOT cross-loading (2nd < 0.30 OR diff > 0.10)\n")
+  cat(sprintf("  1. Primary loading >= %.2f\n", primary_threshold))
+  cat(sprintf("  2. NOT cross-loading (2nd < %.2f OR diff > %.2f)\n", 
+              cross_threshold, diff_threshold))
   cat("\n")
   
   # Collect evaluation results for all sets
@@ -253,7 +258,10 @@ display_efa_evaluation <- function(results) {
     gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
     pattern <- results$polychoric$efa$rotations[[gamma_key]]$pattern
     
-    eval_result <- evaluate_items(pattern)
+    eval_result <- evaluate_items(pattern,
+                                  primary_threshold = primary_threshold,
+                                  cross_threshold = cross_threshold,
+                                  diff_threshold = diff_threshold)
     
     all_evaluations[[paste0("Polychoric_gamma_", gamma)]] <- list(
       cor_type = "Polychoric",
@@ -268,7 +276,10 @@ display_efa_evaluation <- function(results) {
     gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
     pattern <- results$pearson$efa$rotations[[gamma_key]]$pattern
     
-    eval_result <- evaluate_items(pattern)
+    eval_result <- evaluate_items(pattern,
+                                  primary_threshold = primary_threshold,
+                                  cross_threshold = cross_threshold,
+                                  diff_threshold = diff_threshold)
     
     all_evaluations[[paste0("Pearson_gamma_", gamma)]] <- list(
       cor_type = "Pearson",
@@ -340,8 +351,8 @@ display_efa_evaluation <- function(results) {
         item_info <- eval$failed_items[[item_name]]
         
         if (item_info$reason == "low_primary") {
-          cat(sprintf("  %s: primary=%.2f (< 0.40)\n", 
-                      item_name, item_info$primary))
+          cat(sprintf("  %s: primary=%.2f (< %.2f)\n", 
+                      item_name, item_info$primary, primary_threshold))
         } else if (item_info$reason == "cross_loading") {
           cat(sprintf("  %s: cross-loading (primary=%.2f, 2nd=%.2f, diff=%.2f)\n",
                       item_name, item_info$primary, item_info$second, item_info$diff))
