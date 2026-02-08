@@ -1,9 +1,10 @@
 # ===================================================
 # EFA Calculator
-# Version: 6.1 - Fixed iterations field
+# Version: 7.0 - Remove default gamma_values
 # Description: Perform EFA with psych package
-# Changes from v6.0:
-#   - Fixed: rotation_result$iter -> nrow(rotation_result$Table)
+# Changes from v6.1:
+#   - Removed default gamma_values from perform_efa()
+#   - All parameters must be passed explicitly
 # ===================================================
 
 library(psych)
@@ -101,11 +102,8 @@ oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE,
 # Main EFA Function (single extraction method)
 # ===================================================
 
-perform_efa <- function(cor_matrix, n_factors, fm,
-                        gamma_values = c(0, -0.2, -0.5, -0.8),
-                        kaiser_normalize = TRUE,
-                        max_iter = 1000,
-                        verbose = TRUE) {
+perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
+                        kaiser_normalize, max_iter, verbose = TRUE) {
   
   if (verbose) {
     cat("Extraction Method:", fm, "\n")

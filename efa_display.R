@@ -1,11 +1,10 @@
 # ===================================================
 # EFA Display
-# Version: 8.0 - Configurable thresholds
+# Version: 8.1 - Fix gamma display format
 # Description: Display EFA results with configurable evaluation thresholds
-# Changes from v7.0:
-#   - Added threshold parameters to display_efa_evaluation()
-#   - Thresholds now passed from configuration file
-#   - Display uses configured threshold values
+# Changes from v8.0:
+#   - Changed gamma display format from %.1f to %.2f
+#   - This prevents duplicate display of different gamma values
 # ===================================================
 
 # Display pattern matrix
@@ -111,7 +110,7 @@ display_gamma_comparison <- function(results, gamma) {
   gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
   
   cat("\n========================================\n")
-  cat(sprintf("GAMMA: %.1f\n", gamma))
+  cat(sprintf("GAMMA: %.2f\n", gamma))
   cat("========================================\n\n")
   
   poly_sol <- results$polychoric$efa$rotations[[gamma_key]]
@@ -297,7 +296,7 @@ display_efa_evaluation <- function(results,
     eval <- set_info$evaluation
     
     cat("----------------------------------------\n")
-    cat(sprintf("PARAMETER SET: %s, gamma = %.1f\n", 
+    cat(sprintf("PARAMETER SET: %s, gamma = %.2f\n", 
                 set_info$cor_type, set_info$gamma))
     cat("----------------------------------------\n")
     cat(sprintf("Items failing criteria: %d/%d (%.1f%% pass)\n", 
@@ -305,7 +304,7 @@ display_efa_evaluation <- function(results,
     
     if (eval$n_failed == 0) {
       cat("\n*** ELIGIBLE SET ***\n\n")
-      eligible_sets <- c(eligible_sets, sprintf("%s, gamma = %.1f", 
+      eligible_sets <- c(eligible_sets, sprintf("%s, gamma = %.2f", 
                                                 set_info$cor_type, 
                                                 set_info$gamma))
       
@@ -385,7 +384,7 @@ display_efa_evaluation <- function(results,
     for (i in 1:min(3, length(sorted_idx))) {
       idx <- sorted_idx[i]
       set_info <- all_evaluations[[idx]]
-      cat(sprintf("  - %s, gamma = %.1f (%d failed items)\n",
+      cat(sprintf("  - %s, gamma = %.2f (%d failed items)\n",
                   set_info$cor_type, set_info$gamma, 
                   set_info$evaluation$n_failed))
     }
