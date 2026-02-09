@@ -65,8 +65,8 @@ efa_settings:
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
-  primary_threshold: 0.4
-  cross_threshold: 0.3
+  primary_threshold: 0.3
+  cross_threshold: 0.25
   diff_threshold: 0.1
     
 # REHAB subscale definitions

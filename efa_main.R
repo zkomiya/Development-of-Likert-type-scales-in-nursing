@@ -1,298 +1,230 @@
 # ===================================================
-# EFA Calculator
-# Version: 8.0 - Factor sign adjustment added
-# Description: Perform EFA with psych package
-# Changes from v7.0:
-#   - Added flip_factors_by_absolute_sum() function
-#   - Added flip_factors parameter to oblimin_rotation()
-#   - Added flip_factors parameter to perform_efa()
+# EFA Main Controller
+# Version: 16.1 - show_full_results parameter added
+# Changes from v16.0:
+#   - Added show_full_results parameter to analyze_efa()
+#   - show_efa_evaluation() calls analyze_efa() with show_full_results=FALSE
+#   - This prevents display_efa_comparison() from running during evaluation
 # ===================================================
 
-library(psych)
-library(GPArotation)
-library(clue)
-
-# ===================================================
-# Factor Extraction (unified function)
-# ===================================================
-
-extract_factors <- function(R, n_factors, fm, max_iter = 1000) {
+# Main EFA analysis function
+analyze_efa <- function(data_obj,
+                        n_factors,
+                        verbose = TRUE,
+                        show_full_results = TRUE) {
   
-  fa_result <- psych::fa(
-    r = R,
-    nfactors = n_factors,
-    rotate = "none",
-    fm = fm,
-    max.iter = max_iter,
-    SMC = TRUE
-  )
+  source("data_structure.R")
+  data <- get_data(data_obj)
+  keys <- get_keys(data_obj)
   
-  communalities_values <- if (!is.null(fa_result$communality)) {
-    fa_result$communality
-  } else if (!is.null(fa_result$communalities)) {
-    fa_result$communalities
-  } else {
-    rowSums(as.matrix(fa_result$loadings)^2)
-  }
+  cat("\n========================================\n")
+  cat("EXPLORATORY FACTOR ANALYSIS\n")
+  cat("========================================\n")
   
-  return(list(
-    loadings = as.matrix(fa_result$loadings),
-    communalities = communalities_values,
-    eigenvalues = fa_result$e.values,
-    method = fm,
-    fa_object = fa_result
-  ))
-}
-
-# ===================================================
-# Factor Sign Adjustment
-# ===================================================
-
-flip_factors_by_absolute_sum <- function(pattern, 
-                                         structure = NULL, 
-                                         factor_correlation = NULL) {
+  # Load configuration
+  config <- load_config()
+  efa_config <- config$analysis$efa_settings
   
-  n_factors <- ncol(pattern)
-  
-  # Determine which factors to flip
-  for (f in 1:n_factors) {
-    sum_positive <- sum(pattern[pattern[, f] > 0, f])
-    sum_negative_abs <- abs(sum(pattern[pattern[, f] < 0, f]))
-    
-    # Flip if negative sum is larger
-    if (sum_negative_abs > sum_positive) {
-      # Flip pattern
-      pattern[, f] <- -pattern[, f]
-      
-      # Flip structure if provided
-      if (!is.null(structure)) {
-        structure[, f] <- -structure[, f]
-      }
-      
-      # Flip factor correlation if provided
-      if (!is.null(factor_correlation)) {
-        factor_correlation[f, ] <- -factor_correlation[f, ]
-        factor_correlation[, f] <- -factor_correlation[, f]
-        # Restore diagonal to 1
-        diag(factor_correlation) <- 1
-      }
-    }
-  }
-  
-  return(list(
-    pattern = pattern,
-    structure = structure,
-    factor_correlation = factor_correlation
-  ))
-}
-
-# ===================================================
-# Oblimin Rotation
-# ===================================================
-
-oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE, 
-                             max_iter = 1000, tol = 1e-5, flip_factors = FALSE) {
-  
-  p <- nrow(loadings)
-  m <- ncol(loadings)
-  
-  # Kaiser normalization
-  if (normalize) {
-    h <- sqrt(rowSums(loadings^2))
-    loadings_norm <- loadings / h
-  } else {
-    loadings_norm <- loadings
-    h <- rep(1, p)
-  }
-  
-  # Oblimin rotation
-  rotation_result <- GPArotation::oblimin(
-    loadings_norm,
-    Tmat = diag(m),
-    gam = gamma,
-    normalize = FALSE,
-    eps = tol,
-    maxit = max_iter
-  )
-  
-  # De-normalize
-  if (normalize) {
-    pattern_matrix <- rotation_result$loadings * h
-  } else {
-    pattern_matrix <- rotation_result$loadings
-  }
-  
-  # Calculate factor correlations
-  T_mat <- rotation_result$Th
-  factor_correlation <- t(T_mat) %*% T_mat
-  
-  # Calculate structure matrix
-  structure_matrix <- pattern_matrix %*% factor_correlation
-  
-  # Factor sign adjustment
-  if (flip_factors) {
-    flip_result <- flip_factors_by_absolute_sum(
-      pattern = pattern_matrix,
-      structure = structure_matrix,
-      factor_correlation = factor_correlation
-    )
-    
-    pattern_matrix <- flip_result$pattern
-    structure_matrix <- flip_result$structure
-    factor_correlation <- flip_result$factor_correlation
-  }
-  
-  return(list(
-    pattern = pattern_matrix,
-    structure = structure_matrix,
-    factor_correlation = factor_correlation,
-    rotation_matrix = rotation_result$Th,
-    converged = rotation_result$convergence,
-    iterations = nrow(rotation_result$Table),
-    gamma = gamma,
-    kaiser_normalized = normalize
-  ))
-}
-
-# ===================================================
-# Main EFA Function (single extraction method)
-# ===================================================
-
-perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
-                        kaiser_normalize, max_iter, flip_factors = TRUE,
-                        verbose = TRUE) {
+  # Read parameters from YAML
+  missing <- efa_config$missing
+  extraction_method <- efa_config$extraction_method
+  gamma_values <- efa_config$gamma_values
+  kaiser_normalize <- efa_config$kaiser_normalize
+  max_iterations <- efa_config$max_iterations
+  flip_factors <- efa_config$flip_factors
   
   if (verbose) {
-    cat("Extraction Method:", fm, "\n")
+    cat("\nUsing EFA settings from configuration:\n")
+    cat("  Missing data handling:", missing, "\n")
+    cat("  Extraction method:", extraction_method, "\n")
+    cat("  Gamma values:", paste(gamma_values, collapse = ", "), "\n")
+    cat("  Kaiser normalization:", kaiser_normalize, "\n")
+    cat("  Max iterations:", max_iterations, "\n")
+    cat("  Factor sign adjustment:", flip_factors, "\n")
+    cat("  Correlation methods: Polychoric AND Pearson\n")
   }
   
-  # Extract factors
-  extraction_result <- extract_factors(cor_matrix, n_factors, fm, max_iter)
+  # Validate n_factors
+  if (missing(n_factors)) {
+    stop("n_factors is required. Run determine_n_factors() first to determine appropriate number.")
+  }
+  
+  if (!is.numeric(n_factors) || n_factors < 1) {
+    stop("n_factors must be a positive integer")
+  }
+  
+  # Validate missing parameter
+  if (!missing %in% c("listwise", "pairwise")) {
+    stop("missing must be 'listwise' or 'pairwise'")
+  }
+  
+  # Step 1: Data Preprocessing
+  cat("\nStep 1: Data Preprocessing\n")
+  cat("----------------------------\n")
+  
+  source("data_preprocessor.R")
+  data_fa <- preprocess_for_fa(data, method = missing, verbose = verbose)
+  
+  if (n_factors > ncol(data_fa)) {
+    stop("n_factors (", n_factors, ") cannot exceed number of variables (", ncol(data_fa), ")")
+  }
+  
+  cat("Number of factors to extract:", n_factors, "\n")
+  
+  # Step 2: Compute correlation matrices
+  cat("\nStep 2: Computing correlation matrices\n")
+  cat("------------------------------------------\n")
+  cat("  Computing Polychoric correlation...\n")
+  
+  source("efa_calculator.R")
+  cor_poly <- calculate_correlation_for_efa(data_fa, "polychoric", missing)
+  
+  cat("  Computing Pearson correlation...\n")
+  cor_pear <- calculate_correlation_for_efa(data_fa, "pearson", missing)
   
   if (verbose) {
-    cat("Extraction completed\n")
+    cat("  Polychoric: ", nrow(cor_poly), "x", ncol(cor_poly), "\n")
+    cat("  Pearson: ", nrow(cor_pear), "x", ncol(cor_pear), "\n")
   }
   
-  # Store results
-  results <- list(
-    extraction = extraction_result,
-    rotations = list()
-  )
+  # Step 3: EFA with Polychoric correlation
+  cat("\nStep 3: Factor Extraction and Rotation (Polychoric)\n")
+  cat("----------------------------------------\n")
+  cat("Extracting", n_factors, "factors...\n")
   
-  # Perform rotation for each gamma value
-  for (gamma in gamma_values) {
-    
-    if (verbose) {
-      cat("  Oblimin rotation - gamma:", gamma, "\n")
-    }
-    
-    rotation_result <- oblimin_rotation(
-      extraction_result$loadings,
-      gamma = gamma,
-      normalize = kaiser_normalize,
-      max_iter = max_iter,
-      flip_factors = flip_factors
-    )
-    
-    if (verbose && rotation_result$converged) {
-      cat("    Rotation completed (iterations:", rotation_result$iterations, ")\n")
-    } else if (verbose) {
-      cat("    Rotation did not converge\n")
-    }
-    
-    # Store rotation results
-    gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
-    results$rotations[[gamma_key]] <- rotation_result
-  }
-  
-  # Add metadata
-  results$metadata <- list(
+  efa_poly <- perform_efa(
+    cor_matrix = cor_poly,
     n_factors = n_factors,
-    extraction_method = fm,
+    fm = extraction_method,
     gamma_values = gamma_values,
     kaiser_normalize = kaiser_normalize,
-    cor_matrix_dim = dim(cor_matrix)
+    max_iter = max_iterations,
+    flip_factors = flip_factors,
+    verbose = verbose
   )
   
-  return(results)
-}
-
-# ===================================================
-# Calculate correlation matrix for EFA
-# ===================================================
-
-calculate_correlation_for_efa <- function(data, method = "polychoric", missing_mode = "listwise") {
+  # Step 4: EFA with Pearson correlation
+  cat("\nStep 4: Factor Extraction and Rotation (Pearson)\n")
+  cat("----------------------------------------\n")
+  cat("Extracting", n_factors, "factors...\n")
   
-  if (method == "polychoric") {
-    poly_result <- psych::polychoric(data, global = FALSE)
-    cor_matrix <- poly_result$rho
+  efa_pear <- perform_efa(
+    cor_matrix = cor_pear,
+    n_factors = n_factors,
+    fm = extraction_method,
+    gamma_values = gamma_values,
+    kaiser_normalize = kaiser_normalize,
+    max_iter = max_iterations,
+    flip_factors = flip_factors,
+    verbose = verbose
+  )
+  
+  # Step 5: Align Pearson solution to Polychoric
+  cat("\nStep 5: Aligning Pearson solution to Polychoric\n")
+  cat("------------------------------------------------\n")
+  
+  efa_pear_aligned <- efa_pear
+  
+  for (gamma in gamma_values) {
+    gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
     
-  } else if (method == "pearson") {
-    use_arg <- if (missing_mode == "pairwise") "pairwise.complete.obs" else "complete.obs"
-    cor_matrix <- cor(data, use = use_arg, method = "pearson")
+    poly_pattern <- efa_poly$rotations[[gamma_key]]$pattern
+    pear_pattern <- efa_pear$rotations[[gamma_key]]$pattern
     
+    alignment_result <- align_factors(poly_pattern, pear_pattern)
+    factor_mapping <- alignment_result$factor_mapping
+    
+    efa_pear_aligned$rotations[[gamma_key]] <- 
+      align_efa_solution(
+        efa_poly$rotations[[gamma_key]],
+        efa_pear$rotations[[gamma_key]],
+        factor_mapping
+      )
+  }
+  
+  cat("  Alignment completed\n")
+  
+  # Step 6: Results integration
+  results <- list(
+    polychoric = list(
+      correlation_matrix = cor_poly,
+      efa = efa_poly
+    ),
+    pearson = list(
+      correlation_matrix = cor_pear,
+      efa = efa_pear_aligned
+    ),
+    data = data_fa,
+    n_factors = n_factors,
+    config_used = list(
+      missing = missing,
+      extraction_method = extraction_method,
+      gamma_values = gamma_values,
+      kaiser_normalize = kaiser_normalize,
+      max_iterations = max_iterations,
+      flip_factors = flip_factors
+    )
+  )
+  
+  # Step 7: Display Results
+  cat("\nStep 6: Results\n")
+  cat("----------------\n")
+  
+  if (show_full_results) {
+    source("efa_display.R")
+    display_efa_comparison(results)
   } else {
-    stop("method must be 'polychoric' or 'pearson'")
+    cat("Full results display skipped (show_full_results = FALSE)\n")
   }
   
-  # Check positive definiteness
-  eigenvalues <- eigen(cor_matrix, symmetric = TRUE, only.values = TRUE)$values
+  # Return results
+  cat("\n========================================\n")
+  cat("EFA ANALYSIS COMPLETE\n")
+  cat("Configuration used:\n")
+  cat("  Missing data:", missing, "\n")
+  cat("  Extraction method:", extraction_method, "\n")
+  cat("  Kaiser normalization:", kaiser_normalize, "\n")
+  cat("  Correlation methods: Polychoric AND Pearson (aligned)\n")
+  cat("========================================\n")
   
-  if (any(!is.finite(eigenvalues)) || min(eigenvalues) <= 0) {
-    cor_matrix <- psych::cor.smooth(cor_matrix)
-  }
-  
-  return(cor_matrix)
+  invisible(results)
 }
 
-# ===================================================
-# Factor Alignment Functions
-# ===================================================
-
-align_factors <- function(pattern1, pattern2) {
-  
-  congruence_matrix <- psych::factor.congruence(pattern1, pattern2)
-  abs_congruence <- abs(congruence_matrix)
-  optimal_match <- clue::solve_LSAP(abs_congruence, maximum = TRUE)
-  
-  pattern2_aligned <- pattern2[, optimal_match]
-  
-  for (i in 1:ncol(pattern1)) {
-    if (sum(pattern1[, i] * pattern2_aligned[, i]) < 0) {
-      pattern2_aligned[, i] <- -pattern2_aligned[, i]
-    }
-  }
-  
-  return(list(
-    pattern_aligned = pattern2_aligned,
-    factor_mapping = as.vector(optimal_match)
-  ))
+# Function to display specific results
+show_efa <- function(results, gamma = 0) {
+  source("efa_display.R")
+  display_specific_result(results, gamma)
 }
 
-align_efa_solution <- function(solution1, solution2, factor_mapping) {
+# Function to display EFA evaluation (all gamma values)
+show_efa_evaluation <- function(data_obj, n_factors) {
   
-  aligned <- solution2
-  
-  # Align pattern matrix
-  aligned$pattern <- solution2$pattern[, factor_mapping]
-  
-  for (i in 1:ncol(solution1$pattern)) {
-    if (sum(solution1$pattern[, i] * aligned$pattern[, i]) < 0) {
-      aligned$pattern[, i] <- -aligned$pattern[, i]
-    }
+  if (missing(n_factors)) {
+    stop("n_factors is required. Run determine_factors() first to determine appropriate number.")
   }
   
-  # Align structure matrix
-  aligned$structure <- solution2$structure[, factor_mapping]
+  cat("Running EFA analysis for evaluation...\n\n")
   
-  for (i in 1:ncol(solution1$structure)) {
-    if (sum(solution1$structure[, i] * aligned$structure[, i]) < 0) {
-      aligned$structure[, i] <- -aligned$structure[, i]
-    }
-  }
+  # Load configuration for thresholds
+  config <- load_config()
+  efa_eval_config <- config$analysis$efa_evaluation
   
-  # Align factor correlation matrix
-  aligned$factor_correlation <- solution2$factor_correlation[factor_mapping, factor_mapping]
+  primary_threshold <- efa_eval_config$primary_threshold
+  cross_threshold <- efa_eval_config$cross_threshold
+  diff_threshold <- efa_eval_config$diff_threshold
   
-  return(aligned)
+  # Run EFA analysis quietly
+  results <- analyze_efa(data_obj, 
+                         n_factors = n_factors, 
+                         verbose = FALSE,
+                         show_full_results = FALSE)
+  
+  # Display evaluation with configured thresholds
+  source("efa_display.R")
+  display_efa_evaluation(results,
+                         primary_threshold = primary_threshold,
+                         cross_threshold = cross_threshold,
+                         diff_threshold = diff_threshold)
+  
+  invisible(NULL)
 }
