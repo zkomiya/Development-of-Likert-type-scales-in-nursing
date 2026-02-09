@@ -1,10 +1,11 @@
 # ===================================================
 # EFA Calculator
-# Version: 7.0 - Remove default gamma_values
+# Version: 8.0 - Factor sign adjustment added
 # Description: Perform EFA with psych package
-# Changes from v6.1:
-#   - Removed default gamma_values from perform_efa()
-#   - All parameters must be passed explicitly
+# Changes from v7.0:
+#   - Added flip_factors_by_absolute_sum() function
+#   - Added flip_factors parameter to oblimin_rotation()
+#   - Added flip_factors parameter to perform_efa()
 # ===================================================
 
 library(psych)
@@ -44,11 +45,53 @@ extract_factors <- function(R, n_factors, fm, max_iter = 1000) {
 }
 
 # ===================================================
+# Factor Sign Adjustment
+# ===================================================
+
+flip_factors_by_absolute_sum <- function(pattern, 
+                                         structure = NULL, 
+                                         factor_correlation = NULL) {
+  
+  n_factors <- ncol(pattern)
+  
+  # Determine which factors to flip
+  for (f in 1:n_factors) {
+    sum_positive <- sum(pattern[pattern[, f] > 0, f])
+    sum_negative_abs <- abs(sum(pattern[pattern[, f] < 0, f]))
+    
+    # Flip if negative sum is larger
+    if (sum_negative_abs > sum_positive) {
+      # Flip pattern
+      pattern[, f] <- -pattern[, f]
+      
+      # Flip structure if provided
+      if (!is.null(structure)) {
+        structure[, f] <- -structure[, f]
+      }
+      
+      # Flip factor correlation if provided
+      if (!is.null(factor_correlation)) {
+        factor_correlation[f, ] <- -factor_correlation[f, ]
+        factor_correlation[, f] <- -factor_correlation[, f]
+        # Restore diagonal to 1
+        diag(factor_correlation) <- 1
+      }
+    }
+  }
+  
+  return(list(
+    pattern = pattern,
+    structure = structure,
+    factor_correlation = factor_correlation
+  ))
+}
+
+# ===================================================
 # Oblimin Rotation
 # ===================================================
 
 oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE, 
-                             max_iter = 1000, tol = 1e-5) {
+                             max_iter = 1000, tol = 1e-5, flip_factors = FALSE) {
   
   p <- nrow(loadings)
   m <- ncol(loadings)
@@ -86,6 +129,19 @@ oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE,
   # Calculate structure matrix
   structure_matrix <- pattern_matrix %*% factor_correlation
   
+  # Factor sign adjustment
+  if (flip_factors) {
+    flip_result <- flip_factors_by_absolute_sum(
+      pattern = pattern_matrix,
+      structure = structure_matrix,
+      factor_correlation = factor_correlation
+    )
+    
+    pattern_matrix <- flip_result$pattern
+    structure_matrix <- flip_result$structure
+    factor_correlation <- flip_result$factor_correlation
+  }
+  
   return(list(
     pattern = pattern_matrix,
     structure = structure_matrix,
@@ -103,7 +159,8 @@ oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE,
 # ===================================================
 
 perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
-                        kaiser_normalize, max_iter, verbose = TRUE) {
+                        kaiser_normalize, max_iter, flip_factors = TRUE,
+                        verbose = TRUE) {
   
   if (verbose) {
     cat("Extraction Method:", fm, "\n")
@@ -133,7 +190,8 @@ perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
       extraction_result$loadings,
       gamma = gamma,
       normalize = kaiser_normalize,
-      max_iter = max_iter
+      max_iter = max_iter,
+      flip_factors = flip_factors
     )
     
     if (verbose && rotation_result$converged) {
