@@ -1,10 +1,10 @@
 # ===================================================
 # EFA Main Controller
-# Version: 16.1 - show_full_results parameter added
-# Changes from v16.0:
-#   - Added show_full_results parameter to analyze_efa()
-#   - show_efa_evaluation() calls analyze_efa() with show_full_results=FALSE
-#   - This prevents display_efa_comparison() from running during evaluation
+# Version: 17.0 - Promax rotation support added
+# Changes from v16.1:
+#   - Added promax_kappa_values reading from config
+#   - Added promax alignment step for Pearson solution
+#   - Added promax_kappa_values to config_used in results
 # ===================================================
 
 # Main EFA analysis function
@@ -32,12 +32,16 @@ analyze_efa <- function(data_obj,
   kaiser_normalize <- efa_config$kaiser_normalize
   max_iterations <- efa_config$max_iterations
   flip_factors <- efa_config$flip_factors
+  promax_kappa_values <- efa_config$promax_kappa_values
   
   if (verbose) {
     cat("\nUsing EFA settings from configuration:\n")
     cat("  Missing data handling:", missing, "\n")
     cat("  Extraction method:", extraction_method, "\n")
     cat("  Gamma values:", paste(gamma_values, collapse = ", "), "\n")
+    if (!is.null(promax_kappa_values)) {
+      cat("  Promax kappa values:", paste(promax_kappa_values, collapse = ", "), "\n")
+    }
     cat("  Kaiser normalization:", kaiser_normalize, "\n")
     cat("  Max iterations:", max_iterations, "\n")
     cat("  Factor sign adjustment:", flip_factors, "\n")
@@ -100,6 +104,7 @@ analyze_efa <- function(data_obj,
     kaiser_normalize = kaiser_normalize,
     max_iter = max_iterations,
     flip_factors = flip_factors,
+    promax_kappa_values = promax_kappa_values,
     verbose = verbose
   )
   
@@ -116,6 +121,7 @@ analyze_efa <- function(data_obj,
     kaiser_normalize = kaiser_normalize,
     max_iter = max_iterations,
     flip_factors = flip_factors,
+    promax_kappa_values = promax_kappa_values,
     verbose = verbose
   )
   
@@ -125,6 +131,7 @@ analyze_efa <- function(data_obj,
   
   efa_pear_aligned <- efa_pear
   
+  # Align oblimin rotations
   for (gamma in gamma_values) {
     gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
     
@@ -142,7 +149,29 @@ analyze_efa <- function(data_obj,
       )
   }
   
-  cat("  Alignment completed\n")
+  cat("  Oblimin alignment completed\n")
+  
+  # Align promax rotations
+  if (!is.null(promax_kappa_values)) {
+    for (kappa in promax_kappa_values) {
+      kappa_key <- paste0("kappa_", kappa)
+      
+      poly_pattern <- efa_poly$rotations_promax[[kappa_key]]$pattern
+      pear_pattern <- efa_pear$rotations_promax[[kappa_key]]$pattern
+      
+      alignment_result <- align_factors(poly_pattern, pear_pattern)
+      factor_mapping <- alignment_result$factor_mapping
+      
+      efa_pear_aligned$rotations_promax[[kappa_key]] <- 
+        align_efa_solution(
+          efa_poly$rotations_promax[[kappa_key]],
+          efa_pear$rotations_promax[[kappa_key]],
+          factor_mapping
+        )
+    }
+    
+    cat("  Promax alignment completed\n")
+  }
   
   # Step 6: Results integration
   results <- list(
@@ -160,6 +189,7 @@ analyze_efa <- function(data_obj,
       missing = missing,
       extraction_method = extraction_method,
       gamma_values = gamma_values,
+      promax_kappa_values = promax_kappa_values,
       kaiser_normalize = kaiser_normalize,
       max_iterations = max_iterations,
       flip_factors = flip_factors
@@ -184,6 +214,10 @@ analyze_efa <- function(data_obj,
   cat("  Missing data:", missing, "\n")
   cat("  Extraction method:", extraction_method, "\n")
   cat("  Kaiser normalization:", kaiser_normalize, "\n")
+  cat("  Rotation: Oblimin (gamma:", paste(gamma_values, collapse = ", "), ")\n")
+  if (!is.null(promax_kappa_values)) {
+    cat("           Promax (kappa:", paste(promax_kappa_values, collapse = ", "), ")\n")
+  }
   cat("  Correlation methods: Polychoric AND Pearson (aligned)\n")
   cat("========================================\n")
   

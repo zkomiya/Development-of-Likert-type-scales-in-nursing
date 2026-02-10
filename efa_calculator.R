@@ -1,11 +1,9 @@
 # ===================================================
 # EFA Calculator
-# Version: 8.0 - Factor sign adjustment added
+# Version: 9.0 - Promax rotation added
 # Description: Perform EFA with psych package
-# Changes from v7.0:
-#   - Added flip_factors_by_absolute_sum() function
-#   - Added flip_factors parameter to oblimin_rotation()
-#   - Added flip_factors parameter to perform_efa()
+# Changes from v8.0:
+#   - Added promax_rotation() function using stats::promax()
 # ===================================================
 
 library(psych)
@@ -155,11 +153,66 @@ oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE,
 }
 
 # ===================================================
+# Promax Rotation
+# ===================================================
+
+promax_rotation <- function(loadings, kappa = 4, flip_factors = FALSE) {
+  
+  # stats::promax performs varimax first, then power transformation
+  promax_result <- stats::promax(loadings, m = kappa)
+  
+  # Extract pattern matrix (promax$loadings)
+  pattern_matrix <- as.matrix(promax_result$loadings)
+  
+  # Extract rotation matrix
+  rotation_matrix <- promax_result$rotmat
+  
+  # Calculate factor correlation matrix
+  # For promax: Phi = (T'T)^{-1} where T is the rotation matrix
+  factor_correlation <- solve(t(rotation_matrix) %*% rotation_matrix)
+  
+  # Standardize to correlation matrix (ensure diagonal = 1)
+  D_inv <- diag(1 / sqrt(diag(factor_correlation)))
+  factor_correlation <- D_inv %*% factor_correlation %*% D_inv
+  
+  # Preserve row/column names
+  rownames(factor_correlation) <- colnames(pattern_matrix)
+  colnames(factor_correlation) <- colnames(pattern_matrix)
+  
+  # Calculate structure matrix: S = P %*% Phi
+  structure_matrix <- pattern_matrix %*% factor_correlation
+  
+  # Factor sign adjustment
+  if (flip_factors) {
+    flip_result <- flip_factors_by_absolute_sum(
+      pattern = pattern_matrix,
+      structure = structure_matrix,
+      factor_correlation = factor_correlation
+    )
+    
+    pattern_matrix <- flip_result$pattern
+    structure_matrix <- flip_result$structure
+    factor_correlation <- flip_result$factor_correlation
+  }
+  
+  return(list(
+    pattern = pattern_matrix,
+    structure = structure_matrix,
+    factor_correlation = factor_correlation,
+    rotation_matrix = rotation_matrix,
+    converged = TRUE,
+    iterations = NA,
+    kappa = kappa
+  ))
+}
+
+# ===================================================
 # Main EFA Function (single extraction method)
 # ===================================================
 
 perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
                         kaiser_normalize, max_iter, flip_factors = TRUE,
+                        promax_kappa_values = NULL,
                         verbose = TRUE) {
   
   if (verbose) {
@@ -176,10 +229,11 @@ perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
   # Store results
   results <- list(
     extraction = extraction_result,
-    rotations = list()
+    rotations = list(),
+    rotations_promax = list()
   )
   
-  # Perform rotation for each gamma value
+  # Perform oblimin rotation for each gamma value
   for (gamma in gamma_values) {
     
     if (verbose) {
@@ -205,11 +259,36 @@ perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
     results$rotations[[gamma_key]] <- rotation_result
   }
   
+  # Perform promax rotation for each kappa value
+  if (!is.null(promax_kappa_values)) {
+    for (kappa in promax_kappa_values) {
+      
+      if (verbose) {
+        cat("  Promax rotation - kappa:", kappa, "\n")
+      }
+      
+      promax_result <- promax_rotation(
+        extraction_result$loadings,
+        kappa = kappa,
+        flip_factors = flip_factors
+      )
+      
+      if (verbose) {
+        cat("    Rotation completed\n")
+      }
+      
+      # Store promax results
+      kappa_key <- paste0("kappa_", kappa)
+      results$rotations_promax[[kappa_key]] <- promax_result
+    }
+  }
+  
   # Add metadata
   results$metadata <- list(
     n_factors = n_factors,
     extraction_method = fm,
     gamma_values = gamma_values,
+    promax_kappa_values = promax_kappa_values,
     kaiser_normalize = kaiser_normalize,
     cor_matrix_dim = dim(cor_matrix)
   )

@@ -62,6 +62,7 @@ efa_settings:
   kaiser_normalize: true
   max_iterations: 1000
   flip_factors: true
+  promax_kappa_values: [2, 3, 4]
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:

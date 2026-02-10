@@ -1,10 +1,11 @@
 # ===================================================
 # EFA Display
-# Version: 8.1 - Fix gamma display format
+# Version: 9.0 - Promax display and evaluation added
 # Description: Display EFA results with configurable evaluation thresholds
-# Changes from v8.0:
-#   - Changed gamma display format from %.1f to %.2f
-#   - This prevents duplicate display of different gamma values
+# Changes from v8.1:
+#   - Added display_promax_comparison() function
+#   - Added promax results to display_efa_comparison()
+#   - Added promax evaluation to display_efa_evaluation()
 # ===================================================
 
 # Display pattern matrix
@@ -150,6 +151,54 @@ display_gamma_comparison <- function(results, gamma) {
 }
 
 # ===================================================
+# Display single kappa comparison (Promax)
+# ===================================================
+
+display_kappa_comparison <- function(results, kappa) {
+  
+  kappa_key <- paste0("kappa_", kappa)
+  
+  cat("\n========================================\n")
+  cat(sprintf("PROMAX KAPPA: %d\n", kappa))
+  cat("========================================\n\n")
+  
+  poly_sol <- results$polychoric$efa$rotations_promax[[kappa_key]]
+  pear_sol <- results$pearson$efa$rotations_promax[[kappa_key]]
+  
+  cat("PATTERN MATRIX\n")
+  cat("--------------\n\n")
+  display_matrix_comparison(poly_sol$pattern, pear_sol$pattern)
+  
+  cat("\nSTRUCTURE MATRIX\n")
+  cat("----------------\n\n")
+  display_matrix_comparison(poly_sol$structure, pear_sol$structure)
+  
+  cat("\nFACTOR CORRELATION\n")
+  cat("------------------\n\n")
+  
+  cat("Polychoric:\n")
+  print(round(poly_sol$factor_correlation, 3))
+  
+  cat("\nPearson:\n")
+  print(round(pear_sol$factor_correlation, 3))
+  
+  cat("\nCOMMUNALITIES\n")
+  cat("-------------\n\n")
+  
+  poly_comm <- results$polychoric$efa$extraction$communalities
+  pear_comm <- results$pearson$efa$extraction$communalities
+  
+  comm_df <- data.frame(
+    Item = names(poly_comm),
+    Polychoric = sprintf("%.3f", poly_comm),
+    Pearson = sprintf("%.3f", pear_comm),
+    stringsAsFactors = FALSE
+  )
+  
+  print(comm_df, row.names = FALSE)
+}
+
+# ===================================================
 # Display EFA comparison (main function)
 # ===================================================
 
@@ -162,11 +211,24 @@ display_efa_comparison <- function(results) {
   cat("Number of factors:", results$n_factors, "\n")
   cat("Extraction method:", results$config_used$extraction_method, "\n")
   cat("Gamma values:", paste(results$config_used$gamma_values, collapse = ", "), "\n")
+  if (!is.null(results$config_used$promax_kappa_values)) {
+    cat("Promax kappa values:", paste(results$config_used$promax_kappa_values, collapse = ", "), "\n")
+  }
   cat("\nNote: Pearson solution aligned to Polychoric\n")
   cat("      (factor order and signs adjusted)\n")
   
+  # Display oblimin results
+  cat("\n\n### OBLIMIN ROTATION RESULTS ###\n")
   for (gamma in results$config_used$gamma_values) {
     display_gamma_comparison(results, gamma)
+  }
+  
+  # Display promax results
+  if (!is.null(results$config_used$promax_kappa_values)) {
+    cat("\n\n### PROMAX ROTATION RESULTS ###\n")
+    for (kappa in results$config_used$promax_kappa_values) {
+      display_kappa_comparison(results, kappa)
+    }
   }
   
   cat("\n========================================\n")
@@ -228,6 +290,78 @@ evaluate_items <- function(pattern,
 }
 
 # ===================================================
+# Display single evaluation set (helper function)
+# ===================================================
+
+display_evaluation_set <- function(set_info, eval, primary_threshold,
+                                   eligible_sets) {
+  
+  cat(sprintf("Items failing criteria: %d/%d (%.1f%% pass)\n", 
+              eval$n_failed, eval$n_total, eval$pass_rate * 100))
+  
+  if (eval$n_failed == 0) {
+    cat("\n*** ELIGIBLE SET ***\n\n")
+    
+    # Get rotation result based on type
+    if (set_info$rotation_type == "oblimin") {
+      gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(set_info$param_value)))
+      rot_result <- set_info$results$efa$rotations[[gamma_key]]
+    } else {
+      kappa_key <- paste0("kappa_", set_info$param_value)
+      rot_result <- set_info$results$efa$rotations_promax[[kappa_key]]
+    }
+    ext_result <- set_info$results$efa$extraction
+    
+    cat("PATTERN MATRIX:\n")
+    print(round(rot_result$pattern, 3))
+    
+    cat("\nSTRUCTURE MATRIX:\n")
+    print(round(rot_result$structure, 3))
+    
+    cat("\nFACTOR CORRELATION:\n")
+    print(round(rot_result$factor_correlation, 3))
+    
+    cat("\nCOMMUNALITIES:\n")
+    comm_df <- data.frame(
+      Variable = names(ext_result$communalities),
+      Communality = round(ext_result$communalities, 3)
+    )
+    print(comm_df, row.names = FALSE)
+    
+    ss_loadings <- colSums(rot_result$pattern^2)
+    prop_var <- ss_loadings / nrow(rot_result$pattern)
+    cum_var <- cumsum(prop_var)
+    
+    var_df <- data.frame(
+      Factor = paste0("F", 1:length(ss_loadings)),
+      SS_Loadings = round(ss_loadings, 3),
+      Prop_Var = round(prop_var, 3),
+      Cum_Var = round(cum_var, 3)
+    )
+    
+    cat("\nVARIANCE EXPLAINED:\n")
+    print(var_df, row.names = FALSE)
+    
+  } else {
+    cat("\nFailed items:\n")
+    
+    for (item_name in names(eval$failed_items)) {
+      item_info <- eval$failed_items[[item_name]]
+      
+      if (item_info$reason == "low_primary") {
+        cat(sprintf("  %s: primary=%.2f (< %.2f)\n", 
+                    item_name, item_info$primary, primary_threshold))
+      } else if (item_info$reason == "cross_loading") {
+        cat(sprintf("  %s: cross-loading (primary=%.2f, 2nd=%.2f, diff=%.2f)\n",
+                    item_name, item_info$primary, item_info$second, item_info$diff))
+      }
+    }
+  }
+  
+  cat("\n")
+}
+
+# ===================================================
 # Display EFA Evaluation (all parameter sets with details)
 # ===================================================
 
@@ -237,6 +371,7 @@ display_efa_evaluation <- function(results,
                                    diff_threshold = 0.1) {
   
   gamma_values <- results$config_used$gamma_values
+  promax_kappa_values <- results$config_used$promax_kappa_values
   extraction_method <- results$config_used$extraction_method
   
   cat("\n========================================\n")
@@ -252,7 +387,7 @@ display_efa_evaluation <- function(results,
   # Collect evaluation results for all sets
   all_evaluations <- list()
   
-  # Evaluate Polychoric solutions
+  # Evaluate Polychoric Oblimin solutions
   for (gamma in gamma_values) {
     gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
     pattern <- results$polychoric$efa$rotations[[gamma_key]]$pattern
@@ -262,15 +397,17 @@ display_efa_evaluation <- function(results,
                                   cross_threshold = cross_threshold,
                                   diff_threshold = diff_threshold)
     
-    all_evaluations[[paste0("Polychoric_gamma_", gamma)]] <- list(
+    all_evaluations[[paste0("Polychoric_Oblimin_gamma_", gamma)]] <- list(
       cor_type = "Polychoric",
-      gamma = gamma,
+      rotation_type = "oblimin",
+      param_name = "gamma",
+      param_value = gamma,
       evaluation = eval_result,
       results = results$polychoric
     )
   }
   
-  # Evaluate Pearson solutions
+  # Evaluate Pearson Oblimin solutions
   for (gamma in gamma_values) {
     gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
     pattern <- results$pearson$efa$rotations[[gamma_key]]$pattern
@@ -280,12 +417,56 @@ display_efa_evaluation <- function(results,
                                   cross_threshold = cross_threshold,
                                   diff_threshold = diff_threshold)
     
-    all_evaluations[[paste0("Pearson_gamma_", gamma)]] <- list(
+    all_evaluations[[paste0("Pearson_Oblimin_gamma_", gamma)]] <- list(
       cor_type = "Pearson",
-      gamma = gamma,
+      rotation_type = "oblimin",
+      param_name = "gamma",
+      param_value = gamma,
       evaluation = eval_result,
       results = results$pearson
     )
+  }
+  
+  # Evaluate Polychoric Promax solutions
+  if (!is.null(promax_kappa_values)) {
+    for (kappa in promax_kappa_values) {
+      kappa_key <- paste0("kappa_", kappa)
+      pattern <- results$polychoric$efa$rotations_promax[[kappa_key]]$pattern
+      
+      eval_result <- evaluate_items(pattern,
+                                    primary_threshold = primary_threshold,
+                                    cross_threshold = cross_threshold,
+                                    diff_threshold = diff_threshold)
+      
+      all_evaluations[[paste0("Polychoric_Promax_kappa_", kappa)]] <- list(
+        cor_type = "Polychoric",
+        rotation_type = "promax",
+        param_name = "kappa",
+        param_value = kappa,
+        evaluation = eval_result,
+        results = results$polychoric
+      )
+    }
+    
+    # Evaluate Pearson Promax solutions
+    for (kappa in promax_kappa_values) {
+      kappa_key <- paste0("kappa_", kappa)
+      pattern <- results$pearson$efa$rotations_promax[[kappa_key]]$pattern
+      
+      eval_result <- evaluate_items(pattern,
+                                    primary_threshold = primary_threshold,
+                                    cross_threshold = cross_threshold,
+                                    diff_threshold = diff_threshold)
+      
+      all_evaluations[[paste0("Pearson_Promax_kappa_", kappa)]] <- list(
+        cor_type = "Pearson",
+        rotation_type = "promax",
+        param_name = "kappa",
+        param_value = kappa,
+        evaluation = eval_result,
+        results = results$pearson
+      )
+    }
   }
   
   # Display each parameter set
@@ -296,70 +477,28 @@ display_efa_evaluation <- function(results,
     eval <- set_info$evaluation
     
     cat("----------------------------------------\n")
-    cat(sprintf("PARAMETER SET: %s, gamma = %.2f\n", 
-                set_info$cor_type, set_info$gamma))
+    if (set_info$rotation_type == "oblimin") {
+      cat(sprintf("PARAMETER SET: %s, Oblimin, gamma = %.2f\n", 
+                  set_info$cor_type, set_info$param_value))
+    } else {
+      cat(sprintf("PARAMETER SET: %s, Promax, kappa = %d\n", 
+                  set_info$cor_type, set_info$param_value))
+    }
     cat("----------------------------------------\n")
-    cat(sprintf("Items failing criteria: %d/%d (%.1f%% pass)\n", 
-                eval$n_failed, eval$n_total, eval$pass_rate * 100))
+    
+    display_evaluation_set(set_info, eval, primary_threshold, eligible_sets)
     
     if (eval$n_failed == 0) {
-      cat("\n*** ELIGIBLE SET ***\n\n")
-      eligible_sets <- c(eligible_sets, sprintf("%s, gamma = %.2f", 
-                                                set_info$cor_type, 
-                                                set_info$gamma))
-      
-      # Display full results for eligible sets
-      gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(set_info$gamma)))
-      rot_result <- set_info$results$efa$rotations[[gamma_key]]
-      ext_result <- set_info$results$efa$extraction
-      
-      cat("PATTERN MATRIX:\n")
-      print(round(rot_result$pattern, 3))
-      
-      cat("\nSTRUCTURE MATRIX:\n")
-      print(round(rot_result$structure, 3))
-      
-      cat("\nFACTOR CORRELATION:\n")
-      print(round(rot_result$factor_correlation, 3))
-      
-      cat("\nCOMMUNALITIES:\n")
-      comm_df <- data.frame(
-        Variable = names(ext_result$communalities),
-        Communality = round(ext_result$communalities, 3)
-      )
-      print(comm_df, row.names = FALSE)
-      
-      ss_loadings <- colSums(rot_result$pattern^2)
-      prop_var <- ss_loadings / nrow(rot_result$pattern)
-      cum_var <- cumsum(prop_var)
-      
-      var_df <- data.frame(
-        Factor = paste0("F", 1:length(ss_loadings)),
-        SS_Loadings = round(ss_loadings, 3),
-        Prop_Var = round(prop_var, 3),
-        Cum_Var = round(cum_var, 3)
-      )
-      
-      cat("\nVARIANCE EXPLAINED:\n")
-      print(var_df, row.names = FALSE)
-      
-    } else {
-      cat("\nFailed items:\n")
-      
-      for (item_name in names(eval$failed_items)) {
-        item_info <- eval$failed_items[[item_name]]
-        
-        if (item_info$reason == "low_primary") {
-          cat(sprintf("  %s: primary=%.2f (< %.2f)\n", 
-                      item_name, item_info$primary, primary_threshold))
-        } else if (item_info$reason == "cross_loading") {
-          cat(sprintf("  %s: cross-loading (primary=%.2f, 2nd=%.2f, diff=%.2f)\n",
-                      item_name, item_info$primary, item_info$second, item_info$diff))
-        }
+      if (set_info$rotation_type == "oblimin") {
+        eligible_sets <- c(eligible_sets, sprintf("%s, Oblimin, gamma = %.2f", 
+                                                  set_info$cor_type, 
+                                                  set_info$param_value))
+      } else {
+        eligible_sets <- c(eligible_sets, sprintf("%s, Promax, kappa = %d", 
+                                                  set_info$cor_type, 
+                                                  set_info$param_value))
       }
     }
-    
-    cat("\n")
   }
   
   # Display summary
@@ -381,12 +520,18 @@ display_efa_evaluation <- function(results,
     sorted_idx <- order(failure_counts)
     
     cat("\nBest non-eligible sets (fewest failed items):\n")
-    for (i in 1:min(3, length(sorted_idx))) {
+    for (i in 1:min(5, length(sorted_idx))) {
       idx <- sorted_idx[i]
       set_info <- all_evaluations[[idx]]
-      cat(sprintf("  - %s, gamma = %.2f (%d failed items)\n",
-                  set_info$cor_type, set_info$gamma, 
-                  set_info$evaluation$n_failed))
+      if (set_info$rotation_type == "oblimin") {
+        cat(sprintf("  - %s, Oblimin, gamma = %.2f (%d failed items)\n",
+                    set_info$cor_type, set_info$param_value, 
+                    set_info$evaluation$n_failed))
+      } else {
+        cat(sprintf("  - %s, Promax, kappa = %d (%d failed items)\n",
+                    set_info$cor_type, set_info$param_value, 
+                    set_info$evaluation$n_failed))
+      }
     }
   }
   
