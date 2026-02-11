@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_29    # "items_30", "items_28","items_29"
+  dataset: items_30    # "items_30", "items_28","items_29"
 
 # ===== GLOBAL SETTINGS =====
 global:
@@ -52,13 +52,13 @@ item_total_analysis:
   enable_subscales: true
   self-management_skills:
     name: "地域活動の自己管理"
-    items: ["Q04","Q05", "Q09", "Q12", "Q21", "Q22"]
+    items: ["Q04","Q05", "Q09", "Q20", "Q21", "Q22"]
   ability_to_stay_safe:
     name: "精神状態の安定性"
     items: ["Q10", "Q12", "Q14", "Q15", "Q16"]
   ability_to_express_ones_inner_self:
     name: "自分の意向や変化を周囲に表出する力"
-    items: ["Q07", "Q11", "Q13", "Q24"]
+    items: ["Q07", "Q11", "Q13", "Q24","Q25","Q30"]
   mental_stability:
     name: "病気と治療の必要性の理解"
     items: ["Q01", "Q02", "Q03"]
@@ -80,7 +80,7 @@ efa_settings:
   # Single extraction method (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
   extraction_method: "ml"
-  gamma_values: [0, 0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
+  gamma_values: [0, -1.0,-2.0,-3.0,-4.0,-5.0]
   kaiser_normalize: true
   max_iterations: 1000
   flip_factors: true
@@ -88,7 +88,7 @@ efa_settings:
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
-  primary_threshold: 0.3
+  primary_threshold: 0.35
   cross_threshold: 0.25
   diff_threshold: 0.1
     
