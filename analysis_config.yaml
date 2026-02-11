@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_28    # "items_30", "items_28"
+  dataset: items_29    # "items_30", "items_28","items_29"
 
 # ===== GLOBAL SETTINGS =====
 global:
@@ -28,6 +28,24 @@ correlation_analysis:
   # Note: Both Polychoric and Pearson correlations are calculated
   # MIIC calculation uses psych::alpha() for both methods
   # Item-Total correlation always uses Pearson (via psych::alpha)
+
+#item_total_analysis:
+#  enable_subscales: true
+#  self-management_skills:
+#    name: "Self-management Skills"
+#    items: ["Q04","Q05", "Q06", "Q09", "Q12", "Q21", "Q22", "Q23"]
+#  ability_to_stay_safe:
+#    name: "Ability to Stay Safe"
+#    items: ["Q08", "Q18", "Q19", "Q20", "Q24", "Q28"]
+#  ability_to_express_ones_inner_self:
+#    name: "Ability to Express One's Inner Self"
+#    items: ["Q07", "Q11", "Q14", "Q25", "Q26"]
+#  mental_stability:
+#    name: "Mental Stability"
+#    items: ["Q10", "Q13", "Q15", "Q16", "Q17", "Q27"]
+#  awareness_of_illness_and_treatment_needs:
+#    name: "Awareness of Illness and Treatment Needs"
+#    items: ["Q01", "Q02", "Q03"]
 
 item_total_analysis:
   enable_subscales: true

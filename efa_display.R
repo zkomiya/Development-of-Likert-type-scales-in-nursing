@@ -1,11 +1,10 @@
 # ===================================================
 # EFA Display
-# Version: 9.0 - Promax display and evaluation added
+# Version: 10.0 - Return eligible sets for CSV export
 # Description: Display EFA results with configurable evaluation thresholds
-# Changes from v8.1:
-#   - Added display_promax_comparison() function
-#   - Added promax results to display_efa_comparison()
-#   - Added promax evaluation to display_efa_evaluation()
+# Changes from v9.0:
+#   - display_efa_evaluation() now returns all_evaluations
+#   - Removed hardcoded default values for thresholds
 # ===================================================
 
 # Display pattern matrix
@@ -241,9 +240,9 @@ display_efa_comparison <- function(results) {
 # ===================================================
 
 evaluate_items <- function(pattern, 
-                           primary_threshold = 0.4,
-                           cross_threshold = 0.3,
-                           diff_threshold = 0.1) {
+                           primary_threshold,
+                           cross_threshold,
+                           diff_threshold) {
   
   n_items <- nrow(pattern)
   n_factors <- ncol(pattern)
@@ -366,9 +365,9 @@ display_evaluation_set <- function(set_info, eval, primary_threshold,
 # ===================================================
 
 display_efa_evaluation <- function(results,
-                                   primary_threshold = 0.4,
-                                   cross_threshold = 0.3,
-                                   diff_threshold = 0.1) {
+                                   primary_threshold,
+                                   cross_threshold,
+                                   diff_threshold) {
   
   gamma_values <- results$config_used$gamma_values
   promax_kappa_values <- results$config_used$promax_kappa_values
@@ -537,5 +536,6 @@ display_efa_evaluation <- function(results,
   
   cat("========================================\n")
   
-  invisible(NULL)
+  # Return eligible sets information
+  invisible(all_evaluations)
 }

@@ -1,10 +1,8 @@
 # ===================================================
 # EFA Main Controller
-# Version: 17.0 - Promax rotation support added
-# Changes from v16.1:
-#   - Added promax_kappa_values reading from config
-#   - Added promax alignment step for Pearson solution
-#   - Added promax_kappa_values to config_used in results
+# Version: 18.0 - CSV export for eligible patterns
+# Changes from v17.0:
+#   - Added CSV export for eligible pattern matrices in show_efa_evaluation()
 # ===================================================
 
 # Main EFA analysis function
@@ -255,10 +253,52 @@ show_efa_evaluation <- function(data_obj, n_factors) {
   
   # Display evaluation with configured thresholds
   source("efa_display.R")
-  display_efa_evaluation(results,
-                         primary_threshold = primary_threshold,
-                         cross_threshold = cross_threshold,
-                         diff_threshold = diff_threshold)
+  all_evaluations <- display_efa_evaluation(results,
+                                            primary_threshold = primary_threshold,
+                                            cross_threshold = cross_threshold,
+                                            diff_threshold = diff_threshold)
+  
+  # Export eligible pattern matrices to CSV
+  output_dir <- "efa_output"
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
+  
+  exported_count <- 0
+  for (set_name in names(all_evaluations)) {
+    set_info <- all_evaluations[[set_name]]
+    
+    if (set_info$evaluation$n_failed == 0) {
+      # Get pattern matrix
+      if (set_info$rotation_type == "oblimin") {
+        gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(set_info$param_value)))
+        pattern <- set_info$results$efa$rotations[[gamma_key]]$pattern
+        filename <- sprintf("pattern_%s_Oblimin_gamma_%.2f.csv",
+                            set_info$cor_type, set_info$param_value)
+      } else {
+        kappa_key <- paste0("kappa_", set_info$param_value)
+        pattern <- set_info$results$efa$rotations_promax[[kappa_key]]$pattern
+        filename <- sprintf("pattern_%s_Promax_kappa_%d.csv",
+                            set_info$cor_type, set_info$param_value)
+      }
+      
+      # Round to 3 decimal places
+      pattern_rounded <- round(pattern, 3)
+      
+      # Export to CSV
+      filepath <- file.path(output_dir, filename)
+      write.csv(pattern_rounded, filepath)
+      cat(sprintf("Exported: %s\n", filepath))
+      exported_count <- exported_count + 1
+    }
+  }
+  
+  if (exported_count > 0) {
+    cat(sprintf("\nTotal %d pattern matrix file(s) exported to %s/\n", 
+                exported_count, output_dir))
+  } else {
+    cat("\nNo eligible pattern matrices to export.\n")
+  }
   
   invisible(NULL)
 }
