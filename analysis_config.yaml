@@ -15,6 +15,7 @@ global:
 # Data key definitions
 data_keys:
   items_30: "患者ID"
+  items_29: "患者ID"  
   items_28: "患者ID"
   rehab: "患者ID"
   interrater: "患者ID"
@@ -50,20 +51,23 @@ correlation_analysis:
 item_total_analysis:
   enable_subscales: true
   self-management_skills:
-    name: "Self-management Skills"
-    items: ["Q04","Q05", "Q06", "Q09", "Q12", "Q21", "Q22", "Q23"]
+    name: "地域活動の自己管理"
+    items: ["Q04","Q05", "Q09", "Q12", "Q21", "Q22"]
   ability_to_stay_safe:
-    name: "Ability to Stay Safe"
-    items: ["Q08", "Q18", "Q19", "Q20", "Q24", "Q28"]
+    name: "精神状態の安定性"
+    items: ["Q10", "Q12", "Q14", "Q15", "Q16"]
   ability_to_express_ones_inner_self:
-    name: "Ability to Express One's Inner Self"
-    items: ["Q07", "Q11", "Q14", "Q25", "Q26"]
+    name: "自分の意向や変化を周囲に表出する力"
+    items: ["Q07", "Q11", "Q13", "Q24"]
   mental_stability:
-    name: "Mental Stability"
-    items: ["Q10", "Q13", "Q15", "Q16", "Q17", "Q27"]
-  awareness_of_illness_and_treatment_needs:
-    name: "Awareness of Illness and Treatment Needs"
+    name: "病気と治療の必要性の理解"
     items: ["Q01", "Q02", "Q03"]
+  awareness_of_illness_and_treatment_needs:
+    name: "現時点で自分と他人への危険行動がない"
+    items: ["Q26", "Q27", "Q28","Q29"]
+  awareness_of_illness_and_treatment_needs2:
+    name: "自分の生活の安全を保つ力"
+    items: ["Q06", "Q08", "Q17","Q18","Q23"]
 
 # ===== FACTOR NUMBER DETERMINATION =====
 factor_number:
