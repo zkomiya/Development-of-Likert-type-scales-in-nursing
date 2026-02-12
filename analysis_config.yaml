@@ -3,7 +3,10 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_30    # "items_30", "items_28","items_29"
+  dataset: satisficing_test_data    
+                       # "items_30", "items_28","items_29"
+                       # test data
+                       # "satisficing_test_data"
 
 # ===== GLOBAL SETTINGS =====
 global:
@@ -19,6 +22,8 @@ data_keys:
   items_28: "患者ID"
   rehab: "患者ID"
   interrater: "患者ID"
+  #
+  satisficing_test_data: "患者ID"
 
 # ===== ANALYSIS SPECIFIC =====
 gp_analysis:

@@ -2,6 +2,9 @@
 # Version: 2.0 - Multiple spreadsheets support
 
 google_sheets:
+  satisficing_test_data:
+    spreadsheet_id: "1fwugNF_qPQGUdNXXJLJ1gBMQrDQZgra3b8N4xhmWmjk"
+    sheet_name: "satisficing_test_data"
   items_30:
     spreadsheet_id: "1nCQ9k4flYCLouq5ZT1ZyTcuhVQVDIGtDPMqDBl5zMog"
     sheet_name: "patients_data"
