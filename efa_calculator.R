@@ -27,9 +27,9 @@ extract_factors <- function(R, n_factors, fm, max_iter = 1000) {
   #  - Turn off SMC only when fm == "ml" (case-insensitive)
   # ---------------------------------------------------
   use_smc <- TRUE
-  if (!is.null(fm) && tolower(fm) == "ml") {
-    use_smc <- FALSE
-  }
+#  if (!is.null(fm) && tolower(fm) == "ml") {
+#    use_smc <- FALSE
+#  }
   
   fa_result <- psych::fa(
     r = R,
