@@ -1,8 +1,9 @@
 # ===================================================
 # EFA Main Controller
-# Version: 18.0 - CSV export for eligible patterns
-# Changes from v17.0:
-#   - Added CSV export for eligible pattern matrices in show_efa_evaluation()
+# Version: 19.0 - YAML-driven scale range and item pattern
+# Changes from v18.0:
+#   - Data preprocessing now uses global scale range and item pattern from analysis_config.yaml
+#   - Removed 1-4 hardcoding dependency in data_preprocessor.R call
 # ===================================================
 
 # Main EFA analysis function
@@ -22,6 +23,7 @@ analyze_efa <- function(data_obj,
   # Load configuration
   config <- load_config()
   efa_config <- config$analysis$efa_settings
+  global_config <- config$analysis$global
   
   # Read parameters from YAML
   missing <- efa_config$missing
@@ -31,6 +33,17 @@ analyze_efa <- function(data_obj,
   max_iterations <- efa_config$max_iterations
   flip_factors <- efa_config$flip_factors
   promax_kappa_values <- efa_config$promax_kappa_values
+  
+  # Read global parameters from YAML (scale range / item pattern)
+  if (is.null(global_config$item_pattern)) {
+    stop("Global item_pattern not found in analysis_config.yaml")
+  }
+  if (is.null(global_config$scale$min) || is.null(global_config$scale$max)) {
+    stop("Global scale min/max not found in analysis_config.yaml")
+  }
+  item_pattern <- global_config$item_pattern
+  scale_min <- global_config$scale$min
+  scale_max <- global_config$scale$max
   
   if (verbose) {
     cat("\nUsing EFA settings from configuration:\n")
@@ -43,6 +56,8 @@ analyze_efa <- function(data_obj,
     cat("  Kaiser normalization:", kaiser_normalize, "\n")
     cat("  Max iterations:", max_iterations, "\n")
     cat("  Factor sign adjustment:", flip_factors, "\n")
+    cat("  Item pattern:", item_pattern, "\n")
+    cat("  Scale range:", scale_min, "-", scale_max, "\n")
     cat("  Correlation methods: Polychoric AND Pearson\n")
   }
   
@@ -65,7 +80,12 @@ analyze_efa <- function(data_obj,
   cat("----------------------------\n")
   
   source("data_preprocessor.R")
-  data_fa <- preprocess_for_fa(data, method = missing, verbose = verbose)
+  data_fa <- preprocess_for_fa(data,
+                               method = missing,
+                               verbose = verbose,
+                               item_pattern = item_pattern,
+                               scale_min = scale_min,
+                               scale_max = scale_max)
   
   if (n_factors > ncol(data_fa)) {
     stop("n_factors (", n_factors, ") cannot exceed number of variables (", ncol(data_fa), ")")

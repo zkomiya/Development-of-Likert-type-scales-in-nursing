@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Suitability Main (Controller Layer)
-# Version: 2.0
+# Version: 2.1 (YAML global scale/pattern integration)
 # Description: Main controller for FA suitability check
 # Changes from v1.0:
 #   - Added show_fa_evaluation function
@@ -15,9 +15,28 @@ check_fa_suitability <- function(data_obj) {
   data <- get_data(data_obj)
   keys <- get_keys(data_obj)
   
+  # Load configuration (global settings)
+  source("config_loader.R")
+  config <- load_config()
+  global_config <- config$analysis$global
+  if (is.null(global_config$item_pattern)) {
+    stop("Global item_pattern not found in analysis_config.yaml")
+  }
+  if (is.null(global_config$scale$min) || is.null(global_config$scale$max)) {
+    stop("Global scale min/max not found in analysis_config.yaml")
+  }
+  item_pattern <- global_config$item_pattern
+  scale_min <- global_config$scale$min
+  scale_max <- global_config$scale$max
+  
   # Data preprocessing
   source("data_preprocessor.R")
-  data_fa <- preprocess_for_fa(data, method = "listwise", verbose = FALSE)
+  data_fa <- preprocess_for_fa(data,
+                               method = "listwise",
+                               verbose = FALSE,
+                               item_pattern = item_pattern,
+                               scale_min = scale_min,
+                               scale_max = scale_max)
   
   # Calculate both correlation matrices
   source("factor_suitability_calculator.R")

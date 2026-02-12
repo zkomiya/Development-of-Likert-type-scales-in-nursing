@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Main (Controller Layer)
-# Version: 4.0 (YAML config integration)
+# Version: 4.1 (YAML global scale/pattern integration)
 # Description: Main controller for factor number determination
 # ===================================================
 
@@ -19,6 +19,18 @@ determine_factors <- function(data_obj,
   
   # Load config
   config <- load_config()
+  
+  # Global settings (scale range / item pattern)
+  global_config <- config$analysis$global
+  if (is.null(global_config$item_pattern)) {
+    stop("Global item_pattern not found in analysis_config.yaml")
+  }
+  if (is.null(global_config$scale$min) || is.null(global_config$scale$max)) {
+    stop("Global scale min/max not found in analysis_config.yaml")
+  }
+  item_pattern <- global_config$item_pattern
+  scale_min <- global_config$scale$min
+  scale_max <- global_config$scale$max
   
   # Get parameters from config (use argument if provided)
   if (is.null(n_iterations)) {
@@ -42,7 +54,12 @@ determine_factors <- function(data_obj,
   data <- get_data(data_obj)
   
   # Data preprocessing
-  data_fa <- preprocess_for_fa(data, method = "listwise", verbose = verbose)
+  data_fa <- preprocess_for_fa(data,
+                               method = "listwise",
+                               verbose = verbose,
+                               item_pattern = item_pattern,
+                               scale_min = scale_min,
+                               scale_max = scale_max)
   
   # Run factor number determination
   results <- determine_n_factors(
@@ -73,6 +90,18 @@ show_fn_evaluation <- function(data_obj,
   # Load config
   config <- load_config()
   
+  # Global settings (scale range / item pattern)
+  global_config <- config$analysis$global
+  if (is.null(global_config$item_pattern)) {
+    stop("Global item_pattern not found in analysis_config.yaml")
+  }
+  if (is.null(global_config$scale$min) || is.null(global_config$scale$max)) {
+    stop("Global scale min/max not found in analysis_config.yaml")
+  }
+  item_pattern <- global_config$item_pattern
+  scale_min <- global_config$scale$min
+  scale_max <- global_config$scale$max
+  
   # Get parameters from config (use argument if provided)
   if (is.null(n_iterations)) {
     n_iterations <- config$analysis$factor_number$parallel_analysis_iterations
@@ -95,7 +124,12 @@ show_fn_evaluation <- function(data_obj,
   data <- get_data(data_obj)
   
   # Data preprocessing
-  data_fa <- preprocess_for_fa(data, method = "listwise", verbose = verbose)
+  data_fa <- preprocess_for_fa(data,
+                               method = "listwise",
+                               verbose = verbose,
+                               item_pattern = item_pattern,
+                               scale_min = scale_min,
+                               scale_max = scale_max)
   
   # Run factor number determination
   results <- determine_n_factors(
