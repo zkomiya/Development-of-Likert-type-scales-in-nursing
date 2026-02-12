@@ -3,12 +3,13 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: efa_unit_test_clean_28items    
+  dataset: efa_unit_test_collinear_28items    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
                        # "efa_unit_test_clean_28items"
                        # "efa_unit_test_skew_cross_28item"
+                       # "efa_unit_test_collinear_28items
 
 # ===== GLOBAL SETTINGS =====
 global:
@@ -28,7 +29,8 @@ data_keys:
   satisficing_test_data: "患者ID"
   efa_unit_test_clean_28items: "患者ID"
   efa_unit_test_skew_cross_28item: "患者ID"
-
+  efa_unit_test_collinear_28items: "患者ID"
+  
 # ===== ANALYSIS SPECIFIC =====
 gp_analysis:
   cutoff_percentile: 0.27

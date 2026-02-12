@@ -16,7 +16,20 @@ library(clue)
 # Factor Extraction (unified function)
 # ===================================================
 
+# ===================================================
+# Factor Extraction (unified function)
+# ===================================================
+
 extract_factors <- function(R, n_factors, fm, max_iter = 1000) {
+  
+  # ---------------------------------------------------
+  # Minimal change:
+  #  - Turn off SMC only when fm == "ml" (case-insensitive)
+  # ---------------------------------------------------
+  use_smc <- TRUE
+  if (!is.null(fm) && tolower(fm) == "ml") {
+    use_smc <- FALSE
+  }
   
   fa_result <- psych::fa(
     r = R,
@@ -24,10 +37,10 @@ extract_factors <- function(R, n_factors, fm, max_iter = 1000) {
     rotate = "none",
     fm = fm,
     max.iter = max_iter,
-    SMC = TRUE
+    SMC = use_smc
   )
   
-  # psych::fa returns loadings as class "loadings" (matrix with class attribute)
+  # psych::fa returns loadings as class "loadings"
   # Remove class to ensure consistent downstream behavior and printing
   loadings_matrix <- unclass(fa_result$loadings)
   

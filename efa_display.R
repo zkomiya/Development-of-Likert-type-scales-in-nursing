@@ -259,7 +259,7 @@ evaluate_items <- function(pattern,
     
     # Check conditions
     has_primary <- primary >= primary_threshold
-    is_cross_loading <- (second >= cross_threshold) && 
+    is_cross_loading <- (second >= cross_threshold) || 
       ((primary - second) <= diff_threshold)
     
     # Record failure details
