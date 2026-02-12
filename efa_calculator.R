@@ -1,9 +1,11 @@
 # ===================================================
 # EFA Calculator
-# Version: 9.0 - Promax rotation added
+# Version: 9.1 - Remove 'loadings' class to avoid print cutoff suppression
 # Description: Perform EFA with psych package
-# Changes from v8.0:
-#   - Added promax_rotation() function using stats::promax()
+# Changes from v9.0:
+#   - Ensured all loadings-based outputs (extraction loadings, pattern) are plain matrices
+#     by removing class "loadings" via unclass()
+#   - This prevents print.loadings() from suppressing small loadings (default cutoff=0.1)
 # ===================================================
 
 library(psych)
@@ -25,16 +27,20 @@ extract_factors <- function(R, n_factors, fm, max_iter = 1000) {
     SMC = TRUE
   )
   
+  # psych::fa returns loadings as class "loadings" (matrix with class attribute)
+  # Remove class to ensure consistent downstream behavior and printing
+  loadings_matrix <- unclass(fa_result$loadings)
+  
   communalities_values <- if (!is.null(fa_result$communality)) {
     fa_result$communality
   } else if (!is.null(fa_result$communalities)) {
     fa_result$communalities
   } else {
-    rowSums(as.matrix(fa_result$loadings)^2)
+    rowSums(loadings_matrix^2)
   }
   
   return(list(
-    loadings = as.matrix(fa_result$loadings),
+    loadings = loadings_matrix,
     communalities = communalities_values,
     eigenvalues = fa_result$e.values,
     method = fm,
@@ -120,6 +126,9 @@ oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE,
     pattern_matrix <- rotation_result$loadings
   }
   
+  # Ensure plain matrix (remove potential class attributes)
+  pattern_matrix <- unclass(pattern_matrix)
+  
   # Calculate factor correlations
   T_mat <- rotation_result$Th
   factor_correlation <- t(T_mat) %*% T_mat
@@ -161,8 +170,9 @@ promax_rotation <- function(loadings, kappa = 4, flip_factors = FALSE) {
   # stats::promax performs varimax first, then power transformation
   promax_result <- stats::promax(loadings, m = kappa)
   
-  # Extract pattern matrix (promax$loadings)
-  pattern_matrix <- as.matrix(promax_result$loadings)
+  # Extract pattern matrix (promax$loadings) and remove class "loadings"
+  # to avoid print.loadings() cutoff suppression
+  pattern_matrix <- unclass(promax_result$loadings)
   
   # Extract rotation matrix
   rotation_matrix <- promax_result$rotmat
