@@ -1,11 +1,13 @@
 # ===================================================
 # EFA Calculator
-# Version: 9.1 - Remove 'loadings' class to avoid print cutoff suppression
+# Version: 9.2 - PD tolerance for correlation smoothing (ML stability)
 # Description: Perform EFA with psych package
-# Changes from v9.0:
+# Changes from v9.1:
 #   - Ensured all loadings-based outputs (extraction loadings, pattern) are plain matrices
 #     by removing class "loadings" via unclass()
 #   - This prevents print.loadings() from suppressing small loadings (default cutoff=0.1)
+#   - Added pd_tol argument to calculate_correlation_for_efa() and applied cor.smooth(eig.tol=pd_tol) when min eigenvalue <= pd_tol
+#   - pd_tol is required (no default); missing pd_tol triggers stop() to avoid silent behavior
 # ===================================================
 
 library(psych)
@@ -27,9 +29,9 @@ extract_factors <- function(R, n_factors, fm, max_iter = 1000) {
   #  - Turn off SMC only when fm == "ml" (case-insensitive)
   # ---------------------------------------------------
   use_smc <- TRUE
-#  if (!is.null(fm) && tolower(fm) == "ml") {
-#    use_smc <- FALSE
-#  }
+  if (!is.null(fm) && tolower(fm) == "ml") {
+    use_smc <- FALSE
+  }
   
   fa_result <- psych::fa(
     r = R,
@@ -258,40 +260,35 @@ perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
   
   # Perform oblimin rotation for each gamma value
   for (gamma in gamma_values) {
-    
     if (verbose) {
-      cat("  Oblimin rotation - gamma:", gamma, "\n")
+      cat("  Oblimin rotation with gamma =", gamma, "\n")
     }
     
-    rotation_result <- oblimin_rotation(
-      extraction_result$loadings,
+    oblimin_result <- oblimin_rotation(
+      loadings = results$extraction$loadings,
       gamma = gamma,
       normalize = kaiser_normalize,
       max_iter = max_iter,
       flip_factors = flip_factors
     )
     
-    if (verbose && rotation_result$converged) {
-      cat("    Rotation completed (iterations:", rotation_result$iterations, ")\n")
-    } else if (verbose) {
-      cat("    Rotation did not converge\n")
+    if (verbose) {
+      cat("    Rotation completed\n")
     }
     
-    # Store rotation results
     gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
-    results$rotations[[gamma_key]] <- rotation_result
+    results$rotations[[gamma_key]] <- oblimin_result
   }
   
-  # Perform promax rotation for each kappa value
+  # Perform promax rotation for each kappa value (if provided)
   if (!is.null(promax_kappa_values)) {
     for (kappa in promax_kappa_values) {
-      
       if (verbose) {
-        cat("  Promax rotation - kappa:", kappa, "\n")
+        cat("  Promax rotation with kappa =", kappa, "\n")
       }
       
       promax_result <- promax_rotation(
-        extraction_result$loadings,
+        loadings = results$extraction$loadings,
         kappa = kappa,
         flip_factors = flip_factors
       )
@@ -323,7 +320,7 @@ perform_efa <- function(cor_matrix, n_factors, fm, gamma_values,
 # Calculate correlation matrix for EFA
 # ===================================================
 
-calculate_correlation_for_efa <- function(data, method = "polychoric", missing_mode = "listwise") {
+calculate_correlation_for_efa <- function(data, method = "polychoric", missing_mode = "listwise", pd_tol) {
   
   if (method == "polychoric") {
     poly_result <- psych::polychoric(data, global = FALSE)
@@ -337,11 +334,27 @@ calculate_correlation_for_efa <- function(data, method = "polychoric", missing_m
     stop("method must be 'polychoric' or 'pearson'")
   }
   
-  # Check positive definiteness
+  if (missing(pd_tol) || is.null(pd_tol)) {
+    stop("pd_tol is required for calculate_correlation_for_efa()")
+  }
+  
+  pd_tol <- as.numeric(pd_tol)
+  if (!is.finite(pd_tol) || pd_tol <= 0) {
+    stop("pd_tol must be a positive finite numeric value")
+  }
+  
+  # Check positive definiteness (with tolerance)
   eigenvalues <- eigen(cor_matrix, symmetric = TRUE, only.values = TRUE)$values
   
-  if (any(!is.finite(eigenvalues)) || min(eigenvalues) <= 0) {
-    cor_matrix <- psych::cor.smooth(cor_matrix)
+  if (any(!is.finite(eigenvalues)) || min(eigenvalues) <= pd_tol) {
+    cor_matrix <- psych::cor.smooth(cor_matrix, eig.tol = pd_tol)
+    
+    # Re-check after smoothing
+    eigenvalues2 <- eigen(cor_matrix, symmetric = TRUE, only.values = TRUE)$values
+    if (any(!is.finite(eigenvalues2)) || min(eigenvalues2) <= pd_tol) {
+      stop("Correlation matrix is not positive definite enough after cor.smooth: min eigen = ",
+           signif(min(eigenvalues2), 6), " (pd_tol = ", pd_tol, ")")
+    }
   }
   
   return(cor_matrix)

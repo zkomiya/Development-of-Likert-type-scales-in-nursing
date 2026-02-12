@@ -33,6 +33,11 @@ analyze_efa <- function(data_obj,
   max_iterations <- efa_config$max_iterations
   flip_factors <- efa_config$flip_factors
   promax_kappa_values <- efa_config$promax_kappa_values
+  pd_tol <- efa_config$pd_tolerance
+  if (is.null(pd_tol)) {
+    stop("EFA setting pd_tolerance not found in analysis_config.yaml")
+  }
+  pd_tol <- as.numeric(pd_tol)
   
   # Read global parameters from YAML (scale range / item pattern)
   if (is.null(global_config$item_pattern)) {
@@ -55,6 +60,7 @@ analyze_efa <- function(data_obj,
     }
     cat("  Kaiser normalization:", kaiser_normalize, "\n")
     cat("  Max iterations:", max_iterations, "\n")
+    cat("  PD tolerance (cor.smooth eig.tol):", pd_tol, "\n")
     cat("  Factor sign adjustment:", flip_factors, "\n")
     cat("  Item pattern:", item_pattern, "\n")
     cat("  Scale range:", scale_min, "-", scale_max, "\n")
@@ -99,10 +105,10 @@ analyze_efa <- function(data_obj,
   cat("  Computing Polychoric correlation...\n")
   
   source("efa_calculator.R")
-  cor_poly <- calculate_correlation_for_efa(data_fa, "polychoric", missing)
+  cor_poly <- calculate_correlation_for_efa(data_fa, "polychoric", missing, pd_tol = pd_tol)
   
   cat("  Computing Pearson correlation...\n")
-  cor_pear <- calculate_correlation_for_efa(data_fa, "pearson", missing)
+  cor_pear <- calculate_correlation_for_efa(data_fa, "pearson", missing, pd_tol = pd_tol)
   
   if (verbose) {
     cat("  Polychoric: ", nrow(cor_poly), "x", ncol(cor_poly), "\n")
@@ -210,7 +216,8 @@ analyze_efa <- function(data_obj,
       promax_kappa_values = promax_kappa_values,
       kaiser_normalize = kaiser_normalize,
       max_iterations = max_iterations,
-      flip_factors = flip_factors
+      flip_factors = flip_factors,
+      pd_tolerance = pd_tol
     )
   )
   

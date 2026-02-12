@@ -6,12 +6,12 @@ google_sheets:
   satisficing_test_data:
     spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
     sheet_name: "satisficing_test_data"
-  efa_unit_test_clean_28items:
+  efa_unit_test_clean_28items_v2:
     spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
-    sheet_name: "efa_unit_test_clean_28items" 
-  efa_unit_test_skew_cross_28item:
+    sheet_name: "efa_unit_test_clean_28items_v2" 
+  efa_unit_test_skew_cross_28items_v2:
     spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
-    sheet_name: "efa_unit_test_skew_cross_28item"       
+    sheet_name: "efa_unit_test_skew_cross_28items_v2"       
   efa_unit_test_collinear_28items:
     spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
     sheet_name: "efa_unit_test_collinear_28items"  

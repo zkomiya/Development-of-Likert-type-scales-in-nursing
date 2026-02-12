@@ -3,12 +3,12 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: efa_unit_test_collinear_28items    
+  dataset: efa_unit_test_skew_cross_28items_v2    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
-                       # "efa_unit_test_clean_28items"
-                       # "efa_unit_test_skew_cross_28item"
+                       # "efa_unit_test_clean_28items_v2"
+                       # "efa_unit_test_skew_cross_28items_v2"
                        # "efa_unit_test_collinear_28items
 
 # ===== GLOBAL SETTINGS =====
@@ -27,8 +27,8 @@ data_keys:
   interrater: "患者ID"
   #
   satisficing_test_data: "患者ID"
-  efa_unit_test_clean_28items: "患者ID"
-  efa_unit_test_skew_cross_28item: "患者ID"
+  efa_unit_test_clean_28items_v2: "患者ID"
+  efa_unit_test_skew_cross_28items_v2: "患者ID"
   efa_unit_test_collinear_28items: "患者ID"
   
 # ===== ANALYSIS SPECIFIC =====
@@ -88,6 +88,7 @@ factor_number:
 # ===== EFA SETTINGS =====
 efa_settings:
   missing: "listwise"
+  pd_tolerance: 1.0e-6
   # Single extraction method (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
   extraction_method: "ml"
@@ -200,76 +201,3 @@ cfa_models:
         - "Q14"
         - "Q25"
         - "Q26"
-      illness_awareness:
-        - "Q01"
-        - "Q02"
-        - "Q03"
-
-  higher_order_model:
-    name: "Higher-Order Factor Model"
-    structure:
-      self_management:
-        - "Q04"
-        - "Q05"
-        - "Q06"
-        - "Q09"
-        - "Q12"
-        - "Q21"
-        - "Q22"
-        - "Q23"
-      safety_awareness:
-        - "Q08"
-        - "Q18"
-        - "Q19"
-        - "Q20"
-        - "Q24"
-        - "Q28"
-      self_expression:
-        - "Q07"
-        - "Q11"
-        - "Q14"
-        - "Q25"
-        - "Q26"
-      mental_stability:
-        - "Q10"
-        - "Q13"
-        - "Q15"
-        - "Q16"
-        - "Q17"
-        - "Q27"
-      illness_awareness:
-        - "Q01"
-        - "Q02"
-        - "Q03"
-    higher_order:
-      discharge_readiness:
-        - "self_management"
-        - "safety_awareness"
-        - "self_expression"
-        - "mental_stability"
-        - "illness_awareness"
-
-# ===== CFA Settings =====
-cfa_settings:
-  estimator: "WLSMV"
-  missing: "pairwise"
-  se: "robust"
-  standardized: true
-  rsquare: true
-  
-# ===================================================
-# Satisficing Analysis Settings
-# ===================================================
-satisficing:
-  longstring:
-    threshold: 10
-  irv:
-    percentile_threshold: 5
-  mahalanobis:
-    p_threshold: 0.001
-
-# ===================================================
-# Response Styles Analysis Settings
-# ===================================================
-response_styles:
-  extreme_percentile: 95
