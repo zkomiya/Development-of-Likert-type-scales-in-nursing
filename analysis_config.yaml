@@ -8,6 +8,7 @@ data_source:
                        # test data
                        # "satisficing_test_data"
                        # "efa_unit_test_clean_28items"
+                       # "efa_unit_test_skew_cross_28item"
 
 # ===== GLOBAL SETTINGS =====
 global:
@@ -26,6 +27,7 @@ data_keys:
   #
   satisficing_test_data: "患者ID"
   efa_unit_test_clean_28items: "患者ID"
+  efa_unit_test_skew_cross_28item: "患者ID"
 
 # ===== ANALYSIS SPECIFIC =====
 gp_analysis:
@@ -96,8 +98,8 @@ efa_settings:
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
   primary_threshold: 0.35
-  cross_threshold: 0.25
-  diff_threshold: 0.1
+  cross_threshold: 0.30
+  diff_threshold: 0.2
     
 # REHAB subscale definitions
 rehab_subscales:
