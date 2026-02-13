@@ -1,9 +1,8 @@
 # ===================================================
 # EFA Main Controller
-# Version: 19.0 - YAML-driven scale range and item pattern
-# Changes from v18.0:
-#   - Data preprocessing now uses global scale range and item pattern from analysis_config.yaml
-#   - Removed 1-4 hardcoding dependency in data_preprocessor.R call
+# Version: 21.0 - Removed show_efa
+# Changes from v20.0:
+#   - Removed show_efa() function (oblimin-only individual display)
 # ===================================================
 
 # Main EFA analysis function
@@ -33,6 +32,7 @@ analyze_efa <- function(data_obj,
   max_iterations <- efa_config$max_iterations
   flip_factors <- efa_config$flip_factors
   promax_kappa_values <- efa_config$promax_kappa_values
+  display_cutoff <- efa_config$display_cutoff
   pd_tol <- efa_config$pd_tolerance
   if (is.null(pd_tol)) {
     stop("EFA setting pd_tolerance not found in analysis_config.yaml")
@@ -64,6 +64,11 @@ analyze_efa <- function(data_obj,
     cat("  Factor sign adjustment:", flip_factors, "\n")
     cat("  Item pattern:", item_pattern, "\n")
     cat("  Scale range:", scale_min, "-", scale_max, "\n")
+    if (!is.null(display_cutoff)) {
+      cat("  Display cutoff:", display_cutoff, "\n")
+    } else {
+      cat("  Display cutoff: none (show all values)\n")
+    }
     cat("  Correlation methods: Polychoric AND Pearson\n")
   }
   
@@ -217,7 +222,8 @@ analyze_efa <- function(data_obj,
       kaiser_normalize = kaiser_normalize,
       max_iterations = max_iterations,
       flip_factors = flip_factors,
-      pd_tolerance = pd_tol
+      pd_tolerance = pd_tol,
+      display_cutoff = display_cutoff
     )
   )
   
@@ -227,7 +233,7 @@ analyze_efa <- function(data_obj,
   
   if (show_full_results) {
     source("efa_display.R")
-    display_efa_comparison(results)
+    display_efa_comparison(results, display_cutoff)
   } else {
     cat("Full results display skipped (show_full_results = FALSE)\n")
   }
@@ -243,16 +249,13 @@ analyze_efa <- function(data_obj,
   if (!is.null(promax_kappa_values)) {
     cat("           Promax (kappa:", paste(promax_kappa_values, collapse = ", "), ")\n")
   }
+  if (!is.null(display_cutoff)) {
+    cat("  Display cutoff:", display_cutoff, "\n")
+  }
   cat("  Correlation methods: Polychoric AND Pearson (aligned)\n")
   cat("========================================\n")
   
   invisible(results)
-}
-
-# Function to display specific results
-show_efa <- function(results, gamma = 0) {
-  source("efa_display.R")
-  display_specific_result(results, gamma)
 }
 
 # Function to display EFA evaluation (all gamma values)
@@ -264,13 +267,15 @@ show_efa_evaluation <- function(data_obj, n_factors) {
   
   cat("Running EFA analysis for evaluation...\n\n")
   
-  # Load configuration for thresholds
+  # Load configuration for thresholds and display_cutoff
   config <- load_config()
   efa_eval_config <- config$analysis$efa_evaluation
+  efa_config <- config$analysis$efa_settings
   
   primary_threshold <- efa_eval_config$primary_threshold
   cross_threshold <- efa_eval_config$cross_threshold
   diff_threshold <- efa_eval_config$diff_threshold
+  display_cutoff <- efa_config$display_cutoff
   
   # Run EFA analysis quietly
   results <- analyze_efa(data_obj, 
@@ -283,7 +288,8 @@ show_efa_evaluation <- function(data_obj, n_factors) {
   all_evaluations <- display_efa_evaluation(results,
                                             primary_threshold = primary_threshold,
                                             cross_threshold = cross_threshold,
-                                            diff_threshold = diff_threshold)
+                                            diff_threshold = diff_threshold,
+                                            display_cutoff = display_cutoff)
   
   # Export eligible pattern matrices to CSV
   output_dir <- "efa_output"

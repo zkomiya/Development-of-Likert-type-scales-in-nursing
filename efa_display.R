@@ -1,14 +1,13 @@
 # ===================================================
 # EFA Display
-# Version: 10.0 - Return eligible sets for CSV export
+# Version: 12.0 - Removed display_specific_result
 # Description: Display EFA results with configurable evaluation thresholds
-# Changes from v9.0:
-#   - display_efa_evaluation() now returns all_evaluations
-#   - Removed hardcoded default values for thresholds
+# Changes from v11.0:
+#   - Removed display_specific_result() (oblimin-only individual display)
 # ===================================================
 
 # Display pattern matrix
-display_pattern_matrix <- function(pattern) {
+display_pattern_matrix <- function(pattern, display_cutoff) {
   
   p <- nrow(pattern)
   m <- ncol(pattern)
@@ -20,63 +19,34 @@ display_pattern_matrix <- function(pattern) {
     rownames(pattern) <- paste0("Q", sprintf("%02d", 1:p))
   }
   
-  pattern_display <- round(pattern, 3)
-  return(pattern_display)
-}
-
-# Display specific gamma result
-display_specific_result <- function(results, gamma) {
-  
-  gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
-  
-  poly_efa <- results$polychoric$efa
-  
-  if (!gamma_key %in% names(poly_efa$rotations)) {
-    stop("Gamma ", gamma, " not found")
+  if (is.null(display_cutoff)) {
+    # Show all values
+    pattern_display <- round(pattern, 3)
+    return(pattern_display)
   }
   
-  cat("\nRESULTS FOR: gamma =", gamma, "\n")
-  cat("----------------------------------------\n")
+  # Apply cutoff: suppress absolute values below threshold
+  pattern_rounded <- round(pattern, 3)
+  pattern_char <- matrix("", nrow = p, ncol = m)
+  rownames(pattern_char) <- rownames(pattern)
+  colnames(pattern_char) <- colnames(pattern)
   
-  ext_result <- poly_efa$extraction
-  rot_result <- poly_efa$rotations[[gamma_key]]
+  for (i in 1:p) {
+    for (j in 1:m) {
+      if (abs(pattern_rounded[i, j]) >= display_cutoff) {
+        pattern_char[i, j] <- sprintf("%.3f", pattern_rounded[i, j])
+      }
+    }
+  }
   
-  cat("\nPattern Matrix:\n")
-  print(round(rot_result$pattern, 3))
-  
-  cat("\nStructure Matrix:\n")
-  print(round(rot_result$structure, 3))
-  
-  cat("\nFactor Correlation Matrix:\n")
-  print(round(rot_result$factor_correlation, 3))
-  
-  cat("\nCommunalities:\n")
-  comm_df <- data.frame(
-    Variable = names(ext_result$communalities),
-    Communality = round(ext_result$communalities, 3)
-  )
-  print(comm_df)
-  
-  ss_loadings <- colSums(rot_result$pattern^2)
-  prop_var <- ss_loadings / nrow(rot_result$pattern)
-  cum_var <- cumsum(prop_var)
-  
-  var_df <- data.frame(
-    Factor = paste0("F", 1:length(ss_loadings)),
-    SS_Loadings = round(ss_loadings, 3),
-    Prop_Var = round(prop_var, 3),
-    Cum_Var = round(cum_var, 3)
-  )
-  
-  cat("\nVariance Explained:\n")
-  print(var_df)
+  return(noquote(pattern_char))
 }
 
 # ===================================================
 # Display matrix comparison (Polychoric vs Pearson)
 # ===================================================
 
-display_matrix_comparison <- function(matrix_poly, matrix_pear) {
+display_matrix_comparison <- function(matrix_poly, matrix_pear, display_cutoff) {
   
   n_items <- nrow(matrix_poly)
   n_factors <- ncol(matrix_poly)
@@ -95,7 +65,16 @@ display_matrix_comparison <- function(matrix_poly, matrix_pear) {
     cat(sprintf("%-8s", item_name))
     
     for (f in 1:n_factors) {
-      cat(sprintf("  %7.3f %7.3f", matrix_poly[i, f], matrix_pear[i, f]))
+      val_poly <- matrix_poly[i, f]
+      val_pear <- matrix_pear[i, f]
+      
+      if (!is.null(display_cutoff)) {
+        str_poly <- if (abs(val_poly) >= display_cutoff) sprintf("%7.3f", val_poly) else "       "
+        str_pear <- if (abs(val_pear) >= display_cutoff) sprintf("%7.3f", val_pear) else "       "
+        cat(sprintf("  %s %s", str_poly, str_pear))
+      } else {
+        cat(sprintf("  %7.3f %7.3f", val_poly, val_pear))
+      }
     }
     cat("\n")
   }
@@ -105,7 +84,7 @@ display_matrix_comparison <- function(matrix_poly, matrix_pear) {
 # Display single gamma comparison
 # ===================================================
 
-display_gamma_comparison <- function(results, gamma) {
+display_gamma_comparison <- function(results, gamma, display_cutoff) {
   
   gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
   
@@ -118,11 +97,11 @@ display_gamma_comparison <- function(results, gamma) {
   
   cat("PATTERN MATRIX\n")
   cat("--------------\n\n")
-  display_matrix_comparison(poly_sol$pattern, pear_sol$pattern)
+  display_matrix_comparison(poly_sol$pattern, pear_sol$pattern, display_cutoff)
   
   cat("\nSTRUCTURE MATRIX\n")
   cat("----------------\n\n")
-  display_matrix_comparison(poly_sol$structure, pear_sol$structure)
+  display_matrix_comparison(poly_sol$structure, pear_sol$structure, display_cutoff)
   
   cat("\nFACTOR CORRELATION\n")
   cat("------------------\n\n")
@@ -153,7 +132,7 @@ display_gamma_comparison <- function(results, gamma) {
 # Display single kappa comparison (Promax)
 # ===================================================
 
-display_kappa_comparison <- function(results, kappa) {
+display_kappa_comparison <- function(results, kappa, display_cutoff) {
   
   kappa_key <- paste0("kappa_", kappa)
   
@@ -166,11 +145,11 @@ display_kappa_comparison <- function(results, kappa) {
   
   cat("PATTERN MATRIX\n")
   cat("--------------\n\n")
-  display_matrix_comparison(poly_sol$pattern, pear_sol$pattern)
+  display_matrix_comparison(poly_sol$pattern, pear_sol$pattern, display_cutoff)
   
   cat("\nSTRUCTURE MATRIX\n")
   cat("----------------\n\n")
-  display_matrix_comparison(poly_sol$structure, pear_sol$structure)
+  display_matrix_comparison(poly_sol$structure, pear_sol$structure, display_cutoff)
   
   cat("\nFACTOR CORRELATION\n")
   cat("------------------\n\n")
@@ -201,7 +180,7 @@ display_kappa_comparison <- function(results, kappa) {
 # Display EFA comparison (main function)
 # ===================================================
 
-display_efa_comparison <- function(results) {
+display_efa_comparison <- function(results, display_cutoff) {
   
   cat("\n========================================\n")
   cat("EFA COMPARISON: Polychoric vs Pearson\n")
@@ -213,20 +192,23 @@ display_efa_comparison <- function(results) {
   if (!is.null(results$config_used$promax_kappa_values)) {
     cat("Promax kappa values:", paste(results$config_used$promax_kappa_values, collapse = ", "), "\n")
   }
+  if (!is.null(display_cutoff)) {
+    cat("Display cutoff:", display_cutoff, "(absolute values below this are suppressed)\n")
+  }
   cat("\nNote: Pearson solution aligned to Polychoric\n")
   cat("      (factor order and signs adjusted)\n")
   
   # Display oblimin results
   cat("\n\n### OBLIMIN ROTATION RESULTS ###\n")
   for (gamma in results$config_used$gamma_values) {
-    display_gamma_comparison(results, gamma)
+    display_gamma_comparison(results, gamma, display_cutoff)
   }
   
   # Display promax results
   if (!is.null(results$config_used$promax_kappa_values)) {
     cat("\n\n### PROMAX ROTATION RESULTS ###\n")
     for (kappa in results$config_used$promax_kappa_values) {
-      display_kappa_comparison(results, kappa)
+      display_kappa_comparison(results, kappa, display_cutoff)
     }
   }
   
@@ -293,7 +275,7 @@ evaluate_items <- function(pattern,
 # ===================================================
 
 display_evaluation_set <- function(set_info, eval, primary_threshold,
-                                   eligible_sets) {
+                                   eligible_sets, display_cutoff) {
   
   cat(sprintf("Items failing criteria: %d/%d (%.1f%% pass)\n", 
               eval$n_failed, eval$n_total, eval$pass_rate * 100))
@@ -312,7 +294,7 @@ display_evaluation_set <- function(set_info, eval, primary_threshold,
     ext_result <- set_info$results$efa$extraction
     
     cat("PATTERN MATRIX:\n")
-    print(round(rot_result$pattern, 3))
+    print(display_pattern_matrix(rot_result$pattern, display_cutoff))
     
     cat("\nSTRUCTURE MATRIX:\n")
     print(round(rot_result$structure, 3))
@@ -367,7 +349,8 @@ display_evaluation_set <- function(set_info, eval, primary_threshold,
 display_efa_evaluation <- function(results,
                                    primary_threshold,
                                    cross_threshold,
-                                   diff_threshold) {
+                                   diff_threshold,
+                                   display_cutoff) {
   
   gamma_values <- results$config_used$gamma_values
   promax_kappa_values <- results$config_used$promax_kappa_values
@@ -381,6 +364,10 @@ display_efa_evaluation <- function(results,
   cat(sprintf("  1. Primary loading >= %.2f\n", primary_threshold))
   cat(sprintf("  2. NOT cross-loading (2nd < %.2f OR diff > %.2f)\n", 
               cross_threshold, diff_threshold))
+  if (!is.null(display_cutoff)) {
+    cat(sprintf("  Display cutoff: %.2f (absolute values below this are suppressed)\n",
+                display_cutoff))
+  }
   cat("\n")
   
   # Collect evaluation results for all sets
@@ -485,7 +472,8 @@ display_efa_evaluation <- function(results,
     }
     cat("----------------------------------------\n")
     
-    display_evaluation_set(set_info, eval, primary_threshold, eligible_sets)
+    display_evaluation_set(set_info, eval, primary_threshold, eligible_sets,
+                           display_cutoff)
     
     if (eval$n_failed == 0) {
       if (set_info$rotation_type == "oblimin") {
