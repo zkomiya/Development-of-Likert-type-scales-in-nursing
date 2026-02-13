@@ -12,9 +12,9 @@ google_sheets:
   efa_unit_test_skew_cross_28items_v2:
     spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
     sheet_name: "efa_unit_test_skew_cross_28items_v2"       
-  efa_unit_test_collinear_28items:
+  efa_unit_test_collinear_28items_v2:
     spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
-    sheet_name: "efa_unit_test_collinear_28items"  
+    sheet_name: "efa_unit_test_collinear_28items_v2"  
 #
 # 本番データ
   items_30:

@@ -97,6 +97,10 @@ efa_settings:
   max_iterations: 1000
   flip_factors: true
   promax_kappa_values: [2, 3, 4]
+  # Display cutoff for pattern matrix
+  # null: show all values
+  # numeric (e.g., 0.30): suppress absolute values below this threshold
+  display_cutoff: null
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
