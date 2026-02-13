@@ -131,7 +131,8 @@ oblimin_rotation <- function(loadings, gamma = 0, normalize = TRUE,
     gam = gamma,
     normalize = FALSE,
     eps = tol,
-    maxit = max_iter
+    maxit = max_iter,
+    randomStarts = 50
   )
   
   # De-normalize

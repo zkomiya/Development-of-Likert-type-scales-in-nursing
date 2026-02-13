@@ -87,14 +87,15 @@ factor_number:
 
 # ===== EFA SETTINGS =====
 efa_settings:
+  # missing: "listwise","pairwise"
   missing: "listwise"
   pd_tolerance: 1.0e-6
   # Single extraction method (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
   extraction_method: "ml"
-  gamma_values: [1.0]
+  gamma_values: [-1.0,-0.5,0.0]
   kaiser_normalize: true
-  max_iterations: 1000
+  max_iterations: 10000
   flip_factors: true
   promax_kappa_values: [2, 3, 4]
   # Display cutoff for pattern matrix
@@ -104,8 +105,8 @@ efa_settings:
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
-  primary_threshold: 0.32
-  cross_threshold: 0.28
+  primary_threshold: 0.35
+  cross_threshold: 0.30
   diff_threshold: 0.2
     
 # REHAB subscale definitions
