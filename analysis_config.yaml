@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_28    
+  dataset: items_30    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
@@ -101,7 +101,11 @@ efa_settings:
   # Display cutoff for pattern matrix
   # null: show all values
   # numeric (e.g., 0.30): suppress absolute values below this threshold
+<<<<<<< HEAD
   display_cutoff: 0.1
+=======
+  display_cutoff: null
+>>>>>>> f3d65de1217abc6ffc8848f1c00510aab97de092
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
