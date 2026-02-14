@@ -3,13 +3,15 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_30    
+  dataset: items_30-Q19    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
                        # "efa_unit_test_clean_28items_v2"
                        # "efa_unit_test_skew_cross_28items_v2"
                        # "efa_unit_test_collinear_28items
+                       # items_28-Q07
+                       # items_30-Q19
 
 # ===== GLOBAL SETTINGS =====
 global:
@@ -23,6 +25,8 @@ data_keys:
   items_30: "患者ID"
   items_29: "患者ID"  
   items_28: "患者ID"
+  items_28-Q07: "患者ID"
+  items_30-Q19: "患者ID"  
   rehab: "患者ID"
   interrater: "患者ID"
   #
@@ -93,7 +97,7 @@ efa_settings:
   # Single extraction method (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
   extraction_method: "ml"
-  gamma_values: [-1.0,-0.5,0.0]
+  gamma_values: [-10.0,-9.0,-8.0,-7.0,-6.0,-5.0,-4.0,-3.0,-2.0,-1.5,-1.0,-0.8,-0.5,-0.3,0.0]
   kaiser_normalize: true
   max_iterations: 10000
   flip_factors: true
@@ -101,15 +105,11 @@ efa_settings:
   # Display cutoff for pattern matrix
   # null: show all values
   # numeric (e.g., 0.30): suppress absolute values below this threshold
-<<<<<<< HEAD
   display_cutoff: 0.1
-=======
-  display_cutoff: null
->>>>>>> f3d65de1217abc6ffc8848f1c00510aab97de092
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
-  primary_threshold: 0.35
+  primary_threshold: 0.32
   cross_threshold: 0.30
   diff_threshold: 0.2
     

@@ -15,11 +15,18 @@ google_sheets:
   efa_unit_test_collinear_28items_v2:
     spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
     sheet_name: "efa_unit_test_collinear_28items_v2"  
+#    
 #
 # 本番データ
   items_30:
     spreadsheet_id: "1nCQ9k4flYCLouq5ZT1ZyTcuhVQVDIGtDPMqDBl5zMog"
     sheet_name: "patients_data"
+  items_30-Q19:
+    spreadsheet_id: "1Ahle3FcBBNjLWIL-MVtTeOnjduvmmXG3usgf0sG6oT8"
+    sheet_name: "patients_data"    
+  items_28-Q07:
+    spreadsheet_id: "17v9C-Fahzu4xvbSM1PitFJK4YLILpljv64jbYD7ziMo"
+    sheet_name: "patients_data"    
   items_28:
     spreadsheet_id: "116gLf-8qmx0b9oWNNaqSabgje6K07kaCOUThXQQrlcg"
     sheet_name: "patients_data"
