@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_30-Q19    
+  dataset: efa_unit_test_clean_28items_v2    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
@@ -96,8 +96,8 @@ efa_settings:
   pd_tolerance: 1.0e-6
   # Single extraction method (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
-  extraction_method: "ml"
-  gamma_values: [-10.0,-9.0,-8.0,-7.0,-6.0,-5.0,-4.0,-3.0,-2.0,-1.5,-1.0,-0.8,-0.5,-0.3,0.0]
+  extraction_method: "pa"
+  gamma_values: [-1.5,-1.0,-0.8,-0.5,-0.3,0.0]
   kaiser_normalize: true
   max_iterations: 10000
   flip_factors: true
@@ -105,13 +105,13 @@ efa_settings:
   # Display cutoff for pattern matrix
   # null: show all values
   # numeric (e.g., 0.30): suppress absolute values below this threshold
-  display_cutoff: 0.1
+  display_cutoff: 0.35
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
   primary_threshold: 0.32
-  cross_threshold: 0.30
-  diff_threshold: 0.2
+  cross_threshold: 0.2
+  diff_threshold: 0.1
     
 # REHAB subscale definitions
 rehab_subscales:
