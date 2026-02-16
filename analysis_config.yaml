@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: efa_unit_test_clean_28items_v2    
+  dataset: items_30    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
@@ -97,11 +97,11 @@ efa_settings:
   # Single extraction method (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
   extraction_method: "pa"
-  gamma_values: [-1.5,-1.0,-0.8,-0.5,-0.3,0.0]
+  gamma_values: [0.0]
   kaiser_normalize: true
   max_iterations: 10000
   flip_factors: true
-  promax_kappa_values: [2, 3, 4]
+  promax_kappa_values: [3, 4]
   # Display cutoff for pattern matrix
   # null: show all values
   # numeric (e.g., 0.30): suppress absolute values below this threshold
