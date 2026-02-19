@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_30    
+  dataset: items_29    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
@@ -96,7 +96,7 @@ efa_settings:
   pd_tolerance: 1.0e-6
   # Single extraction method (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
-  extraction_method: "ml"
+  extraction_method: "wls"
   gamma_values: [0.0]
   kaiser_normalize: true
   max_iterations: 1000
