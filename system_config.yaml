@@ -4,42 +4,42 @@
 google_sheets:
 #テストデータ
   satisficing_test_data:
-    spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
-    sheet_name: "satisficing_test_data"
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXXXXXXX"
   efa_unit_test_clean_28items_v2:
-    spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
-    sheet_name: "efa_unit_test_clean_28items_v2" 
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXXXXXXX" 
   efa_unit_test_skew_cross_28items_v2:
-    spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
-    sheet_name: "efa_unit_test_skew_cross_28items_v2"       
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXXXXXXX"       
   efa_unit_test_collinear_28items_v2:
-    spreadsheet_id: "1trlN-OqG-QOUL_X8KVcpzFNV-mQv2FXTYfs9Qg2umq0"
-    sheet_name: "efa_unit_test_collinear_28items_v2"  
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXXXXXXX"  
 #    
 #
 # 本番データ
   items_30:
-    spreadsheet_id: "1nCQ9k4flYCLouq5ZT1ZyTcuhVQVDIGtDPMqDBl5zMog"
-    sheet_name: "patients_data"
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXX"
   items_30-Q19:
-    spreadsheet_id: "1Ahle3FcBBNjLWIL-MVtTeOnjduvmmXG3usgf0sG6oT8"
-    sheet_name: "patients_data"    
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXX"    
   items_28-Q07:
-    spreadsheet_id: "17v9C-Fahzu4xvbSM1PitFJK4YLILpljv64jbYD7ziMo"
-    sheet_name: "patients_data"    
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXX"    
   items_28:
-    spreadsheet_id: "116gLf-8qmx0b9oWNNaqSabgje6K07kaCOUThXQQrlcg"
-    sheet_name: "patients_data"
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXX"
   items_29:
-    spreadsheet_id: "1xyW2A3URsj4ZGkdArfRJE8q6mTsIEujfTbx4FI34iro"
-    sheet_name: "patients_data"
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXX"
   rehab:
-    spreadsheet_id: "1IUIG-IicVvbBidnCyPBeI0pUVuEY3lrzSWICHKIoRKE"
-    sheet_name: "patients_data"
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXX"
   interrater:
-    spreadsheet_id: "1dy-Y6FU-zH4S9pdqTHLQJDqW_1rWD-3p12v1fz9Av1c"
-    sheet_name: "inter-rater_data"
+    spreadsheet_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    sheet_name: "XXXXXXXXXXXX"
 
 authentication:
   cache_folder: ".secrets"
-  email_auth: "zen@komiyake.com"
+  email_auth: "example@example.com"
