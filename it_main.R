@@ -1,9 +1,9 @@
 # ===================================================
 # Item-Total Correlation Main (Controller Layer)
-# Version: 7.1 - Added comparison display
+# Version: 7.2 - Fixed subscale config loading from scale_structure
 # Description: Main controller for I-T correlation analysis
-# Changes from v7.0:
-#   - Added comparison display (Total vs Subscale)
+# Changes from v7.1:
+#   - Fixed subscale config loading: item_total_analysis -> scale_structure
 # ===================================================
 
 # Evaluate I-T correlation results
@@ -67,8 +67,9 @@ analyze_item_total <- function(data_obj) {
   
   # Load configuration from YAML
   config <- load_config()
-  enable_subscales <- config$analysis$item_total_analysis$enable_subscales
-  subscale_config <- config$analysis$item_total_analysis
+  dataset_name <- config$analysis$data_source$dataset
+  subscale_config <- config$analysis$scale_structure[[dataset_name]]
+  enable_subscales <- !is.null(subscale_config)
   
   # Display header
   it_display_header()

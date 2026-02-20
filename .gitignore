@@ -7,3 +7,4 @@
 .gitignore
 efa_output/
 system_config.yaml
+output/
