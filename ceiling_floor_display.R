@@ -1,6 +1,6 @@
 # ===================================================
 # Ceiling-Floor Effect Display (View Layer)
-# Version: 12.0 - Fixed evaluation display order
+# Version: 13.0 - Threshold-based evaluation with configurable levels
 # ===================================================
 
 # Unified display function for all ceiling-floor results
@@ -35,18 +35,22 @@ display_ceiling_floor_results <- function(results, parameters) {
 # Evaluate ceiling-floor results against criteria
 evaluate_ceiling_floor_results <- function(results, scale_min, scale_max) {
   
+  thresholds <- c(30, 25, 20, 15)
+  
+  ceiling_flag <- rep("-", nrow(results))
+  for (thr in sort(thresholds)) {
+    ceiling_flag[results$ceiling_pct >= thr] <- paste0(thr, "%")
+  }
+  
+  floor_flag <- rep("-", nrow(results))
+  for (thr in sort(thresholds)) {
+    floor_flag[results$floor_pct >= thr] <- paste0(thr, "%")
+  }
+  
   evaluation <- data.frame(
     item = results$item,
-    ceiling_flag = case_when(
-      results$ceiling_pct >= 25 ~ "25%",
-      results$ceiling_pct >= 20 ~ "20%",
-      TRUE ~ "-"
-    ),
-    floor_flag = case_when(
-      results$floor_pct >= 25 ~ "25%",
-      results$floor_pct >= 20 ~ "20%",
-      TRUE ~ "-"
-    ),
+    ceiling_flag = ceiling_flag,
+    floor_flag = floor_flag,
     skewness_flag = ifelse(abs(results$skewness) > 1.0, "FLAG", "-"),
     kurtosis_flag = ifelse(abs(results$kurtosis) > 2.0, "FLAG", "-"),
     mean_plus_sd_flag = ifelse(results$mean_plus_sd > scale_max, "FLAG", "-"),
@@ -59,6 +63,8 @@ evaluate_ceiling_floor_results <- function(results, scale_min, scale_max) {
 
 # Display evaluation results
 display_ceiling_floor_evaluation <- function(evaluation) {
+  
+  thresholds <- c(30, 25, 20, 15)
   
   cat("\n========================================\n")
   cat("Evaluation Results\n")
@@ -84,20 +90,18 @@ display_ceiling_floor_evaluation <- function(evaluation) {
   cat("\nSummary:\n")
   
   # Floor effect
-  floor_25 <- evaluation$item[evaluation$floor_flag == "25%"]
-  floor_20 <- evaluation$item[evaluation$floor_flag == "20%"]
-  cat(sprintf("  Floor effect (>=25%%): %s\n", 
-              ifelse(length(floor_25) > 0, paste(floor_25, collapse = ", "), "(none)")))
-  cat(sprintf("  Floor effect (>=20%%): %s\n", 
-              ifelse(length(floor_20) > 0, paste(floor_20, collapse = ", "), "(none)")))
+  for (thr in sort(thresholds, decreasing = TRUE)) {
+    floor_items <- evaluation$item[evaluation$floor_flag == paste0(thr, "%")]
+    cat(sprintf("  Floor effect (>=%d%%): %s\n", thr,
+                ifelse(length(floor_items) > 0, paste(floor_items, collapse = ", "), "(none)")))
+  }
   
   # Ceiling effect
-  ceiling_25 <- evaluation$item[evaluation$ceiling_flag == "25%"]
-  ceiling_20 <- evaluation$item[evaluation$ceiling_flag == "20%"]
-  cat(sprintf("  Ceiling effect (>=25%%): %s\n", 
-              ifelse(length(ceiling_25) > 0, paste(ceiling_25, collapse = ", "), "(none)")))
-  cat(sprintf("  Ceiling effect (>=20%%): %s\n", 
-              ifelse(length(ceiling_20) > 0, paste(ceiling_20, collapse = ", "), "(none)")))
+  for (thr in sort(thresholds, decreasing = TRUE)) {
+    ceiling_items <- evaluation$item[evaluation$ceiling_flag == paste0(thr, "%")]
+    cat(sprintf("  Ceiling effect (>=%d%%): %s\n", thr,
+                ifelse(length(ceiling_items) > 0, paste(ceiling_items, collapse = ", "), "(none)")))
+  }
   
   # Skewness
   skew_flag <- evaluation$item[evaluation$skewness_flag == "FLAG"]
