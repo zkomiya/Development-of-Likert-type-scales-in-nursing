@@ -1,10 +1,31 @@
 # ===================================================
 # EFA Display
-# Version: 12.0 - Removed display_specific_result
+# Version: 12.1 - Added display_heywood_check
 # Description: Display EFA results with configurable evaluation thresholds
-# Changes from v11.0:
-#   - Removed display_specific_result() (oblimin-only individual display)
+# Changes from v12.0:
+#   - Added display_heywood_check() function
 # ===================================================
+
+# ===================================================
+# Display Heywood Check
+# ===================================================
+
+display_heywood_check <- function(communalities, label) {
+  cat(sprintf("\n--- HEYWOOD CHECK: %s ---\n", label))
+  
+  heywood_items <- communalities[communalities >= 1.0]
+  
+  if (length(heywood_items) == 0) {
+    cat("Heywood cases (communality >= 1.000): NONE\n")
+  } else {
+    cat(sprintf("Heywood cases (communality >= 1.000): %d items detected\n", length(heywood_items)))
+    cat(sprintf("  %-8s %s\n", "Item", "Communality"))
+    for (item_name in names(heywood_items)) {
+      cat(sprintf("  %-8s %.3f        [WARNING]\n", item_name, heywood_items[[item_name]]))
+    }
+    cat("  ** Solution may be unreliable. Interpret with caution. **\n")
+  }
+}
 
 # Display pattern matrix
 display_pattern_matrix <- function(pattern, display_cutoff) {
@@ -360,6 +381,13 @@ display_efa_evaluation <- function(results,
   cat("EFA EVALUATION SUMMARY\n")
   cat(sprintf("Extraction method: %s\n", extraction_method))
   cat("========================================\n")
+  
+  # --- Heywood check ---
+  display_heywood_check(results$polychoric$efa$extraction$communalities, "Polychoric")
+  display_heywood_check(results$pearson$efa$extraction$communalities, "Pearson")
+  cat("\n")
+  # ----------------------
+  
   cat("\nCriteria for ALL items:\n")
   cat(sprintf("  1. Primary loading >= %.2f\n", primary_threshold))
   cat(sprintf("  2. NOT cross-loading (2nd < %.2f OR diff > %.2f)\n", 
