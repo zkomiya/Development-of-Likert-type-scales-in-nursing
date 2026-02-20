@@ -1,6 +1,6 @@
 # ===================================================
 # Item-Item Correlation Main (Controller Layer)
-# Version: 14.0 - Enhanced show_ii_evaluation with full analysis
+# Version: 15.0 - subscale_def loaded from scale_structure
 # Description: Main controller for item-item correlation analysis
 # ===================================================
 
@@ -79,10 +79,8 @@ show_ii_evaluation <- function(data_obj) {
   # Load configuration
   config <- load_config()
   use <- config$analysis$correlation_analysis$use
-  subscale_def <- config$analysis$item_total_analysis
-  
-  # Remove enable_subscales flag from subscale definitions
-  subscale_def$enable_subscales <- NULL
+  dataset_name <- config$analysis$data_source$dataset
+  subscale_def <- config$analysis$scale_structure[[dataset_name]]
   
   # Compute both correlation matrices
   cor_poly <- calculate_polychoric_correlation(data)

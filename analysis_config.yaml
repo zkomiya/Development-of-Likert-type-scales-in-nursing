@@ -1,5 +1,5 @@
 # Analysis Configuration
-# Version: 3.0 - Factor number settings added
+# Version: 4.0 - extraction_methods supports multiple methods
 
 # ===== DATA SOURCE =====
 data_source:
@@ -45,44 +45,42 @@ correlation_analysis:
   # MIIC calculation uses psych::alpha() for both methods
   # Item-Total correlation always uses Pearson (via psych::alpha)
 
-#item_total_analysis:
-#  enable_subscales: true
-#  self-management_skills:
-#    name: "Self-management Skills"
-#    items: ["Q04","Q05", "Q06", "Q09", "Q12", "Q21", "Q22", "Q23"]
-#  ability_to_stay_safe:
-#    name: "Ability to Stay Safe"
-#    items: ["Q08", "Q18", "Q19", "Q20", "Q24", "Q28"]
-#  ability_to_express_ones_inner_self:
-#    name: "Ability to Express One's Inner Self"
-#    items: ["Q07", "Q11", "Q14", "Q25", "Q26"]
-#  mental_stability:
-#    name: "Mental Stability"
-#    items: ["Q10", "Q13", "Q15", "Q16", "Q17", "Q27"]
-#  awareness_of_illness_and_treatment_needs:
-#    name: "Awareness of Illness and Treatment Needs"
-#    items: ["Q01", "Q02", "Q03"]
-
-item_total_analysis:
-  enable_subscales: true
-  self-management_skills:
-    name: "地域活動の自己管理"
-    items: ["Q04","Q05", "Q09", "Q20", "Q21", "Q22"]
-  ability_to_stay_safe:
-    name: "精神状態の安定性"
-    items: ["Q10", "Q12", "Q14", "Q15", "Q16"]
-  ability_to_express_ones_inner_self:
-    name: "自分の意向や変化を周囲に表出する力"
-    items: ["Q07", "Q11", "Q13", "Q24","Q25","Q30"]
-  mental_stability:
-    name: "病気と治療の必要性の理解"
-    items: ["Q01", "Q02", "Q03"]
-  awareness_of_illness_and_treatment_needs:
-    name: "現時点で自分と他人への危険行動がない"
-    items: ["Q26", "Q27", "Q28","Q29"]
-  awareness_of_illness_and_treatment_needs2:
-    name: "自分の生活の安全を保つ力"
-    items: ["Q06", "Q08", "Q17","Q18","Q23"]
+# ===== SCALE STRUCTURE =====
+# Factor and subscale definitions per dataset
+# Used across multiple analyses (ii, item_total, etc.)
+scale_structure:
+  items_28:
+    self_management_skills:
+      name: "セルフマネジメント能力"
+      items: ["Q04","Q05", "Q06","Q09","Q12", "Q21", "Q22", "Q23"]
+    ability_to_stay_safe:
+      name: "安全に過ごす力"
+      items: ["Q06", "Q18", "Q19", "Q20", "Q24","Q28"]
+    mental_stability:
+      name: "自分の内面を表現する力"
+      items: ["Q07", "Q11", "Q14","Q25","Q26"]
+    safety_behavior:
+      name: "精神状態の安定性"
+      items: ["Q10", "Q13", "Q15","Q16","Q17","Q27"]
+    awareness_of_illness:
+      name: "病気と治療の必要性の自覚"
+      items: ["Q01", "Q02", "Q03"]
+  items_30:
+    factor_1:
+      name: "DUMMY"
+      items: ["Q01", "Q02", "Q03"]
+  items_29:
+    factor_1:
+      name: "DUMMY"
+      items: ["Q01", "Q02", "Q03"]
+  items_28-Q07:
+    factor_1:
+      name: "DUMMY"
+      items: ["Q01", "Q02", "Q03"]
+  items_30-Q19:
+    factor_1:
+      name: "DUMMY"
+      items: ["Q01", "Q02", "Q03"]
 
 # ===== FACTOR NUMBER DETERMINATION =====
 factor_number:
@@ -94,9 +92,9 @@ efa_settings:
   # missing: "listwise","pairwise"
   missing: "listwise"
   pd_tolerance: 1.0e-6
-  # Single extraction method (psych::fa fm argument)
+  # Multiple extraction methods (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
-  extraction_methods: ["wls", "pa", "minres","ml"]
+  extraction_methods: ["wls", "pa", "minres"]
   gamma_values: [0.0]
   kaiser_normalize: true
   max_iterations: 1000

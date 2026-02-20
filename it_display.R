@@ -1,213 +1,214 @@
 # ===================================================
-# Item-Total Correlation Display (View Layer)
-# Version: 5.2 - Removed judgment from comparison display
-# Description: Display functions for I-T correlation analysis with both methods
-# Changes from v5.1:
-#   - Removed Flag column and Legend from it_display_comparison()
-#   - Removed Summary count of atypical pattern
+# Item-Item Correlation Display (View Layer)
+# Version: 11.0 - Added MIIC to within-subscale display
+# Description: Display functions for item-item correlation analysis
 # ===================================================
 
 # Display header
-it_display_header <- function() {
+ii_display_header <- function() {
   cat("========================================\n")
-  cat("Item-Total Correlation Analysis\n")
+  cat("Item-Item Correlation Analysis\n")
   cat("========================================\n\n")
 }
 
 # Display data information
-it_display_data_info <- function(n_items, item_names) {
+ii_display_data_info <- function(item_cols, n_items, complete_info = NULL) {
   cat("Step 1: Data detection\n")
-  cat(sprintf("  Found %d items: %s ... %s\n", 
-              n_items, item_names[1], item_names[n_items]))
-}
-
-# Display calculation info
-it_display_calculation_info <- function() {
-  cat("\nStep 2: Calculating correlations\n")
-  cat("  Method 1: Pearson (via psych::alpha)\n")
-  cat("  Method 2: Polyserial (via polycor::polyserial)\n")
-  cat("  Type: Both corrected and uncorrected\n")
-}
-
-# Display main results (4-column structure)
-it_display_results <- function(it_results) {
-  cat("\n========================================\n")
-  cat("RESULTS\n")
-  cat("========================================\n\n")
+  cat(sprintf("  Found %d item columns: %s ... %s\n", 
+              n_items, item_cols[1], item_cols[n_items]))
   
-  # Format for display
-  formatted <- data.frame(
-    Item = it_results$item,
-    Pear_Corr = sprintf("%.3f", it_results$cor_corrected_pearson),
-    Pear_Uncorr = sprintf("%.3f", it_results$cor_uncorrected_pearson),
-    Poly_Corr = sprintf("%.3f", it_results$cor_corrected_polyserial),
-    Poly_Uncorr = sprintf("%.3f", it_results$cor_uncorrected_polyserial),
-    stringsAsFactors = FALSE
-  )
-  
-  # Replace NA with "  NA" for alignment
-  formatted[formatted == "NA"] <- "  NA"
-  
-  print(formatted, row.names = FALSE)
-  
-  cat("\nColumn Legend:\n")
-  cat("  Pear_Corr   : Pearson corrected (item-rest)\n")
-  cat("  Pear_Uncorr : Pearson uncorrected (item-total)\n")
-  cat("  Poly_Corr   : Polyserial corrected (item-rest)\n")
-  cat("  Poly_Uncorr : Polyserial uncorrected (item-total)\n")
-}
-
-# Display summary statistics
-it_display_summary <- function(summary_stats) {
-  cat("\n----------------------------------------\n")
-  cat("SUMMARY\n")
-  cat("----------------------------------------\n")
-  
-  # Pearson
-  cat("\nPearson Correlations:\n")
-  cat(sprintf("  Corrected:   Mean = %.3f (SD = %.3f), Range = [%.3f, %.3f]\n",
-              summary_stats$mean_corrected_pearson,
-              summary_stats$sd_corrected_pearson,
-              summary_stats$min_corrected_pearson,
-              summary_stats$max_corrected_pearson))
-  cat(sprintf("  Uncorrected: Mean = %.3f (SD = %.3f)\n",
-              summary_stats$mean_uncorrected_pearson,
-              summary_stats$sd_uncorrected_pearson))
-  
-  # Polyserial
-  cat("\nPolyserial Correlations:\n")
-  cat(sprintf("  Corrected:   Mean = %.3f (SD = %.3f), Range = [%.3f, %.3f]\n",
-              summary_stats$mean_corrected_polyserial,
-              summary_stats$sd_corrected_polyserial,
-              summary_stats$min_corrected_polyserial,
-              summary_stats$max_corrected_polyserial))
-  cat(sprintf("  Uncorrected: Mean = %.3f (SD = %.3f)\n",
-              summary_stats$mean_uncorrected_polyserial,
-              summary_stats$sd_uncorrected_polyserial))
-  
-  # Comparison
-  cat("\nDifference (Polyserial - Pearson):\n")
-  cat(sprintf("  Corrected:   Mean = %+.3f (SD = %.3f)\n",
-              summary_stats$mean_diff_corrected,
-              summary_stats$sd_diff_corrected))
-  cat(sprintf("  Uncorrected: Mean = %+.3f (SD = %.3f)\n",
-              summary_stats$mean_diff_uncorrected,
-              summary_stats$sd_diff_uncorrected))
-  
-  # Quality check
-  if (summary_stats$n_na_corrected_polyserial > 0 || 
-      summary_stats$n_na_uncorrected_polyserial > 0) {
-    cat("\nWarning: Polyserial computation failed for some items:\n")
-    cat(sprintf("  Corrected: %d NAs\n", summary_stats$n_na_corrected_polyserial))
-    cat(sprintf("  Uncorrected: %d NAs\n", summary_stats$n_na_uncorrected_polyserial))
+  if (!is.null(complete_info)) {
+    cat(sprintf("  Complete cases: %d out of %d (%.1f%%)\n",
+                complete_info$n_complete,
+                complete_info$n_total,
+                complete_info$percent_complete))
   }
 }
 
-# Display subscale header
-it_display_subscale_header <- function(subscale_name, n_items) {
-  cat("\n----------------------------------------\n")
-  cat(sprintf("SUBSCALE: %s (%d items)\n", subscale_name, n_items))
-  cat("----------------------------------------\n")
-}
-
-# Display subscale results (4-column structure)
-it_display_subscale_results <- function(subscale_results) {
-  formatted <- data.frame(
-    Item = subscale_results$item,
-    Pear_Corr = sprintf("%.3f", subscale_results$cor_corrected_pearson),
-    Pear_Uncorr = sprintf("%.3f", subscale_results$cor_uncorrected_pearson),
-    Poly_Corr = sprintf("%.3f", subscale_results$cor_corrected_polyserial),
-    Poly_Uncorr = sprintf("%.3f", subscale_results$cor_uncorrected_polyserial),
-    stringsAsFactors = FALSE
-  )
-  
-  formatted[formatted == "NA"] <- "  NA"
-  
-  print(formatted, row.names = FALSE)
-}
-
-# Display I-T evaluation results
-display_it_evaluation <- function(eval_results) {
+# Display MIIC comparison (without Difference column)
+ii_display_miic_comparison <- function(miic_poly, miic_pear) {
   cat("\n========================================\n")
-  cat("Item-Total Correlation Evaluation\n")
+  cat("MIIC COMPARISON\n")
   cat("========================================\n\n")
   
-  # Display thresholds
-  cat("Evaluation Criteria (Corrected I-T Correlation):\n")
-  cat(sprintf("  Poor:      r < %.2f (consider deletion)\n", eval_results$thresholds$poor))
-  cat(sprintf("  Marginal:  %.2f <= r < %.2f (caution)\n", 
-              eval_results$thresholds$poor, eval_results$thresholds$marginal))
-  cat(sprintf("  Good:      %.2f <= r < %.2f (acceptable)\n",
-              eval_results$thresholds$marginal, eval_results$thresholds$good))
-  cat(sprintf("  Excellent: r >= %.2f (good)\n", eval_results$thresholds$good))
+  # Header
+  cat(sprintf("%-25s %12s %12s\n", "", "Polychoric", "Pearson"))
+  cat(paste(rep("-", 50), collapse = ""), "\n")
   
-  # Display item-level evaluation
-  cat("\n----------------------------------------\n")
-  cat("Item-Level Evaluation\n")
-  cat("----------------------------------------\n\n")
+  # MIIC values
+  cat(sprintf("%-25s %12.3f %12.3f\n", 
+              "MIIC:", miic_poly$miic, miic_pear$miic))
   
-  eval_df <- eval_results$evaluation
-  formatted <- data.frame(
-    Item = eval_df$item,
-    Pear_r = sprintf("%.3f", eval_df$pearson_r),
-    Pear_Eval = eval_df$pearson_eval,
-    Poly_r = sprintf("%.3f", eval_df$polyserial_r),
-    Poly_Eval = eval_df$polyserial_eval,
-    stringsAsFactors = FALSE
-  )
+  cat(sprintf("%-25s %12d %12d\n", 
+              "Item pairs:", miic_poly$n_pairs, miic_pear$n_pairs))
   
-  print(formatted, row.names = FALSE)
+  # Item-level mean correlations
+  cat("\nItem-level mean correlations:\n")
+  cat(sprintf("%-8s %12s %12s\n", "Item", "Polychoric", "Pearson"))
+  cat(paste(rep("-", 35), collapse = ""), "\n")
   
-  # Display summary counts
-  cat("\n----------------------------------------\n")
-  cat("Summary Counts\n")
-  cat("----------------------------------------\n\n")
-  
-  cat("Pearson:\n")
-  cat(sprintf("  Excellent: %d, Good: %d, Marginal: %d, Poor: %d\n",
-              eval_results$pearson_counts["Excellent"],
-              eval_results$pearson_counts["Good"],
-              eval_results$pearson_counts["Marginal"],
-              eval_results$pearson_counts["Poor"]))
-  
-  cat("\nPolyserial:\n")
-  cat(sprintf("  Excellent: %d, Good: %d, Marginal: %d, Poor: %d\n",
-              eval_results$polyserial_counts["Excellent"],
-              eval_results$polyserial_counts["Good"],
-              eval_results$polyserial_counts["Marginal"],
-              eval_results$polyserial_counts["Poor"]))
-  
-  # Display problem items
-  if (length(eval_results$problem_items) > 0) {
-    cat("\n----------------------------------------\n")
-    cat("Problem Items (Poor or Marginal)\n")
-    cat("----------------------------------------\n")
-    cat(paste(eval_results$problem_items, collapse = ", "), "\n")
-  } else {
-    cat("\nNo problem items detected.\n")
+  items <- names(miic_poly$item_mean_correlations)
+  for (item in items) {
+    poly_val <- miic_poly$item_mean_correlations[[item]]
+    pear_val <- miic_pear$item_mean_correlations[[item]]
+    
+    cat(sprintf("%-8s %12.3f %12.3f\n", item, poly_val, pear_val))
   }
 }
 
-# Display Total vs Subscale comparison
-it_display_comparison <- function(comparison) {
+# Display correlation matrix comparison
+ii_display_correlation_comparison <- function(cor_poly, cor_pear) {
   cat("\n========================================\n")
-  cat("RESULTS: Total vs Subscale Comparison\n")
+  cat("CORRELATION MATRIX COMPARISON\n")
   cat("========================================\n\n")
   
-  # Format for display
-  formatted <- data.frame(
-    Item = comparison$item,
-    Subscale = substr(comparison$subscale, 1, 20),
-    Total_Corr = sprintf("%.3f", comparison$total_corr),
-    Subscale_Corr = sprintf("%.3f", comparison$subscale_corr),
-    Diff = sprintf("%+.3f", comparison$diff),
-    stringsAsFactors = FALSE
-  )
+  cat("Polychoric Correlation Matrix:\n")
+  print(round(cor_poly, 3))
   
-  # Handle NA subscale
-  formatted$Subscale[is.na(comparison$subscale)] <- "(none)"
-  formatted$Subscale_Corr[is.na(comparison$subscale_corr)] <- "   NA"
-  formatted$Diff[is.na(comparison$diff)] <- "    NA"
+  cat("\n----------------------------------------\n")
+  cat("Pearson Correlation Matrix:\n")
+  print(round(cor_pear, 3))
   
-  print(formatted, row.names = FALSE)
+  cat("\n----------------------------------------\n")
+  cat("Difference (Polychoric - Pearson):\n")
+  cor_diff <- cor_poly - cor_pear
+  print(round(cor_diff, 3))
+}
+
+# Display correlation distribution
+ii_display_correlation_distribution <- function(dist_stats) {
+  cat("\n[1] Correlation Distribution\n")
+  cat(sprintf("  Polychoric correlations (%d pairs):\n", dist_stats$n_pairs))
+  cat(sprintf("    Mean:          %.2f\n", dist_stats$mean))
+  cat(sprintf("    Median:        %.2f\n", dist_stats$median))
+  cat(sprintf("    Range:         %.2f - %.2f\n", dist_stats$min, dist_stats$max))
+  cat("    Percentiles:\n")
+  cat(sprintf("      25th:        %.2f\n", dist_stats$q25))
+  cat(sprintf("      75th:        %.2f\n", dist_stats$q75))
+  cat(sprintf("      IQR:         %.2f\n", dist_stats$iqr))
+}
+
+# Display subscale analysis
+ii_display_subscale_analysis <- function(subscale_stats) {
+  cat("\n[2] Subscale Correlations\n")
+  cat("  Within subscale (same factor):\n")
+  cat(sprintf("    %-35s %6s %7s %8s %8s %18s\n",
+              "", "n", "pairs", "Mean r", "MIIC", "range"))
+  cat(sprintf("    %s\n", paste(rep("-", 85), collapse = "")))
+  
+  for (sub_name in names(subscale_stats$within_stats)) {
+    stats <- subscale_stats$within_stats[[sub_name]]
+    
+    if (is.na(stats$mean)) {
+      cat(sprintf("    %-35s (insufficient items)\n", paste0(sub_name, ":")))
+    } else {
+      cat(sprintf("    %-35s %6d %7d %8.2f %8.2f %9s[%.2f, %.2f]\n",
+                  paste0(sub_name, ":"),
+                  stats$n_items,
+                  stats$n_pairs,
+                  stats$mean,
+                  stats$miic,
+                  "",
+                  stats$min,
+                  stats$max))
+    }
+  }
+  
+  cat("\n")
+  cat(sprintf("  Overall within-subscale mean r:    %.2f\n",
+              subscale_stats$overall_within_mean))
+  cat(sprintf("  Overall within-subscale mean MIIC: %.2f\n",
+              subscale_stats$overall_within_miic))
+  cat("\n")
+  cat("  Between subscales (different factors):\n")
+  cat(sprintf("    Mean r = %.2f (range: %.2f-%.2f, n=%d pairs)\n",
+              subscale_stats$between_stats$mean,
+              subscale_stats$between_stats$min,
+              subscale_stats$between_stats$max,
+              subscale_stats$between_stats$n_pairs))
+}
+
+# Display cluster analysis
+ii_display_cluster_analysis <- function(clusters) {
+  cat(sprintf("\n[3] High Correlation Clusters (r > %.2f)\n", clusters$threshold))
+  
+  if (clusters$n_clusters == 0) {
+    cat("  No clusters found\n")
+    return()
+  }
+  
+  for (i in seq_along(clusters$clusters)) {
+    cluster <- clusters$clusters[[i]]
+    cat(sprintf("  Cluster %d: %s\n", i, paste(cluster$items, collapse = ", ")))
+    
+    # Display edges within cluster
+    for (j in 1:nrow(cluster$edges)) {
+      edge <- cluster$edges[j, ]
+      cat(sprintf("    %s-%s: %.2f\n", edge$item1, edge$item2, edge$correlation))
+    }
+    
+    # Calculate average within-cluster correlation
+    avg_r <- mean(cluster$edges$correlation)
+    cat(sprintf("    -> Average within-cluster r = %.2f\n", avg_r))
+    cat("\n")
+  }
+}
+
+# Display overall assessment
+ii_display_overall_assessment <- function(miic_poly, miic_pear, dist_stats, 
+                                          subscale_stats, clusters) {
+  cat("\n[4] Summary Statistics\n")
+  
+  # MIIC Summary
+  cat("  MIIC:\n")
+  cat(sprintf("    Polychoric: %.3f\n", miic_poly$miic))
+  cat(sprintf("    Pearson:    %.3f\n", miic_pear$miic))
+  cat("\n")
+  
+  # Pairs by strength
+  cat("  Pairs by strength:\n")
+  cat(sprintf("    r > 0.70:      %d pairs (%.1f%%)\n", 
+              dist_stats$strength_counts$very_high,
+              dist_stats$strength_counts$very_high / dist_stats$n_pairs * 100))
+  cat(sprintf("    0.50-0.70:     %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$high,
+              dist_stats$strength_counts$high / dist_stats$n_pairs * 100))
+  cat(sprintf("    0.30-0.50:     %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$moderate,
+              dist_stats$strength_counts$moderate / dist_stats$n_pairs * 100))
+  cat(sprintf("    < 0.30:        %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$low,
+              dist_stats$strength_counts$low / dist_stats$n_pairs * 100))
+  cat("\n")
+  
+  # Cluster Summary
+  if (clusters$n_clusters > 0) {
+    cat("  High correlation clusters (r > 0.70):\n")
+    cluster_names <- sapply(clusters$clusters, function(x) {
+      paste(x$items, collapse = "-")
+    })
+    cat(sprintf("    Clusters: %s\n", paste(cluster_names, collapse = ", ")))
+    cat("\n")
+  }
+  
+  # Subscale Summary
+  cat("  Subscale structure:\n")
+  cat(sprintf("    Within-subscale mean r:    %.2f\n", subscale_stats$overall_within_mean))
+  cat(sprintf("    Within-subscale mean MIIC: %.2f\n", subscale_stats$overall_within_miic))
+  cat(sprintf("    Between-subscale mean r:   %.2f\n", subscale_stats$between_stats$mean))
+}
+
+# Display evaluation results (extended version)
+ii_display_evaluation <- function(miic_poly, miic_pear, cor_poly, cor_pear,
+                                  dist_stats, subscale_stats, clusters) {
+  cat("\n========================================\n")
+  cat("II CORRELATION EVALUATION\n")
+  cat("========================================\n")
+  
+  # Display all sections
+  ii_display_correlation_distribution(dist_stats)
+  ii_display_subscale_analysis(subscale_stats)
+  ii_display_cluster_analysis(clusters)
+  ii_display_overall_assessment(miic_poly, miic_pear, dist_stats, 
+                                subscale_stats, clusters)
 }

@@ -1,6 +1,6 @@
 # ===================================================
 # Item-Item Correlation Calculator (Model Layer)
-# Version: 13.0 - Removed Within-Between difference calculation
+# Version: 14.0 - Added MIIC to within-subscale calculation
 # Description: Calculate correlations and MIIC for both methods
 # ===================================================
 
@@ -104,7 +104,7 @@ calculate_correlation_distribution <- function(cor_matrix) {
 }
 
 # Calculate within and between subscale correlations
-calculate_subscale_correlations <- function(cor_matrix, subscale_def) {
+calculate_subscale_correlations <- function(cor_matrix, subscale_def, n_obs) {
   
   # Initialize storage
   within_stats <- list()
@@ -121,7 +121,9 @@ calculate_subscale_correlations <- function(cor_matrix, subscale_def) {
         mean = NA,
         min = NA,
         max = NA,
-        n_pairs = 0
+        n_pairs = 0,
+        n_items = length(items),
+        miic = NA
       )
       next
     }
@@ -131,11 +133,16 @@ calculate_subscale_correlations <- function(cor_matrix, subscale_def) {
     upper_tri <- upper.tri(sub_matrix)
     sub_cors <- sub_matrix[upper_tri]
     
+    # Calculate within-subscale MIIC
+    sub_miic <- calculate_miic_from_correlation_matrix(sub_matrix, n_obs)
+    
     within_stats[[sub_name]] <- list(
       mean = mean(sub_cors, na.rm = TRUE),
       min = min(sub_cors, na.rm = TRUE),
       max = max(sub_cors, na.rm = TRUE),
-      n_pairs = length(sub_cors)
+      n_pairs = length(sub_cors),
+      n_items = length(items),
+      miic = sub_miic$miic
     )
   }
   
@@ -163,10 +170,14 @@ calculate_subscale_correlations <- function(cor_matrix, subscale_def) {
   all_within_means <- sapply(within_stats, function(x) x$mean)
   overall_within_mean <- mean(all_within_means, na.rm = TRUE)
   
+  all_within_miics <- sapply(within_stats, function(x) x$miic)
+  overall_within_miic <- mean(all_within_miics, na.rm = TRUE)
+  
   list(
     within_stats = within_stats,
     between_stats = between_stats,
-    overall_within_mean = overall_within_mean
+    overall_within_mean = overall_within_mean,
+    overall_within_miic = overall_within_miic
   )
 }
 

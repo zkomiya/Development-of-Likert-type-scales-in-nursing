@@ -1,6 +1,6 @@
 # ===================================================
 # Item-Item Correlation Display (View Layer)
-# Version: 9.0 - Removed Within-Between difference display
+# Version: 10.0 - Pairs by strength moved to overall assessment
 # Description: Display functions for item-item correlation analysis
 # ===================================================
 
@@ -86,20 +86,6 @@ ii_display_correlation_distribution <- function(dist_stats) {
   cat(sprintf("      25th:        %.2f\n", dist_stats$q25))
   cat(sprintf("      75th:        %.2f\n", dist_stats$q75))
   cat(sprintf("      IQR:         %.2f\n", dist_stats$iqr))
-  cat("\n")
-  cat("  Pairs by strength:\n")
-  cat(sprintf("    r > 0.70:      %d pairs (%.1f%%)\n", 
-              dist_stats$strength_counts$very_high,
-              dist_stats$strength_counts$very_high / dist_stats$n_pairs * 100))
-  cat(sprintf("    0.50-0.70:     %d pairs (%.1f%%)\n",
-              dist_stats$strength_counts$high,
-              dist_stats$strength_counts$high / dist_stats$n_pairs * 100))
-  cat(sprintf("    0.30-0.50:     %d pairs (%.1f%%)\n",
-              dist_stats$strength_counts$moderate,
-              dist_stats$strength_counts$moderate / dist_stats$n_pairs * 100))
-  cat(sprintf("    < 0.30:        %d pairs (%.1f%%)\n",
-              dist_stats$strength_counts$low,
-              dist_stats$strength_counts$low / dist_stats$n_pairs * 100))
 }
 
 # Display subscale analysis
@@ -155,7 +141,7 @@ ii_display_cluster_analysis <- function(clusters) {
     
     # Calculate average within-cluster correlation
     avg_r <- mean(cluster$edges$correlation)
-    cat(sprintf("    → Average within-cluster r = %.2f\n", avg_r))
+    cat(sprintf("    -> Average within-cluster r = %.2f\n", avg_r))
     cat("\n")
   }
 }
@@ -171,22 +157,31 @@ ii_display_overall_assessment <- function(miic_poly, miic_pear, dist_stats,
   cat(sprintf("    Pearson:    %.3f\n", miic_pear$miic))
   cat("\n")
   
-  # Item Redundancy Summary
-  cat("  High correlations (r > 0.70):\n")
-  very_high_count <- dist_stats$strength_counts$very_high
-  very_high_pct <- very_high_count / dist_stats$n_pairs * 100
+  # Pairs by strength
+  cat("  Pairs by strength:\n")
+  cat(sprintf("    r > 0.70:      %d pairs (%.1f%%)\n", 
+              dist_stats$strength_counts$very_high,
+              dist_stats$strength_counts$very_high / dist_stats$n_pairs * 100))
+  cat(sprintf("    0.50-0.70:     %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$high,
+              dist_stats$strength_counts$high / dist_stats$n_pairs * 100))
+  cat(sprintf("    0.30-0.50:     %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$moderate,
+              dist_stats$strength_counts$moderate / dist_stats$n_pairs * 100))
+  cat(sprintf("    < 0.30:        %d pairs (%.1f%%)\n",
+              dist_stats$strength_counts$low,
+              dist_stats$strength_counts$low / dist_stats$n_pairs * 100))
+  cat("\n")
   
-  cat(sprintf("    Count: %d pairs (%.1f%% of all pairs)\n",
-              very_high_count, very_high_pct))
-  
+  # Cluster Summary
   if (clusters$n_clusters > 0) {
+    cat("  High correlation clusters (r > 0.70):\n")
     cluster_names <- sapply(clusters$clusters, function(x) {
       paste(x$items, collapse = "-")
     })
-    cat(sprintf("    Clusters: %s\n", 
-                paste(cluster_names, collapse = ", ")))
+    cat(sprintf("    Clusters: %s\n", paste(cluster_names, collapse = ", ")))
+    cat("\n")
   }
-  cat("\n")
   
   # Subscale Summary
   cat("  Subscale structure:\n")
