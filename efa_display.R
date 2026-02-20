@@ -1,9 +1,10 @@
 # ===================================================
 # EFA Display
-# Version: 12.1 - Added display_heywood_check
+# Version: 13.0 - Added method_name parameter to display functions
 # Description: Display EFA results with configurable evaluation thresholds
-# Changes from v12.0:
-#   - Added display_heywood_check() function
+# Changes from v12.1:
+#   - display_efa_comparison(): added method_name parameter for header display
+#   - display_efa_evaluation(): added method_name parameter for header display
 # ===================================================
 
 # ===================================================
@@ -41,7 +42,6 @@ display_pattern_matrix <- function(pattern, display_cutoff) {
   }
   
   if (is.null(display_cutoff)) {
-    # Show all values
     pattern_display <- round(pattern, 3)
     return(pattern_display)
   }
@@ -105,7 +105,7 @@ display_matrix_comparison <- function(matrix_poly, matrix_pear, display_cutoff) 
 # Display single gamma comparison
 # ===================================================
 
-display_gamma_comparison <- function(results, gamma, display_cutoff) {
+display_gamma_comparison <- function(results, gamma, display_cutoff, method_name) {
   
   gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
   
@@ -116,16 +116,18 @@ display_gamma_comparison <- function(results, gamma, display_cutoff) {
   poly_sol <- results$polychoric$efa$rotations[[gamma_key]]
   pear_sol <- results$pearson$efa$rotations[[gamma_key]]
   
-  cat("PATTERN MATRIX\n")
-  cat("--------------\n\n")
+  section_label <- sprintf("[%s | Oblimin gamma=%.2f | Polychoric vs Pearson]", method_name, gamma)
+  
+  cat(sprintf("PATTERN MATRIX %s\n", section_label))
+  cat(paste(rep("-", nchar(sprintf("PATTERN MATRIX %s", section_label))), collapse = ""), "\n\n")
   display_matrix_comparison(poly_sol$pattern, pear_sol$pattern, display_cutoff)
   
-  cat("\nSTRUCTURE MATRIX\n")
-  cat("----------------\n\n")
+  cat(sprintf("\nSTRUCTURE MATRIX %s\n", section_label))
+  cat(paste(rep("-", nchar(sprintf("STRUCTURE MATRIX %s", section_label))), collapse = ""), "\n\n")
   display_matrix_comparison(poly_sol$structure, pear_sol$structure, display_cutoff)
   
-  cat("\nFACTOR CORRELATION\n")
-  cat("------------------\n\n")
+  cat(sprintf("\nFACTOR CORRELATION %s\n", section_label))
+  cat(paste(rep("-", nchar(sprintf("FACTOR CORRELATION %s", section_label))), collapse = ""), "\n\n")
   
   cat("Polychoric:\n")
   print(round(poly_sol$factor_correlation, 3))
@@ -153,7 +155,7 @@ display_gamma_comparison <- function(results, gamma, display_cutoff) {
 # Display single kappa comparison (Promax)
 # ===================================================
 
-display_kappa_comparison <- function(results, kappa, display_cutoff) {
+display_kappa_comparison <- function(results, kappa, display_cutoff, method_name) {
   
   kappa_key <- paste0("kappa_", kappa)
   
@@ -164,16 +166,18 @@ display_kappa_comparison <- function(results, kappa, display_cutoff) {
   poly_sol <- results$polychoric$efa$rotations_promax[[kappa_key]]
   pear_sol <- results$pearson$efa$rotations_promax[[kappa_key]]
   
-  cat("PATTERN MATRIX\n")
-  cat("--------------\n\n")
+  section_label <- sprintf("[%s | Promax kappa=%d | Polychoric vs Pearson]", method_name, kappa)
+  
+  cat(sprintf("PATTERN MATRIX %s\n", section_label))
+  cat(paste(rep("-", nchar(sprintf("PATTERN MATRIX %s", section_label))), collapse = ""), "\n\n")
   display_matrix_comparison(poly_sol$pattern, pear_sol$pattern, display_cutoff)
   
-  cat("\nSTRUCTURE MATRIX\n")
-  cat("----------------\n\n")
+  cat(sprintf("\nSTRUCTURE MATRIX %s\n", section_label))
+  cat(paste(rep("-", nchar(sprintf("STRUCTURE MATRIX %s", section_label))), collapse = ""), "\n\n")
   display_matrix_comparison(poly_sol$structure, pear_sol$structure, display_cutoff)
   
-  cat("\nFACTOR CORRELATION\n")
-  cat("------------------\n\n")
+  cat(sprintf("\nFACTOR CORRELATION %s\n", section_label))
+  cat(paste(rep("-", nchar(sprintf("FACTOR CORRELATION %s", section_label))), collapse = ""), "\n\n")
   
   cat("Polychoric:\n")
   print(round(poly_sol$factor_correlation, 3))
@@ -201,14 +205,14 @@ display_kappa_comparison <- function(results, kappa, display_cutoff) {
 # Display EFA comparison (main function)
 # ===================================================
 
-display_efa_comparison <- function(results, display_cutoff) {
+display_efa_comparison <- function(results, display_cutoff, method_name) {
   
   cat("\n========================================\n")
-  cat("EFA COMPARISON: Polychoric vs Pearson\n")
+  cat(sprintf("EFA COMPARISON: Polychoric vs Pearson [%s]\n", toupper(method_name)))
   cat("========================================\n\n")
   
   cat("Number of factors:", results$n_factors, "\n")
-  cat("Extraction method:", results$config_used$extraction_method, "\n")
+  cat("Extraction method:", method_name, "\n")
   cat("Gamma values:", paste(results$config_used$gamma_values, collapse = ", "), "\n")
   if (!is.null(results$config_used$promax_kappa_values)) {
     cat("Promax kappa values:", paste(results$config_used$promax_kappa_values, collapse = ", "), "\n")
@@ -222,19 +226,19 @@ display_efa_comparison <- function(results, display_cutoff) {
   # Display oblimin results
   cat("\n\n### OBLIMIN ROTATION RESULTS ###\n")
   for (gamma in results$config_used$gamma_values) {
-    display_gamma_comparison(results, gamma, display_cutoff)
+    display_gamma_comparison(results, gamma, display_cutoff, method_name = method_name)
   }
   
   # Display promax results
   if (!is.null(results$config_used$promax_kappa_values)) {
     cat("\n\n### PROMAX ROTATION RESULTS ###\n")
     for (kappa in results$config_used$promax_kappa_values) {
-      display_kappa_comparison(results, kappa, display_cutoff)
+      display_kappa_comparison(results, kappa, display_cutoff, method_name = method_name)
     }
   }
   
   cat("\n========================================\n")
-  cat("EFA COMPARISON COMPLETE\n")
+  cat(sprintf("EFA COMPARISON COMPLETE [%s]\n", toupper(method_name)))
   cat("========================================\n")
 }
 
@@ -371,15 +375,15 @@ display_efa_evaluation <- function(results,
                                    primary_threshold,
                                    cross_threshold,
                                    diff_threshold,
-                                   display_cutoff) {
+                                   display_cutoff,
+                                   method_name) {
   
   gamma_values <- results$config_used$gamma_values
   promax_kappa_values <- results$config_used$promax_kappa_values
-  extraction_method <- results$config_used$extraction_method
   
   cat("\n========================================\n")
   cat("EFA EVALUATION SUMMARY\n")
-  cat(sprintf("Extraction method: %s\n", extraction_method))
+  cat(sprintf("Extraction method: %s\n", method_name))
   cat("========================================\n")
   
   # --- Heywood check ---

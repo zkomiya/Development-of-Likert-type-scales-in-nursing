@@ -96,7 +96,7 @@ efa_settings:
   pd_tolerance: 1.0e-6
   # Single extraction method (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
-  extraction_method: "wls"
+  extraction_methods: ["wls", "pa", "minres","ml"]
   gamma_values: [0.0]
   kaiser_normalize: true
   max_iterations: 1000

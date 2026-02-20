@@ -1,8 +1,11 @@
 # ===================================================
 # EFA Main Controller
-# Version: 21.0 - Removed show_efa
-# Changes from v20.0:
-#   - Removed show_efa() function (oblimin-only individual display)
+# Version: 22.0 - Multiple extraction methods support
+# Changes from v21.0:
+#   - extraction_method (single) replaced by extraction_methods (vector)
+#   - analyze_efa(): loops over all extraction methods, results keyed by method name
+#   - show_efa_evaluation(): loops over all extraction methods
+#   - CSV export filename includes extraction method name
 # ===================================================
 
 # Main EFA analysis function
@@ -26,7 +29,7 @@ analyze_efa <- function(data_obj,
   
   # Read parameters from YAML
   missing <- efa_config$missing
-  extraction_method <- efa_config$extraction_method
+  extraction_methods <- unlist(efa_config$extraction_methods)
   gamma_values <- efa_config$gamma_values
   kaiser_normalize <- efa_config$kaiser_normalize
   max_iterations <- efa_config$max_iterations
@@ -39,7 +42,11 @@ analyze_efa <- function(data_obj,
   }
   pd_tol <- as.numeric(pd_tol)
   
-  # Read global parameters from YAML (scale range / item pattern)
+  if (is.null(extraction_methods) || length(extraction_methods) == 0) {
+    stop("extraction_methods not found or empty in analysis_config.yaml")
+  }
+  
+  # Read global parameters from YAML
   if (is.null(global_config$item_pattern)) {
     stop("Global item_pattern not found in analysis_config.yaml")
   }
@@ -53,7 +60,7 @@ analyze_efa <- function(data_obj,
   if (verbose) {
     cat("\nUsing EFA settings from configuration:\n")
     cat("  Missing data handling:", missing, "\n")
-    cat("  Extraction method:", extraction_method, "\n")
+    cat("  Extraction methods:", paste(extraction_methods, collapse = ", "), "\n")
     cat("  Gamma values:", paste(gamma_values, collapse = ", "), "\n")
     if (!is.null(promax_kappa_values)) {
       cat("  Promax kappa values:", paste(promax_kappa_values, collapse = ", "), "\n")
@@ -86,7 +93,7 @@ analyze_efa <- function(data_obj,
     stop("missing must be 'listwise' or 'pairwise'")
   }
   
-  # Step 1: Data Preprocessing
+  # Step 1: Data Preprocessing (once, shared across all methods)
   cat("\nStep 1: Data Preprocessing\n")
   cat("----------------------------\n")
   
@@ -104,7 +111,7 @@ analyze_efa <- function(data_obj,
   
   cat("Number of factors to extract:", n_factors, "\n")
   
-  # Step 2: Compute correlation matrices
+  # Step 2: Compute correlation matrices (once, shared across all methods)
   cat("\nStep 2: Computing correlation matrices\n")
   cat("------------------------------------------\n")
   cat("  Computing Polychoric correlation...\n")
@@ -120,130 +127,158 @@ analyze_efa <- function(data_obj,
     cat("  Pearson: ", nrow(cor_pear), "x", ncol(cor_pear), "\n")
   }
   
-  # Step 3: EFA with Polychoric correlation
-  cat("\nStep 3: Factor Extraction and Rotation (Polychoric)\n")
-  cat("----------------------------------------\n")
-  cat("Extracting", n_factors, "factors...\n")
+  # Steps 3-5: Loop over extraction methods
+  all_method_results <- list()
   
-  efa_poly <- perform_efa(
-    cor_matrix = cor_poly,
-    n_factors = n_factors,
-    fm = extraction_method,
-    gamma_values = gamma_values,
-    kaiser_normalize = kaiser_normalize,
-    max_iter = max_iterations,
-    flip_factors = flip_factors,
-    promax_kappa_values = promax_kappa_values,
-    verbose = verbose
-  )
-  
-  # Step 4: EFA with Pearson correlation
-  cat("\nStep 4: Factor Extraction and Rotation (Pearson)\n")
-  cat("----------------------------------------\n")
-  cat("Extracting", n_factors, "factors...\n")
-  
-  efa_pear <- perform_efa(
-    cor_matrix = cor_pear,
-    n_factors = n_factors,
-    fm = extraction_method,
-    gamma_values = gamma_values,
-    kaiser_normalize = kaiser_normalize,
-    max_iter = max_iterations,
-    flip_factors = flip_factors,
-    promax_kappa_values = promax_kappa_values,
-    verbose = verbose
-  )
-  
-  # Step 5: Align Pearson solution to Polychoric
-  cat("\nStep 5: Aligning Pearson solution to Polychoric\n")
-  cat("------------------------------------------------\n")
-  
-  efa_pear_aligned <- efa_pear
-  
-  # Align oblimin rotations
-  for (gamma in gamma_values) {
-    gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
+  for (fm in extraction_methods) {
     
-    poly_pattern <- efa_poly$rotations[[gamma_key]]$pattern
-    pear_pattern <- efa_pear$rotations[[gamma_key]]$pattern
+    cat(sprintf("\n========================================\n"))
+    cat(sprintf("EXTRACTION METHOD: %s\n", toupper(fm)))
+    cat(sprintf("========================================\n"))
     
-    alignment_result <- align_factors(poly_pattern, pear_pattern)
-    factor_mapping <- alignment_result$factor_mapping
+    # Step 3: EFA with Polychoric correlation
+    cat(sprintf("\nStep 3 [%s]: Factor Extraction and Rotation (Polychoric)\n", fm))
+    cat("----------------------------------------\n")
+    cat("Extracting", n_factors, "factors...\n")
     
-    efa_pear_aligned$rotations[[gamma_key]] <- 
-      align_efa_solution(
-        efa_poly$rotations[[gamma_key]],
-        efa_pear$rotations[[gamma_key]],
-        factor_mapping
-      )
-  }
-  
-  cat("  Oblimin alignment completed\n")
-  
-  # Align promax rotations
-  if (!is.null(promax_kappa_values)) {
-    for (kappa in promax_kappa_values) {
-      kappa_key <- paste0("kappa_", kappa)
+    efa_poly <- perform_efa(
+      cor_matrix = cor_poly,
+      n_factors = n_factors,
+      fm = fm,
+      gamma_values = gamma_values,
+      kaiser_normalize = kaiser_normalize,
+      max_iter = max_iterations,
+      flip_factors = flip_factors,
+      promax_kappa_values = promax_kappa_values,
+      verbose = verbose
+    )
+    
+    # Step 4: EFA with Pearson correlation
+    cat(sprintf("\nStep 4 [%s]: Factor Extraction and Rotation (Pearson)\n", fm))
+    cat("----------------------------------------\n")
+    cat("Extracting", n_factors, "factors...\n")
+    
+    efa_pear <- perform_efa(
+      cor_matrix = cor_pear,
+      n_factors = n_factors,
+      fm = fm,
+      gamma_values = gamma_values,
+      kaiser_normalize = kaiser_normalize,
+      max_iter = max_iterations,
+      flip_factors = flip_factors,
+      promax_kappa_values = promax_kappa_values,
+      verbose = verbose
+    )
+    
+    # Step 5: Align Pearson solution to Polychoric
+    cat(sprintf("\nStep 5 [%s]: Aligning Pearson solution to Polychoric\n", fm))
+    cat("------------------------------------------------\n")
+    
+    efa_pear_aligned <- efa_pear
+    
+    # Align oblimin rotations
+    for (gamma in gamma_values) {
+      gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
       
-      poly_pattern <- efa_poly$rotations_promax[[kappa_key]]$pattern
-      pear_pattern <- efa_pear$rotations_promax[[kappa_key]]$pattern
+      poly_pattern <- efa_poly$rotations[[gamma_key]]$pattern
+      pear_pattern <- efa_pear$rotations[[gamma_key]]$pattern
       
       alignment_result <- align_factors(poly_pattern, pear_pattern)
       factor_mapping <- alignment_result$factor_mapping
       
-      efa_pear_aligned$rotations_promax[[kappa_key]] <- 
+      efa_pear_aligned$rotations[[gamma_key]] <- 
         align_efa_solution(
-          efa_poly$rotations_promax[[kappa_key]],
-          efa_pear$rotations_promax[[kappa_key]],
+          efa_poly$rotations[[gamma_key]],
+          efa_pear$rotations[[gamma_key]],
           factor_mapping
         )
     }
     
-    cat("  Promax alignment completed\n")
+    cat("  Oblimin alignment completed\n")
+    
+    # Align promax rotations
+    if (!is.null(promax_kappa_values)) {
+      for (kappa in promax_kappa_values) {
+        kappa_key <- paste0("kappa_", kappa)
+        
+        poly_pattern <- efa_poly$rotations_promax[[kappa_key]]$pattern
+        pear_pattern <- efa_pear$rotations_promax[[kappa_key]]$pattern
+        
+        alignment_result <- align_factors(poly_pattern, pear_pattern)
+        factor_mapping <- alignment_result$factor_mapping
+        
+        efa_pear_aligned$rotations_promax[[kappa_key]] <- 
+          align_efa_solution(
+            efa_poly$rotations_promax[[kappa_key]],
+            efa_pear$rotations_promax[[kappa_key]],
+            factor_mapping
+          )
+      }
+      
+      cat("  Promax alignment completed\n")
+    }
+    
+    # Store per-method results
+    method_result <- list(
+      polychoric = list(
+        correlation_matrix = cor_poly,
+        efa = efa_poly
+      ),
+      pearson = list(
+        correlation_matrix = cor_pear,
+        efa = efa_pear_aligned
+      ),
+      n_factors = n_factors,
+      config_used = list(
+        missing = missing,
+        extraction_method = fm,
+        gamma_values = gamma_values,
+        promax_kappa_values = promax_kappa_values,
+        kaiser_normalize = kaiser_normalize,
+        max_iterations = max_iterations,
+        flip_factors = flip_factors,
+        pd_tolerance = pd_tol,
+        display_cutoff = display_cutoff
+      )
+    )
+    
+    all_method_results[[fm]] <- method_result
   }
   
-  # Step 6: Results integration
-  results <- list(
-    polychoric = list(
-      correlation_matrix = cor_poly,
-      efa = efa_poly
-    ),
-    pearson = list(
-      correlation_matrix = cor_pear,
-      efa = efa_pear_aligned
-    ),
-    data = data_fa,
-    n_factors = n_factors,
-    config_used = list(
-      missing = missing,
-      extraction_method = extraction_method,
-      gamma_values = gamma_values,
-      promax_kappa_values = promax_kappa_values,
-      kaiser_normalize = kaiser_normalize,
-      max_iterations = max_iterations,
-      flip_factors = flip_factors,
-      pd_tolerance = pd_tol,
-      display_cutoff = display_cutoff
-    )
+  # Top-level results object
+  results <- all_method_results
+  results$n_factors <- n_factors
+  results$data <- data_fa
+  results$config_used <- list(
+    missing = missing,
+    extraction_methods = extraction_methods,
+    gamma_values = gamma_values,
+    promax_kappa_values = promax_kappa_values,
+    kaiser_normalize = kaiser_normalize,
+    max_iterations = max_iterations,
+    flip_factors = flip_factors,
+    pd_tolerance = pd_tol,
+    display_cutoff = display_cutoff
   )
   
-  # Step 7: Display Results
+  # Step 6: Display Results
   cat("\nStep 6: Results\n")
   cat("----------------\n")
   
   if (show_full_results) {
     source("efa_display.R")
-    display_efa_comparison(results, display_cutoff)
+    for (fm in extraction_methods) {
+      display_efa_comparison(results[[fm]], display_cutoff, method_name = fm)
+    }
   } else {
     cat("Full results display skipped (show_full_results = FALSE)\n")
   }
   
-  # Return results
   cat("\n========================================\n")
   cat("EFA ANALYSIS COMPLETE\n")
   cat("Configuration used:\n")
   cat("  Missing data:", missing, "\n")
-  cat("  Extraction method:", extraction_method, "\n")
+  cat("  Extraction methods:", paste(extraction_methods, collapse = ", "), "\n")
   cat("  Kaiser normalization:", kaiser_normalize, "\n")
   cat("  Rotation: Oblimin (gamma:", paste(gamma_values, collapse = ", "), ")\n")
   if (!is.null(promax_kappa_values)) {
@@ -258,7 +293,7 @@ analyze_efa <- function(data_obj,
   invisible(results)
 }
 
-# Function to display EFA evaluation (all gamma values)
+# Function to display EFA evaluation (all extraction methods)
 show_efa_evaluation <- function(data_obj, n_factors) {
   
   if (missing(n_factors)) {
@@ -276,6 +311,7 @@ show_efa_evaluation <- function(data_obj, n_factors) {
   cross_threshold <- efa_eval_config$cross_threshold
   diff_threshold <- efa_eval_config$diff_threshold
   display_cutoff <- efa_config$display_cutoff
+  extraction_methods <- unlist(efa_config$extraction_methods)
   
   # Run EFA analysis quietly
   results <- analyze_efa(data_obj, 
@@ -283,46 +319,56 @@ show_efa_evaluation <- function(data_obj, n_factors) {
                          verbose = FALSE,
                          show_full_results = FALSE)
   
-  # Display evaluation with configured thresholds
-  source("efa_display.R")
-  all_evaluations <- display_efa_evaluation(results,
-                                            primary_threshold = primary_threshold,
-                                            cross_threshold = cross_threshold,
-                                            diff_threshold = diff_threshold,
-                                            display_cutoff = display_cutoff)
-  
-  # Export eligible pattern matrices to CSV
+  # Output directory for CSV export
   output_dir <- "efa_output"
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
   
   exported_count <- 0
-  for (set_name in names(all_evaluations)) {
-    set_info <- all_evaluations[[set_name]]
+  
+  # Display evaluation and export for each extraction method
+  source("efa_display.R")
+  
+  for (fm in extraction_methods) {
     
-    if (set_info$evaluation$n_failed == 0) {
-      # Get pattern matrix
-      if (set_info$rotation_type == "oblimin") {
-        gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(set_info$param_value)))
-        pattern <- set_info$results$efa$rotations[[gamma_key]]$pattern
-        filename <- sprintf("pattern_%s_Oblimin_gamma_%.2f.csv",
-                            set_info$cor_type, set_info$param_value)
-      } else {
-        kappa_key <- paste0("kappa_", set_info$param_value)
-        pattern <- set_info$results$efa$rotations_promax[[kappa_key]]$pattern
-        filename <- sprintf("pattern_%s_Promax_kappa_%d.csv",
-                            set_info$cor_type, set_info$param_value)
+    cat(sprintf("\n########################################\n"))
+    cat(sprintf("# EXTRACTION METHOD: %s\n", toupper(fm)))
+    cat(sprintf("########################################\n"))
+    
+    all_evaluations <- display_efa_evaluation(
+      results[[fm]],
+      primary_threshold = primary_threshold,
+      cross_threshold = cross_threshold,
+      diff_threshold = diff_threshold,
+      display_cutoff = display_cutoff,
+      method_name = fm
+    )
+    
+    # Export eligible pattern matrices to CSV
+    for (set_name in names(all_evaluations)) {
+      set_info <- all_evaluations[[set_name]]
+      
+      if (set_info$evaluation$n_failed == 0) {
+        # Get pattern matrix
+        if (set_info$rotation_type == "oblimin") {
+          gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(set_info$param_value)))
+          pattern <- set_info$results$efa$rotations[[gamma_key]]$pattern
+          filename <- sprintf("pattern_%s_%s_Oblimin_gamma_%.2f.csv",
+                              fm, set_info$cor_type, set_info$param_value)
+        } else {
+          kappa_key <- paste0("kappa_", set_info$param_value)
+          pattern <- set_info$results$efa$rotations_promax[[kappa_key]]$pattern
+          filename <- sprintf("pattern_%s_%s_Promax_kappa_%d.csv",
+                              fm, set_info$cor_type, set_info$param_value)
+        }
+        
+        pattern_rounded <- round(pattern, 3)
+        filepath <- file.path(output_dir, filename)
+        write.csv(pattern_rounded, filepath)
+        cat(sprintf("Exported: %s\n", filepath))
+        exported_count <- exported_count + 1
       }
-      
-      # Round to 3 decimal places
-      pattern_rounded <- round(pattern, 3)
-      
-      # Export to CSV
-      filepath <- file.path(output_dir, filename)
-      write.csv(pattern_rounded, filepath)
-      cat(sprintf("Exported: %s\n", filepath))
-      exported_count <- exported_count + 1
     }
   }
   
