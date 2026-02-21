@@ -84,7 +84,7 @@ scale_structure:
 
 # ===== FACTOR NUMBER DETERMINATION =====
 factor_number:
-  parallel_analysis_iterations: 200
+  parallel_analysis_iterations: 1000
   percentile: 95
 
 # ===== EFA SETTINGS =====
