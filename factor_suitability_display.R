@@ -213,3 +213,50 @@ fs_display_singularity <- function(singularity_results) {
   
   cat("\n")
 }
+
+# Display zero cell diagnosis results
+fs_display_zero_cell_diagnosis <- function(diag_results, top_n_items = 10, top_n_pairs = 20) {
+  
+  cat("========================================\n")
+  cat("ZERO CELL DIAGNOSIS\n")
+  cat("========================================\n\n")
+  
+  total_zero <- sum(diag_results$pair_df$zero_cells)
+  cat(sprintf("N (listwise): %d\n", diag_results$N))
+  cat(sprintf("Total zero cells across all pairs: %d\n\n", total_zero))
+  
+  # Item summary
+  cat("ITEM SUMMARY (sorted by pairs_with_zero)\n")
+  cat(sprintf("Top %d items:\n", top_n_items))
+  cat(sprintf("%-8s %16s %17s %15s %14s\n",
+              "Item", "pairs_with_zero", "total_zero_cells",
+              "min_cat_count", "n_unused_cat"))
+  
+  item_top <- head(diag_results$item_df, top_n_items)
+  for (k in seq_len(nrow(item_top))) {
+    cat(sprintf("%-8s %16d %17d %15d %14d\n",
+                item_top$item[k],
+                item_top$pairs_with_zero[k],
+                item_top$total_zero_cells[k],
+                item_top$min_category_count[k],
+                item_top$n_unused_categories[k]))
+  }
+  
+  # Pair summary
+  cat(sprintf("\nPAIR SUMMARY (sorted by zero_cells)\n"))
+  cat(sprintf("Top %d pairs:\n", top_n_pairs))
+  cat(sprintf("%-8s %-8s %12s %10s %14s\n",
+              "Item1", "Item2", "zero_cells", "min_cell", "min_expected"))
+  
+  pair_top <- head(diag_results$pair_df, top_n_pairs)
+  for (k in seq_len(nrow(pair_top))) {
+    cat(sprintf("%-8s %-8s %12d %10d %14.4f\n",
+                pair_top$item1[k],
+                pair_top$item2[k],
+                pair_top$zero_cells[k],
+                pair_top$min_cell[k],
+                pair_top$min_expected[k]))
+  }
+  
+  cat("\n")
+}

@@ -62,6 +62,11 @@ check_fa_suitability <- function(data_obj) {
   
   results$singularity <- singularity_results
   
+  # Zero cell diagnosis
+  zero_diag <- calculate_zero_cell_diagnosis(data_fa, scale_min, scale_max)
+  fs_display_zero_cell_diagnosis(zero_diag)
+  results$zero_cell_diagnosis <- zero_diag
+  
   # Return results invisibly
   invisible(results)
 }
