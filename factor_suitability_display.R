@@ -184,3 +184,32 @@ fs_display_evaluation <- function(results) {
   
   cat("\n")
 }
+
+# Display singularity check results for both correlation matrices
+fs_display_singularity <- function(singularity_results) {
+  
+  cat("========================================\n")
+  cat("CORRELATION MATRIX SINGULARITY CHECK\n")
+  cat("========================================\n\n")
+  
+  poly <- singularity_results$polychoric
+  pear <- singularity_results$pearson
+  
+  cat(sprintf("%-25s %12s %12s\n", "", "Polychoric", "Pearson"))
+  cat(sprintf("%-25s %12.6f %12.6f\n", "Min Eigenvalue",     poly$min_eigen,    pear$min_eigen))
+  cat(sprintf("%-25s %12d %12d\n",     "N Eigenvalues <= 0", poly$n_eigen_le_0, pear$n_eigen_le_0))
+  cat(sprintf("%-25s %12d %12d\n",     "Rank",               poly$rank,         pear$rank))
+  cat(sprintf("%-25s %12d %12d\n",     "p (variables)",      poly$p,            pear$p))
+  cat(sprintf("%-25s %12s %12s\n",     "Is Singular",
+              as.character(poly$is_singular), as.character(pear$is_singular)))
+  cat(sprintf("%-25s %12.2e %12.2e\n", "Kappa (cond.num)",   poly$kappa_2,      pear$kappa_2))
+  
+  poly_rcond <- if (is.na(poly$rcond)) "N/A" else sprintf("%.6f", poly$rcond)
+  pear_rcond <- if (is.na(pear$rcond)) "N/A" else sprintf("%.6f", pear$rcond)
+  cat(sprintf("%-25s %12s %12s\n",     "rcond",              poly_rcond,        pear_rcond))
+  
+  cat(sprintf("%-25s %12s %12s\n",     "Cholesky OK",
+              as.character(poly$chol_ok), as.character(pear$chol_ok)))
+  
+  cat("\n")
+}

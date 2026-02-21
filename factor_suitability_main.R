@@ -53,6 +53,15 @@ check_fa_suitability <- function(data_obj) {
   source("factor_suitability_display.R")
   fs_display_results(results)
   
+  # Check singularity for both correlation matrices
+  singularity_results <- list(
+    polychoric = check_matrix_singularity(correlations$polychoric),
+    pearson    = check_matrix_singularity(correlations$pearson)
+  )
+  fs_display_singularity(singularity_results)
+  
+  results$singularity <- singularity_results
+  
   # Return results invisibly
   invisible(results)
 }

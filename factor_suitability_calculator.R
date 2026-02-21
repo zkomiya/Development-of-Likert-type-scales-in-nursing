@@ -52,3 +52,41 @@ calculate_fa_suitability_both <- function(data, cor_poly, cor_pearson) {
     data = data
   ))
 }
+
+# Check correlation matrix singularity
+# Uses base R (eigen, kappa, chol) and Matrix package (rankMatrix, rcond)
+check_matrix_singularity <- function(cor_matrix) {
+  
+  p <- ncol(cor_matrix)
+  
+  ev <- eigen(cor_matrix, symmetric = TRUE, only.values = TRUE)$values
+  min_eigen   <- min(ev)
+  n_nonpos    <- sum(ev <= 0)
+  
+  rank <- if (requireNamespace("Matrix", quietly = TRUE)) {
+    as.integer(Matrix::rankMatrix(cor_matrix))
+  } else {
+    qr(cor_matrix)$rank
+  }
+  
+  kappa_2 <- kappa(cor_matrix)
+  
+  rcond_val <- if (requireNamespace("Matrix", quietly = TRUE)) {
+    as.numeric(Matrix::rcond(cor_matrix))
+  } else {
+    NA_real_
+  }
+  
+  chol_ok <- !inherits(try(chol(cor_matrix), silent = TRUE), "try-error")
+  
+  return(list(
+    p            = p,
+    min_eigen    = min_eigen,
+    n_eigen_le_0 = n_nonpos,
+    rank         = rank,
+    is_singular  = (rank < p),
+    kappa_2      = kappa_2,
+    rcond        = rcond_val,
+    chol_ok      = chol_ok
+  ))
+}
