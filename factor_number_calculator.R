@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Determination for EFA
-# Version: 7.0 (Progress display added)
+# Version: 7.1 (Added calculation conditions to output)
 # Description: Factor number determination for Exploratory Factor Analysis
 # ===================================================
 
@@ -10,7 +10,10 @@ determine_n_factors <- function(data,
                                 n_iterations,
                                 percentile,
                                 seed = NULL,
-                                verbose = TRUE) {
+                                verbose = TRUE,
+                                missing_method = NULL,
+                                scale_min = NULL,
+                                scale_max = NULL) {
   
   if (!is.null(seed)) set.seed(seed)
   
@@ -143,10 +146,22 @@ determine_n_factors <- function(data,
   # ========================================
   # Return results
   # ========================================
+  conditions <- list(
+    correlation_method = "Polychoric",
+    extraction_method_pa = "minres",
+    pa_iterations = n_iterations,
+    pa_percentile = percentile,
+    missing_method = missing_method,
+    scale_min = scale_min,
+    scale_max = scale_max,
+    kaiser_eigenvalue_source = "PCA"
+  )
+  
   return(list(
     kaiser = kaiser_result,
     pa = pa_formatted,
     map = map_result,
+    conditions = conditions,
     cor_matrix = pa_result$r,
     n_obs = n_obs,
     n_vars = n_vars

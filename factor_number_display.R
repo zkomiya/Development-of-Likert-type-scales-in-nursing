@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Display
-# Version: 2.0 (Output order: PA -> MAP -> Kaiser)
+# Version: 2.1 (Added calculation conditions display)
 # Description: Display functions for factor number determination
 # ===================================================
 
@@ -10,6 +10,23 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   cat("\n========================================\n")
   cat("FACTOR NUMBER DETERMINATION\n")
   cat("========================================\n\n")
+  
+  # Calculation conditions
+  cond <- results$conditions
+  cat("Calculation Conditions\n")
+  cat("----------------------\n")
+  cat("  Correlation method:       ", cond$correlation_method, "\n")
+  cat("  Extraction method (PA):   ", cond$extraction_method_pa, "\n")
+  cat("  PA iterations:            ", cond$pa_iterations, "\n")
+  cat("  PA percentile:            ", cond$pa_percentile, "\n")
+  if (!is.null(cond$missing_method)) {
+    cat("  Missing data handling:    ", cond$missing_method, "\n")
+  }
+  if (!is.null(cond$scale_min) && !is.null(cond$scale_max)) {
+    cat("  Scale range:              ", cond$scale_min, "-", cond$scale_max, "\n")
+  }
+  cat("  Kaiser eigenvalue source: ", cond$kaiser_eigenvalue_source, "\n")
+  cat("\n")
   
   # Sample info
   cat("Sample Information\n")

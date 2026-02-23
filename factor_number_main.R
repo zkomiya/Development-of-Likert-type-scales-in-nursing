@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Main (Controller Layer)
-# Version: 4.1 (YAML global scale/pattern integration)
+# Version: 4.2 (Pass calculation conditions to calculator)
 # Description: Main controller for factor number determination
 # ===================================================
 
@@ -67,7 +67,10 @@ determine_factors <- function(data_obj,
     n_iterations = n_iterations,
     percentile = percentile,
     seed = seed,
-    verbose = verbose
+    verbose = verbose,
+    missing_method = "listwise",
+    scale_min = scale_min,
+    scale_max = scale_max
   )
   
   # Display results
@@ -137,7 +140,10 @@ show_fn_evaluation <- function(data_obj,
     n_iterations = n_iterations,
     percentile = percentile,
     seed = seed,
-    verbose = verbose
+    verbose = verbose,
+    missing_method = "listwise",
+    scale_min = scale_min,
+    scale_max = scale_max
   )
   
   # Display evaluation

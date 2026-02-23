@@ -39,7 +39,8 @@ extract_factors <- function(R, n_factors, fm, max_iter = 1000) {
     rotate = "none",
     fm = fm,
     max.iter = max_iter,
-    SMC = use_smc
+    SMC = use_smc,
+    scores = "none"
   )
   
   # psych::fa returns loadings as class "loadings"
