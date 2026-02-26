@@ -1,10 +1,10 @@
 # ===================================================
 # EFA Display
-# Version: 13.0 - Added method_name parameter to display functions
+# Version: 14.0 - Added n_factors parameter to display functions
 # Description: Display EFA results with configurable evaluation thresholds
-# Changes from v12.1:
-#   - display_efa_comparison(): added method_name parameter for header display
-#   - display_efa_evaluation(): added method_name parameter for header display
+# Changes from v13.0:
+#   - display_efa_comparison(): added n_factors parameter, updated header format
+#   - display_efa_evaluation(): added n_factors parameter, updated header format
 # ===================================================
 
 # ===================================================
@@ -205,22 +205,20 @@ display_kappa_comparison <- function(results, kappa, display_cutoff, method_name
 # Display EFA comparison (main function)
 # ===================================================
 
-display_efa_comparison <- function(results, display_cutoff, method_name) {
+display_efa_comparison <- function(results, display_cutoff, method_name, n_factors) {
   
-  cat("\n========================================\n")
-  cat(sprintf("EFA COMPARISON: Polychoric vs Pearson [%s]\n", toupper(method_name)))
-  cat("========================================\n\n")
-  
-  cat("Number of factors:", results$n_factors, "\n")
-  cat("Extraction method:", method_name, "\n")
-  cat("Gamma values:", paste(results$config_used$gamma_values, collapse = ", "), "\n")
+  cat("\n########################################\n")
+  cat(sprintf("# n_factors = %d | METHOD: %s\n", n_factors, toupper(method_name)))
+  cat(sprintf("#   Gamma values: %s\n", paste(results$config_used$gamma_values, collapse = ", ")))
   if (!is.null(results$config_used$promax_kappa_values)) {
-    cat("Promax kappa values:", paste(results$config_used$promax_kappa_values, collapse = ", "), "\n")
+    cat(sprintf("#   Promax kappa values: %s\n",
+                paste(results$config_used$promax_kappa_values, collapse = ", ")))
   }
-  if (!is.null(display_cutoff)) {
-    cat("Display cutoff:", display_cutoff, "(absolute values below this are suppressed)\n")
-  }
-  cat("\nNote: Pearson solution aligned to Polychoric\n")
+  cat(sprintf("#   Kaiser normalization: %s\n", results$config_used$kaiser_normalize))
+  cat("#   Correlation methods: Polychoric AND Pearson\n")
+  cat("########################################\n\n")
+  
+  cat("Note: Pearson solution aligned to Polychoric\n")
   cat("      (factor order and signs adjusted)\n")
   
   # Display oblimin results
@@ -237,9 +235,9 @@ display_efa_comparison <- function(results, display_cutoff, method_name) {
     }
   }
   
-  cat("\n========================================\n")
-  cat(sprintf("EFA COMPARISON COMPLETE [%s]\n", toupper(method_name)))
-  cat("========================================\n")
+  cat("\n########################################\n")
+  cat(sprintf("# n_factors = %d | METHOD: %s COMPLETE\n", n_factors, toupper(method_name)))
+  cat("########################################\n")
 }
 
 # ===================================================
@@ -376,15 +374,21 @@ display_efa_evaluation <- function(results,
                                    cross_threshold,
                                    diff_threshold,
                                    display_cutoff,
-                                   method_name) {
+                                   method_name,
+                                   n_factors) {
   
   gamma_values <- results$config_used$gamma_values
   promax_kappa_values <- results$config_used$promax_kappa_values
   
-  cat("\n========================================\n")
-  cat("EFA EVALUATION SUMMARY\n")
-  cat(sprintf("Extraction method: %s\n", method_name))
-  cat("========================================\n")
+  cat("\n########################################\n")
+  cat(sprintf("# n_factors = %d | METHOD: %s (EVALUATION)\n", n_factors, toupper(method_name)))
+  cat(sprintf("#   Gamma values: %s\n", paste(gamma_values, collapse = ", ")))
+  if (!is.null(promax_kappa_values)) {
+    cat(sprintf("#   Promax kappa values: %s\n", paste(promax_kappa_values, collapse = ", ")))
+  }
+  cat(sprintf("#   Kaiser normalization: %s\n", results$config_used$kaiser_normalize))
+  cat("#   Correlation methods: Polychoric AND Pearson\n")
+  cat("########################################\n")
   
   # --- Heywood check ---
   display_heywood_check(results$polychoric$efa$extraction$communalities, "Polychoric")
