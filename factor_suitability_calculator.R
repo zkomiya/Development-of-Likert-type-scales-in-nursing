@@ -1,174 +1,167 @@
 # ===================================================
-# Factor Number Determination for EFA
-# Version: 7.1 (Added calculation conditions to output)
-# Description: Factor number determination for Exploratory Factor Analysis
+# Factor Suitability Calculator (Model Layer)
+# Version: 2.0
+# Description: Calculate correlation matrices and FA suitability
+# Changes from v1.0:
+#   - Bartlett uses Pearson correlation only
 # ===================================================
 
 library(psych)
 
-determine_n_factors <- function(data,
-                                n_iterations,
-                                percentile,
-                                seed = NULL,
-                                verbose = TRUE,
-                                missing_method = NULL,
-                                scale_min = NULL,
-                                scale_max = NULL) {
+# Calculate both correlation matrices
+calculate_both_correlations <- function(data) {
   
-  if (!is.null(seed)) set.seed(seed)
+  # Polychoric correlation
+  poly_result <- psych::polychoric(data, global = FALSE)
+  cor_poly <- poly_result$rho
   
-  n_vars <- ncol(data)
-  n_obs <- nrow(data)
-  max_factors <- min(n_vars - 1, 10)
-  
-  if (verbose) {
-    cat("\n========================================\n")
-    cat("FACTOR NUMBER DETERMINATION - PROGRESS\n")
-    cat("========================================\n")
-    cat("Variables:", n_vars, "\n")
-    cat("Observations:", n_obs, "\n")
-    cat("Iterations:", n_iterations, "\n\n")
-  }
-  
-  # ========================================
-  # Step 1: Parallel Analysis for FACTOR ANALYSIS
-  # ========================================
-  if (verbose) {
-    cat("[1/3] Running Parallel Analysis...\n")
-    cat("      (This may take a while with", n_iterations, "iterations)\n")
-    flush.console()
-  }
-  
-  pa_start <- Sys.time()
-  
-  pa_result <- fa.parallel(
-    x = data,
-    n.iter = n_iterations,
-    cor = "poly",
-    fa = "fa",
-    fm = "minres",
-    quant = percentile / 100,
-    plot = FALSE,
-    main = "",
-    show.legend = FALSE
-  )
-  
-  pa_end <- Sys.time()
-  
-  if (verbose) {
-    cat("      Completed in", round(difftime(pa_end, pa_start, units = "secs"), 1), "seconds\n\n")
-    flush.console()
-  }
-  
-  # ========================================
-  # Step 2: VSS for MAP test
-  # ========================================
-  if (verbose) {
-    cat("[2/3] Running VSS (MAP test)...\n")
-    cat("      Testing", max_factors, "factor solutions\n")
-    flush.console()
-  }
-  
-  vss_start <- Sys.time()
-  
-  vss_result <- VSS(
-    x = data,
-    n = max_factors,
-    cor = "poly",
-    fm = "minres",
-    plot = FALSE
-  )
-  
-  vss_end <- Sys.time()
-  
-  if (verbose) {
-    cat("      Completed in", round(difftime(vss_end, vss_start, units = "secs"), 1), "seconds\n\n")
-    flush.console()
-  }
-  
-  # ========================================
-  # Step 3: Kaiser's Criterion
-  # ========================================
-  if (verbose) {
-    cat("[3/3] Calculating Kaiser's criterion...\n")
-    flush.console()
-  }
-  
-  # Kaiser criterion uses PCA eigenvalues (pc.values) with >1 threshold
-  eigenvalues    <- pa_result$pc.values   # Kaiser criterion (PCA eigenvalues, >1 threshold)
-  # PA comparison table uses FA eigenvalues: fa.values (Real) vs fa.sim (Simulated)
-  # because fa.parallel() was run with fa = "fa" (polychoric + minres)
-  fa_eigenvalues <- pa_result$fa.values   # PA table: real FA eigenvalues
-  kaiser_n <- sum(eigenvalues > 1)
-  
-  if (verbose) {
-    cat("      Completed\n\n")
-    cat("========================================\n")
-    cat("All calculations finished!\n")
-    cat("Total time:", round(difftime(vss_end, pa_start, units = "secs"), 1), "seconds\n")
-    cat("========================================\n\n")
-    flush.console()
-  }
-  
-  # ========================================
-  # Step 4: Format Results
-  # ========================================
-  pa_n <- pa_result$nfact
-  pa_sim_eigenvalues <- pa_result$fa.sim  # PA table: simulated FA eigenvalues (must match fa.values)
-  
-  map_values <- vss_result$map
-  map_n <- which.min(map_values) - 1
-  
-  kaiser_result <- list(
-    n_factors = kaiser_n,
-    eigenvalues = eigenvalues,
-    eigen_table = data.frame(
-      Factor = 1:length(eigenvalues),
-      Eigenvalue = round(eigenvalues, 3),
-      Retain = eigenvalues > 1
-    )
-  )
-  
-  pa_formatted <- list(
-    n_factors = pa_n,
-    # Real = fa.values, Simulated = fa.sim: both are FA-side, consistent comparison
-    eigen_table = data.frame(
-      Factor    = 1:min(length(fa_eigenvalues), length(pa_sim_eigenvalues)),
-      Real      = round(fa_eigenvalues[1:min(length(fa_eigenvalues), length(pa_sim_eigenvalues))], 3),
-      Simulated = round(pa_sim_eigenvalues[1:min(length(fa_eigenvalues), length(pa_sim_eigenvalues))], 3),
-      Retain    = 1:min(length(fa_eigenvalues), length(pa_sim_eigenvalues)) <= pa_n
-    )
-  )
-  
-  map_result <- list(
-    n_factors = map_n,
-    map_table = data.frame(
-      Factors = 0:(length(map_values) - 1),
-      MAP = round(map_values, 6)
-    )
-  )
-  
-  # ========================================
-  # Return results
-  # ========================================
-  conditions <- list(
-    correlation_method = "Polychoric",
-    extraction_method_pa = "minres",
-    pa_iterations = n_iterations,
-    pa_percentile = percentile,
-    missing_method = missing_method,
-    scale_min = scale_min,
-    scale_max = scale_max,
-    kaiser_eigenvalue_source = "PCA"
-  )
+  # Pearson correlation
+  cor_pearson <- cor(data, method = "pearson", use = "pairwise.complete.obs")
   
   return(list(
-    kaiser = kaiser_result,
-    pa = pa_formatted,
-    map = map_result,
-    conditions = conditions,
-    cor_matrix = pa_result$r,
-    n_obs = n_obs,
-    n_vars = n_vars
+    polychoric = cor_poly,
+    pearson = cor_pearson
+  ))
+}
+
+# Calculate FA suitability
+# Bartlett: Pearson only
+# KMO: Both Polychoric and Pearson
+calculate_fa_suitability_both <- function(data, cor_poly, cor_pearson) {
+  
+  source("factor_prerequisites.R")
+  
+  # Polychoric correlation check (KMO only)
+  prereq_poly <- check_fa_prerequisites(data, cor_poly, verbose = FALSE)
+  
+  # Pearson correlation check (Bartlett and KMO)
+  prereq_pearson <- check_fa_prerequisites(data, cor_pearson, verbose = FALSE)
+  
+  # Format and return results
+  return(list(
+    sample_size = prereq_poly$sample_size,
+    bartlett = prereq_pearson$bartlett,
+    kmo = list(
+      polychoric = prereq_poly$kmo,
+      pearson = prereq_pearson$kmo
+    ),
+    cor_matrix = list(
+      polychoric = cor_poly,
+      pearson = cor_pearson
+    ),
+    data = data
+  ))
+}
+
+# Check correlation matrix singularity
+# Uses base R (eigen, kappa, chol) and Matrix package (rankMatrix, rcond)
+check_matrix_singularity <- function(cor_matrix) {
+  
+  p <- ncol(cor_matrix)
+  
+  ev <- eigen(cor_matrix, symmetric = TRUE, only.values = TRUE)$values
+  min_eigen   <- min(ev)
+  n_nonpos    <- sum(ev <= 0)
+  
+  rank <- if (requireNamespace("Matrix", quietly = TRUE)) {
+    as.integer(Matrix::rankMatrix(cor_matrix))
+  } else {
+    qr(cor_matrix)$rank
+  }
+  
+  kappa_2 <- kappa(cor_matrix)
+  
+  rcond_val <- if (requireNamespace("Matrix", quietly = TRUE)) {
+    as.numeric(Matrix::rcond(cor_matrix))
+  } else {
+    NA_real_
+  }
+  
+  chol_ok <- !inherits(try(chol(cor_matrix), silent = TRUE), "try-error")
+  
+  return(list(
+    p            = p,
+    min_eigen    = min_eigen,
+    n_eigen_le_0 = n_nonpos,
+    rank         = rank,
+    is_singular  = (rank < p),
+    kappa_2      = kappa_2,
+    rcond        = rcond_val,
+    chol_ok      = chol_ok
+  ))
+}
+
+# Diagnose zero-frequency cells in polychoric estimation
+# Step 1: marginal frequencies per item
+# Step 2: zero cells per pair (combn + table)
+# Step 3: aggregate zero cell counts back to item level
+calculate_zero_cell_diagnosis <- function(data, scale_min, scale_max) {
+  
+  levels    <- scale_min:scale_max
+  items     <- colnames(data)
+  n_items   <- length(items)
+  N         <- nrow(data)
+  
+  # Step 1: marginal frequencies
+  marg_list <- lapply(items, function(it) {
+    tbl <- table(factor(data[[it]], levels = levels))
+    data.frame(
+      item                = it,
+      min_category_count  = min(as.integer(tbl)),
+      n_unused_categories = sum(tbl == 0),
+      stringsAsFactors    = FALSE
+    )
+  })
+  item_df <- do.call(rbind, marg_list)
+  
+  # Step 2: pair-level zero cells
+  pairs    <- combn(items, 2, simplify = FALSE)
+  pair_list <- lapply(pairs, function(p) {
+    xi  <- factor(data[[p[1]]], levels = levels)
+    xj  <- factor(data[[p[2]]], levels = levels)
+    tab <- table(xi, xj)
+    rs  <- rowSums(tab)
+    cs  <- colSums(tab)
+    exp <- outer(rs, cs) / sum(tab)
+    data.frame(
+      item1        = p[1],
+      item2        = p[2],
+      zero_cells   = sum(tab == 0),
+      min_cell     = min(as.integer(tab)),
+      min_expected = min(exp),
+      stringsAsFactors = FALSE
+    )
+  })
+  pair_df <- do.call(rbind, pair_list)
+  
+  # Step 3: aggregate to item level
+  pairs_with_zero  <- setNames(rep(0L, n_items), items)
+  total_zero_cells <- setNames(rep(0L, n_items), items)
+  
+  for (k in seq_len(nrow(pair_df))) {
+    i1 <- pair_df$item1[k]
+    i2 <- pair_df$item2[k]
+    z  <- pair_df$zero_cells[k]
+    total_zero_cells[i1] <- total_zero_cells[i1] + z
+    total_zero_cells[i2] <- total_zero_cells[i2] + z
+    if (z > 0) {
+      pairs_with_zero[i1] <- pairs_with_zero[i1] + 1L
+      pairs_with_zero[i2] <- pairs_with_zero[i2] + 1L
+    }
+  }
+  
+  item_df$pairs_with_zero  <- as.integer(pairs_with_zero[item_df$item])
+  item_df$total_zero_cells <- as.integer(total_zero_cells[item_df$item])
+  item_df <- item_df[order(-item_df$pairs_with_zero,
+                           -item_df$total_zero_cells,
+                           item_df$min_category_count), ]
+  
+  pair_df <- pair_df[order(-pair_df$zero_cells, pair_df$min_expected), ]
+  
+  return(list(
+    N        = N,
+    item_df  = item_df,
+    pair_df  = pair_df,
+    n_items  = n_items
   ))
 }

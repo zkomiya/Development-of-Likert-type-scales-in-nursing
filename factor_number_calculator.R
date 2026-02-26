@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Determination for EFA
-# Version: 7.1 (Added calculation conditions to output)
+# Version: 7.2 (PA: output mean and quantile thresholds consistently)
 # Description: Factor number determination for Exploratory Factor Analysis
 # ===================================================
 
@@ -94,8 +94,9 @@ determine_n_factors <- function(data,
     flush.console()
   }
   
-  eigenvalues <- pa_result$pc.values
-  kaiser_n <- sum(eigenvalues > 1)
+  # Kaiser criterion uses PCA eigenvalues (pc.values) with >1 threshold
+  pc_eigenvalues <- pa_result$pc.values
+  kaiser_n <- sum(pc_eigenvalues > 1)
   
   if (verbose) {
     cat("      Completed\n\n")
@@ -109,29 +110,58 @@ determine_n_factors <- function(data,
   # ========================================
   # Step 4: Format Results
   # ========================================
-  pa_n <- pa_result$nfact
-  pa_sim_eigenvalues <- pa_result$fa.sim
+  # Parallel analysis (FA): output both mean and quantile thresholds
+  #   - nfact is based on the quantile threshold when quant is specified
+  #   - fa.sim is the simulated mean (FA-side)
+  fa_eigenvalues <- pa_result$fa.values
+  pa_sim_mean <- pa_result$fa.sim
+  
+  # Quantile threshold (e.g., 95th percentile) for simulated FA eigenvalues.
+  # Try to derive it from pa_result$values (preferred); otherwise fall back to NA.
+  pa_sim_quant <- rep(NA_real_, length(fa_eigenvalues))
+  if (!is.null(pa_result$values)) {
+    vals <- pa_result$values
+    cn <- colnames(vals)
+    if (!is.null(cn)) {
+      sim_cols <- which(grepl("sim", cn, ignore.case = TRUE) & grepl("fa", cn, ignore.case = TRUE))
+      if (length(sim_cols) == 0 && ncol(vals) >= n_vars) {
+        sim_cols <- (ncol(vals) - n_vars + 1):ncol(vals)
+      }
+      if (length(sim_cols) > 0) {
+        qv <- apply(vals[, sim_cols, drop = FALSE], 2, quantile, probs = percentile / 100, na.rm = TRUE)
+        pa_sim_quant[1:min(length(pa_sim_quant), length(qv))] <- as.numeric(qv[1:min(length(pa_sim_quant), length(qv))])
+      }
+    }
+  }
+  
+  # Suggested factor numbers for both rules
+  pa_n_mean <- sum(fa_eigenvalues > pa_sim_mean[1:min(length(fa_eigenvalues), length(pa_sim_mean))])
+  pa_n_quant <- pa_result$nfact
   
   map_values <- vss_result$map
   map_n <- which.min(map_values) - 1
   
   kaiser_result <- list(
     n_factors = kaiser_n,
-    eigenvalues = eigenvalues,
+    eigenvalues = pc_eigenvalues,
     eigen_table = data.frame(
-      Factor = 1:length(eigenvalues),
-      Eigenvalue = round(eigenvalues, 3),
-      Retain = eigenvalues > 1
+      Factor = 1:length(pc_eigenvalues),
+      Eigenvalue = round(pc_eigenvalues, 3),
+      Retain = pc_eigenvalues > 1
     )
   )
   
   pa_formatted <- list(
-    n_factors = pa_n,
+    # n_factors is quantile-based (matches psych::fa.parallel behavior)
+    n_factors = pa_n_quant,
+    n_factors_mean = pa_n_mean,
     eigen_table = data.frame(
-      Factor = 1:min(length(eigenvalues), length(pa_sim_eigenvalues)),
-      Real = round(eigenvalues[1:min(length(eigenvalues), length(pa_sim_eigenvalues))], 3),
-      Simulated = round(pa_sim_eigenvalues[1:min(length(eigenvalues), length(pa_sim_eigenvalues))], 3),
-      Retain = 1:min(length(eigenvalues), length(pa_sim_eigenvalues)) <= pa_n
+      Factor = 1:min(length(fa_eigenvalues), length(pa_sim_mean)),
+      Real = round(fa_eigenvalues[1:min(length(fa_eigenvalues), length(pa_sim_mean))], 3),
+      Simulated = round(pa_sim_quant[1:min(length(fa_eigenvalues), length(pa_sim_mean))], 3),
+      Simulated_mean = round(pa_sim_mean[1:min(length(fa_eigenvalues), length(pa_sim_mean))], 3),
+      Retain = 1:min(length(fa_eigenvalues), length(pa_sim_mean)) <= pa_n_quant,
+      Retain_mean = 1:min(length(fa_eigenvalues), length(pa_sim_mean)) <= pa_n_mean
     )
   )
   
@@ -151,6 +181,7 @@ determine_n_factors <- function(data,
     extraction_method_pa = "minres",
     pa_iterations = n_iterations,
     pa_percentile = percentile,
+    pa_reference = "Mean and quantile (FA simulated)",
     missing_method = missing_method,
     scale_min = scale_min,
     scale_max = scale_max,

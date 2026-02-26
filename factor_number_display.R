@@ -1,6 +1,6 @@
 # ===================================================
 # Factor Number Display
-# Version: 2.1 (Added calculation conditions display)
+# Version: 2.2 (PA: show both mean and quantile results)
 # Description: Display functions for factor number determination
 # ===================================================
 
@@ -19,6 +19,9 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   cat("  Extraction method (PA):   ", cond$extraction_method_pa, "\n")
   cat("  PA iterations:            ", cond$pa_iterations, "\n")
   cat("  PA percentile:            ", cond$pa_percentile, "\n")
+  if (!is.null(cond$pa_reference)) {
+    cat("  PA reference:             ", cond$pa_reference, "\n")
+  }
   if (!is.null(cond$missing_method)) {
     cat("  Missing data handling:    ", cond$missing_method, "\n")
   }
@@ -37,17 +40,30 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   # Parallel Analysis (FIRST)
   cat("Parallel Analysis (Factor Analysis)\n")
   cat("------------------------------------\n")
-  cat("  Suggested:", results$pa$n_factors, "factors\n\n")
+  cat("  Suggested:", results$pa$n_factors, "factors\n")
+  if (!is.null(results$pa$n_factors_mean)) {
+    cat("  (Mean reference):", results$pa$n_factors_mean, "factors\n")
+  }
+  cat("\n")
   
   pa_df <- results$pa$eigen_table
   cat("  Comparison of Eigenvalues:\n")
   for (i in 1:nrow(pa_df)) {
     marker <- if (pa_df$Retain[i]) " *" else ""
-    cat(sprintf("    F%02d: Real=%6.3f | Simulated=%6.3f%s\n",
-                pa_df$Factor[i],
-                pa_df$Real[i],
-                pa_df$Simulated[i],
-                marker))
+    if (!is.null(pa_df$Simulated_mean)) {
+      cat(sprintf("    F%02d: Real=%6.3f | Simulated=%6.3f | Mean=%6.3f%s\n",
+                  pa_df$Factor[i],
+                  pa_df$Real[i],
+                  pa_df$Simulated[i],
+                  pa_df$Simulated_mean[i],
+                  marker))
+    } else {
+      cat(sprintf("    F%02d: Real=%6.3f | Simulated=%6.3f%s\n",
+                  pa_df$Factor[i],
+                  pa_df$Real[i],
+                  pa_df$Simulated[i],
+                  marker))
+    }
   }
   cat("\n")
   
@@ -90,6 +106,9 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   cat("SUMMARY\n")
   cat("========================================\n")
   cat("Parallel Analysis (FA):  ", results$pa$n_factors, "factors\n")
+  if (!is.null(results$pa$n_factors_mean)) {
+    cat("PA (mean reference):     ", results$pa$n_factors_mean, "factors\n")
+  }
   cat("MAP test:                ", results$map$n_factors, "factors\n")
   cat("Kaiser's criterion:      ", results$kaiser$n_factors, "factors\n")
   cat("========================================\n")
@@ -107,8 +126,9 @@ show_factor_number_evaluation <- function(results) {
   kaiser_n <- results$kaiser$n_factors
   pa_n <- results$pa$n_factors
   map_n <- results$map$n_factors
+  pa_mean_n <- results$pa$n_factors_mean
   
-  # Agreement check
+  # Agreement check (PA uses quantile-based suggestion)
   all_values <- c(pa_n, map_n, kaiser_n)
   unique_values <- unique(all_values)
   
@@ -124,6 +144,10 @@ show_factor_number_evaluation <- function(results) {
   } else {
     cat("  No agreement among methods\n")
     cat("  Range:", min(all_values), "-", max(all_values), "\n")
+  }
+  
+  if (!is.null(pa_mean_n)) {
+    cat("  PA (mean reference):", pa_mean_n, "factors\n")
   }
   
   cat("\n")
