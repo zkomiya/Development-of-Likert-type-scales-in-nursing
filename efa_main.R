@@ -278,6 +278,47 @@ analyze_efa <- function(data_obj,
     } else {
       cat("Full results display skipped (show_full_results = FALSE)\n")
     }
+    
+    # Step 7: Export pattern matrices to CSV
+    cat(sprintf("\nStep 7 [n=%d]: Export pattern matrices to CSV\n", n))
+    cat("----------------\n")
+    
+    output_dir <- "efa_output"
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir, recursive = TRUE)
+    }
+    dataset_name <- config$analysis$data_source$dataset
+    
+    source("efa_display.R")
+    for (fm in extraction_methods) {
+      for (gamma in gamma_values) {
+        gamma_key <- paste0("gamma_", gsub("-", "neg", as.character(gamma)))
+        
+        poly_pattern <- all_results[[n_key]][[fm]]$polychoric$efa$rotations[[gamma_key]]$pattern
+        pear_pattern <- all_results[[n_key]][[fm]]$pearson$efa$rotations[[gamma_key]]$pattern
+        
+        export_pattern_csv(poly_pattern, output_dir, dataset_name, fm,
+                           "oblimin", gamma, n, "polychoric")
+        export_pattern_csv(pear_pattern, output_dir, dataset_name, fm,
+                           "oblimin", gamma, n, "pearson")
+      }
+    }
+    
+    if (!is.null(promax_kappa_values)) {
+      for (fm in extraction_methods) {
+        for (kappa in promax_kappa_values) {
+          kappa_key <- paste0("kappa_", kappa)
+          
+          poly_pattern <- all_results[[n_key]][[fm]]$polychoric$efa$rotations_promax[[kappa_key]]$pattern
+          pear_pattern <- all_results[[n_key]][[fm]]$pearson$efa$rotations_promax[[kappa_key]]$pattern
+          
+          export_pattern_csv(poly_pattern, output_dir, dataset_name, fm,
+                             "promax", kappa, n, "polychoric")
+          export_pattern_csv(pear_pattern, output_dir, dataset_name, fm,
+                             "promax", kappa, n, "pearson")
+        }
+      }
+    }
   }
   
   # Final summary

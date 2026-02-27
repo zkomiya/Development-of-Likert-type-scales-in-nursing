@@ -563,3 +563,27 @@ display_efa_evaluation <- function(results,
   # Return eligible sets information
   invisible(all_evaluations)
 }
+# ===================================================
+# Export Pattern Matrix to CSV
+# ===================================================
+
+export_pattern_csv <- function(pattern, output_dir, dataset_name, fm,
+                               rotation_type, gamma_value, n_factors, cor_type) {
+  
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
+  
+  if (rotation_type == "oblimin") {
+    param_str <- sprintf("gamma%.2f", gamma_value)
+  } else {
+    param_str <- sprintf("kappa%d", as.integer(gamma_value))
+  }
+  filename <- sprintf("pattern_%s_%s_%s_%s_%dfactors_%s.csv",
+                      dataset_name, fm, rotation_type, param_str, n_factors, cor_type)
+  filepath <- file.path(output_dir, filename)
+  
+  pattern_rounded <- round(pattern, 3)
+  write.csv(pattern_rounded, filepath)
+  cat(sprintf("Exported: %s\n", filepath))
+}

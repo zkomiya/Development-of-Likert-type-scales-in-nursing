@@ -96,7 +96,7 @@ efa_settings:
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
   extraction_methods: ["wls", "uls","ml","pa", "minres"]
   # Multiple numbers of factors to extract
-  n_factors_list: [3, 4, 5]
+  n_factors_list: [4, 5,6]
   gamma_values: [0.0]
   kaiser_normalize: true
   max_iterations: 1000
