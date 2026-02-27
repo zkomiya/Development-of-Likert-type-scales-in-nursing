@@ -94,7 +94,7 @@ efa_settings:
   pd_tolerance: 1.0e-6
   # Multiple extraction methods (psych::fa fm argument)
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
-  extraction_methods: ["wls", "pa", "minres"]
+  extraction_methods: ["wls", "uls","ml","pa", "minres"]
   # Multiple numbers of factors to extract
   n_factors_list: [3, 4, 5]
   gamma_values: [0.0]
