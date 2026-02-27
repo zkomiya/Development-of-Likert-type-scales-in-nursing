@@ -1,6 +1,5 @@
 # ===================================================
 # CFA Main (Controller Layer)
-# Version: 3.0 - Extended analysis
 # Description: Main controller for comprehensive CFA analysis
 # ===================================================
 
@@ -15,12 +14,20 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
   # Load configuration
   config <- load_config()
   
-  # Get model definition
-  if (!model_name %in% names(config$analysis$cfa_models)) {
-    stop(sprintf("Model '%s' not found in configuration", model_name))
+  # Get model definition (dataset-aware)
+  dataset_name <- config$analysis$data_source$dataset
+  dataset_models <- config$analysis$cfa_models[[dataset_name]]
+  
+  if (is.null(dataset_models)) {
+    stop(sprintf("No CFA models defined for dataset '%s'", dataset_name))
   }
   
-  model_def <- config$analysis$cfa_models[[model_name]]
+  if (!model_name %in% names(dataset_models)) {
+    stop(sprintf("Model '%s' not found for dataset '%s'. Available: %s",
+                 model_name, dataset_name, paste(names(dataset_models), collapse = ", ")))
+  }
+  
+  model_def <- dataset_models[[model_name]]
   
   # Get CFA settings
   cfa_settings <- config$analysis$cfa_settings
