@@ -80,7 +80,6 @@ analyze_response_styles <- function(data) {
   # Get target dataset name from config
   target_dataset_name <- config$analysis$data_source$dataset
   target_key_name <- config$analysis$data_keys[[target_dataset_name]]
-  rehab_key_name <- config$analysis$data_keys$rehab
   
   # Build display name for target
   if (target_dataset_name == "items_30") {
@@ -104,19 +103,6 @@ analyze_response_styles <- function(data) {
     data = target_data,
     dataset_name = target_display_name,
     key_name = target_key_name,
-    config = config
-  )
-  
-  # Analyze REHAB dataset
-  cat("\n##################################################\n")
-  cat("## PART 2: REHAB SCALE\n")
-  cat("##################################################\n\n")
-  
-  rehab_data <- get_data(data$rehab)
-  all_results$rehab <- analyze_response_styles_single(
-    data = rehab_data,
-    dataset_name = "REHAB Scale",
-    key_name = rehab_key_name,
     config = config
   )
   
