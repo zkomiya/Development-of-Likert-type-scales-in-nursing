@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_30-Q19    
+  dataset: items_30    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
@@ -35,6 +35,20 @@ data_keys:
   efa_unit_test_skew_cross_28items_v2: "患者ID"
   efa_unit_test_collinear_28items: "患者ID"
   
+
+# ===== SATISFICING SETTINGS =====
+satisficing:
+  longstring:
+    threshold: 10
+  irv:
+    percentile_threshold: 5
+  mahalanobis:
+    p_threshold: 0.001
+
+# ===== RESPONSE STYLES SETTINGS =====
+response_styles:
+  extreme_percentile: 95    
+    
 # ===== ANALYSIS SPECIFIC =====
 gp_analysis:
   cutoff_percentile: 0.27
