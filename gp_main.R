@@ -1,7 +1,9 @@
 # ===================================================
 # GP Main (Controller Layer)
-# Version: 9.3
-# Changes from v9.2:
+# Version: 9.4
+# Changes from v9.3:
+#   - Updated col_order to include CI columns for Cohen's d and Hedges' g
+# Changes from v9.3:
 #   - Modified show_gp_evaluation to accept data_obj directly
 # Description: Main controller for GP analysis
 # ===================================================
@@ -66,7 +68,10 @@ analyze_gp <- function(data_obj) {
     dir.create(output_dir)
   }
   output_file <- file.path(output_dir, "gp_analysis_results.csv")
-  col_order <- c("item", "n_poor", "n_good", "M_poor", "SD_poor", "M_good", "SD_good", "D_star", "Cohens_d", "Hedges_g")
+  col_order <- c("item", "n_poor", "n_good", "M_poor", "SD_poor", "M_good", "SD_good",
+                 "D_star",
+                 "Cohens_d", "Cohens_d_lower", "Cohens_d_upper",
+                 "Hedges_g", "Hedges_g_lower", "Hedges_g_upper")
   write.csv(discrimination_results[, col_order], output_file, row.names = FALSE)
   cat(sprintf("\nResults exported to: %s\n", output_file))
   

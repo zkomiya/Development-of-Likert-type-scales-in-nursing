@@ -1,6 +1,10 @@
 # ===================================================
-# GP Calculator - Version 6.1
-# Changes from v6.0:
+# GP Calculator - Version 6.2
+# Changes from v6.1:
+#   - Added CI columns for Cohen's d and Hedges' g
+#   - cohens_d_result$cohen.d[,"lower"] / [,"upper"]
+#   - cohens_d_result$hedges.g[,"lower"] / [,"upper"]
+# Changes from v6.1:
 #   - FIXED: Changed [2] to [,"effect"] for correct indexing
 #   - cohens_d_result$cohen.d[,"effect"]
 #   - cohens_d_result$hedges.g[,"effect"]
@@ -47,20 +51,27 @@ calculate_item_indices <- function(good, poor, range = c(1, 4)) {
   groups <- factor(c(rep("good", ng), rep("poor", np)), levels = c("poor", "good"))
   
   cohens_d_result <- psych::cohen.d(combined, groups)
-  # Extract both Cohen's d and Hedges' g using column name "effect"
-  cohens_d <- cohens_d_result$cohen.d[,"effect"]
-  hedges_g <- cohens_d_result$hedges.g[,"effect"]
+  cohens_d       <- cohens_d_result$cohen.d[,"effect"]
+  cohens_d_lower <- cohens_d_result$cohen.d[,"lower"]
+  cohens_d_upper <- cohens_d_result$cohen.d[,"upper"]
+  hedges_g       <- cohens_d_result$hedges.g[,"effect"]
+  hedges_g_lower <- cohens_d_result$hedges.g[,"lower"]
+  hedges_g_upper <- cohens_d_result$hedges.g[,"upper"]
   
   data.frame(
-    M_good = mg, 
-    M_poor = mp, 
-    SD_good = sg, 
-    SD_poor = sp,
-    Cohens_d = cohens_d,           # psych版
-    Hedges_g = hedges_g,           # psych版（修正済み）
-    D_star = d_star, 
-    n_good = ng, 
-    n_poor = np
+    M_good         = mg,
+    M_poor         = mp,
+    SD_good        = sg,
+    SD_poor        = sp,
+    Cohens_d       = cohens_d,
+    Cohens_d_lower = cohens_d_lower,
+    Cohens_d_upper = cohens_d_upper,
+    Hedges_g       = hedges_g,
+    Hedges_g_lower = hedges_g_lower,
+    Hedges_g_upper = hedges_g_upper,
+    D_star         = d_star,
+    n_good         = ng,
+    n_poor         = np
   )
 }
 
@@ -95,11 +106,9 @@ calculate_summary_stats <- function(res, cutoffs, scores) {
     d_star_sd = sd(res$D_star, na.rm = TRUE),
     d_star_min = min(res$D_star, na.rm = TRUE),
     d_star_max = max(res$D_star, na.rm = TRUE),
-    # psych版 Cohen's d
     cohens_d_sd = sd(res$Cohens_d, na.rm = TRUE),
     cohens_d_min = min(res$Cohens_d, na.rm = TRUE),
     cohens_d_max = max(res$Cohens_d, na.rm = TRUE),
-    # psych版 Hedge's g
     hedges_g_sd = sd(res$Hedges_g, na.rm = TRUE),
     hedges_g_min = min(res$Hedges_g, na.rm = TRUE),
     hedges_g_max = max(res$Hedges_g, na.rm = TRUE)
