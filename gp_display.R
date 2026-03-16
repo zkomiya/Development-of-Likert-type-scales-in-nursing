@@ -1,10 +1,5 @@
 # ===================================================
 # GP Display (View Layer)
-# Version: 9.1
-# Changes from v9.0:
-#   - Added Cohen's d evaluation section
-# Description: Display functions for GP analysis results
-# Note: All function names have gp_ prefix
 # ===================================================
 
 # Function to display header
@@ -41,15 +36,22 @@ gp_display_group_info <- function(cutoff_percentile, n_good, n_poor, cutoff_uppe
 # Function to format results for display
 gp_format_results <- function(discrimination_results) {
   formatted <- discrimination_results
-  formatted$M_good <- sprintf("%.2f", discrimination_results$M_good)
-  formatted$M_poor <- sprintf("%.2f", discrimination_results$M_poor)
-  formatted$SD_good <- sprintf("%.2f", discrimination_results$SD_good)
-  formatted$SD_poor <- sprintf("%.2f", discrimination_results$SD_poor)
-  formatted$Cohens_d <- sprintf("%.6f", discrimination_results$Cohens_d)
-  formatted$Hedges_g <- sprintf("%.6f", discrimination_results$Hedges_g) 
-  formatted$D_star <- sprintf("%.3f", discrimination_results$D_star)  
+  formatted$M_good        <- sprintf("%.2f", discrimination_results$M_good)
+  formatted$M_poor        <- sprintf("%.2f", discrimination_results$M_poor)
+  formatted$SD_good       <- sprintf("%.2f", discrimination_results$SD_good)
+  formatted$SD_poor       <- sprintf("%.2f", discrimination_results$SD_poor)
+  formatted$Cohens_d      <- sprintf("%.6f", discrimination_results$Cohens_d)
+  formatted$Cohens_d_lower <- sprintf("%.6f", discrimination_results$Cohens_d_lower)
+  formatted$Cohens_d_upper <- sprintf("%.6f", discrimination_results$Cohens_d_upper)
+  formatted$Hedges_g      <- sprintf("%.6f", discrimination_results$Hedges_g)
+  formatted$Hedges_g_lower <- sprintf("%.6f", discrimination_results$Hedges_g_lower)
+  formatted$Hedges_g_upper <- sprintf("%.6f", discrimination_results$Hedges_g_upper)
+  formatted$D_star        <- sprintf("%.3f", discrimination_results$D_star)
   
-  return(formatted[, c("item", "n_poor", "n_good", "M_poor", "SD_poor", "M_good", "SD_good", "D_star", "Cohens_d", "Hedges_g")])
+  return(formatted[, c("item", "n_poor", "n_good", "M_poor", "SD_poor", "M_good", "SD_good",
+                       "D_star",
+                       "Cohens_d", "Cohens_d_lower", "Cohens_d_upper",
+                       "Hedges_g", "Hedges_g_lower", "Hedges_g_upper")])
 }
 
 # Function to display main results
