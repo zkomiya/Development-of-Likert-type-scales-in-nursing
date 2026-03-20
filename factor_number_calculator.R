@@ -1,6 +1,5 @@
 # ===================================================
 # Factor Number Determination for EFA
-# Version: 7.2 (PA: output mean and quantile thresholds consistently)
 # Description: Factor number determination for Exploratory Factor Analysis
 # ===================================================
 
@@ -31,10 +30,10 @@ determine_n_factors <- function(data,
   }
   
   # ========================================
-  # Step 1: Parallel Analysis for FACTOR ANALYSIS
+  # Step 1: Parallel Analysis (FA + PCA)
   # ========================================
   if (verbose) {
-    cat("[1/3] Running Parallel Analysis...\n")
+    cat("[1/3] Running Parallel Analysis (FA + PCA)...\n")
     cat("      (This may take a while with", n_iterations, "iterations)\n")
     flush.console()
   }
@@ -45,7 +44,7 @@ determine_n_factors <- function(data,
     x = data,
     n.iter = n_iterations,
     cor = "poly",
-    fa = "fa",
+    fa = "both",
     fm = "minres",
     quant = percentile / 100,
     plot = FALSE,
@@ -110,6 +109,8 @@ determine_n_factors <- function(data,
   # ========================================
   # Step 4: Format Results
   # ========================================
+  
+  # --- FA-based PA ---
   # Parallel analysis (FA): output both mean and quantile thresholds
   #   - nfact is based on the quantile threshold when quant is specified
   #   - fa.sim is the simulated mean (FA-side)
@@ -138,19 +139,6 @@ determine_n_factors <- function(data,
   pa_n_mean <- sum(fa_eigenvalues > pa_sim_mean[1:min(length(fa_eigenvalues), length(pa_sim_mean))])
   pa_n_quant <- pa_result$nfact
   
-  map_values <- vss_result$map
-  map_n <- which.min(map_values) - 1
-  
-  kaiser_result <- list(
-    n_factors = kaiser_n,
-    eigenvalues = pc_eigenvalues,
-    eigen_table = data.frame(
-      Factor = 1:length(pc_eigenvalues),
-      Eigenvalue = round(pc_eigenvalues, 3),
-      Retain = pc_eigenvalues > 1
-    )
-  )
-  
   pa_formatted <- list(
     # n_factors is quantile-based (matches psych::fa.parallel behavior)
     n_factors = pa_n_quant,
@@ -165,11 +153,61 @@ determine_n_factors <- function(data,
     )
   )
   
+  # --- PCA-based PA ---
+  pc_sim_mean <- pa_result$pc.sim
+  
+  # Quantile threshold for simulated PCA eigenvalues
+  pc_sim_quant <- rep(NA_real_, length(pc_eigenvalues))
+  if (!is.null(pa_result$values)) {
+    vals <- pa_result$values
+    cn <- colnames(vals)
+    if (!is.null(cn)) {
+      sim_pc_cols <- which(grepl("sim", cn, ignore.case = TRUE) & grepl("pc", cn, ignore.case = TRUE))
+      if (length(sim_pc_cols) > 0) {
+        qv_pc <- apply(vals[, sim_pc_cols, drop = FALSE], 2, quantile, probs = percentile / 100, na.rm = TRUE)
+        pc_sim_quant[1:min(length(pc_sim_quant), length(qv_pc))] <- as.numeric(qv_pc[1:min(length(pc_sim_quant), length(qv_pc))])
+      }
+    }
+  }
+  
+  # Suggested component numbers for both rules
+  pa_pca_n_quant <- pa_result$ncomp
+  pa_pca_n_mean <- sum(pc_eigenvalues > pc_sim_mean[1:min(length(pc_eigenvalues), length(pc_sim_mean))])
+  
+  pa_pca_len <- min(length(pc_eigenvalues), length(pc_sim_mean))
+  pa_pca_formatted <- list(
+    n_factors = pa_pca_n_quant,
+    n_factors_mean = pa_pca_n_mean,
+    eigen_table = data.frame(
+      Component = 1:pa_pca_len,
+      Real = round(pc_eigenvalues[1:pa_pca_len], 3),
+      Simulated = round(pc_sim_quant[1:pa_pca_len], 3),
+      Simulated_mean = round(pc_sim_mean[1:pa_pca_len], 3),
+      Retain = 1:pa_pca_len <= pa_pca_n_quant,
+      Retain_mean = 1:pa_pca_len <= pa_pca_n_mean
+    )
+  )
+  
+  # --- MAP ---
+  map_values <- vss_result$map
+  map_n <- which.min(map_values) - 1
+  
   map_result <- list(
     n_factors = map_n,
     map_table = data.frame(
       Factors = 0:(length(map_values) - 1),
       MAP = round(map_values, 6)
+    )
+  )
+  
+  # --- Kaiser ---
+  kaiser_result <- list(
+    n_factors = kaiser_n,
+    eigenvalues = pc_eigenvalues,
+    eigen_table = data.frame(
+      Factor = 1:length(pc_eigenvalues),
+      Eigenvalue = round(pc_eigenvalues, 3),
+      Retain = pc_eigenvalues > 1
     )
   )
   
@@ -181,7 +219,8 @@ determine_n_factors <- function(data,
     extraction_method_pa = "minres",
     pa_iterations = n_iterations,
     pa_percentile = percentile,
-    pa_reference = "Mean and quantile (FA simulated)",
+    pa_fa_reference = "Mean and quantile (FA simulated)",
+    pa_pca_reference = "Mean and quantile (PCA simulated)",
     missing_method = missing_method,
     scale_min = scale_min,
     scale_max = scale_max,
@@ -191,6 +230,7 @@ determine_n_factors <- function(data,
   return(list(
     kaiser = kaiser_result,
     pa = pa_formatted,
+    pa_pca = pa_pca_formatted,
     map = map_result,
     conditions = conditions,
     cor_matrix = pa_result$r,
