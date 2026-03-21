@@ -31,10 +31,10 @@ determine_n_factors <- function(data,
   }
   
   # ========================================
-  # Step 1: Parallel Analysis - MRFA
+  # Step 1: Parallel Analysis - MRFA (Polychoric)
   # ========================================
   if (verbose) {
-    cat("[1/4] Running Parallel Analysis (MRFA)...\n")
+    cat("[1/8] Running Parallel Analysis (MRFA) - Polychoric...\n")
     cat("      (This may take a while with", n_iterations, "datasets)\n")
     flush.console()
   }
@@ -58,10 +58,10 @@ determine_n_factors <- function(data,
   }
   
   # ========================================
-  # Step 2: Parallel Analysis (FA + PCA)
+  # Step 2: Parallel Analysis (FA + PCA) (Polychoric)
   # ========================================
   if (verbose) {
-    cat("[2/4] Running Parallel Analysis (FA + PCA)...\n")
+    cat("[2/8] Running Parallel Analysis (FA + PCA) - Polychoric...\n")
     cat("      (This may take a while with", n_iterations, "iterations)\n")
     flush.console()
   }
@@ -88,10 +88,10 @@ determine_n_factors <- function(data,
   }
   
   # ========================================
-  # Step 3: VSS for MAP test
+  # Step 3: VSS for MAP test (Polychoric)
   # ========================================
   if (verbose) {
-    cat("[3/4] Running VSS (MAP test)...\n")
+    cat("[3/8] Running VSS (MAP test) - Polychoric...\n")
     cat("      Testing", max_factors, "factor solutions\n")
     flush.console()
   }
@@ -114,10 +114,10 @@ determine_n_factors <- function(data,
   }
   
   # ========================================
-  # Step 4: Kaiser's Criterion
+  # Step 4: Kaiser's Criterion (Polychoric)
   # ========================================
   if (verbose) {
-    cat("[4/4] Calculating Kaiser's criterion...\n")
+    cat("[4/8] Calculating Kaiser's criterion - Polychoric...\n")
     flush.console()
   }
   
@@ -127,18 +127,117 @@ determine_n_factors <- function(data,
   
   if (verbose) {
     cat("      Completed\n\n")
+    flush.console()
+  }
+  
+  # ========================================
+  # Step 5: Parallel Analysis - MRFA (Pearson)
+  # ========================================
+  if (verbose) {
+    cat("[5/8] Running Parallel Analysis (MRFA) - Pearson...\n")
+    cat("      (This may take a while with", n_iterations, "datasets)\n")
+    flush.console()
+  }
+  
+  mrfa_pear_start <- Sys.time()
+  
+  mrfa_result_pearson <- parallelMRFA(
+    X = data,
+    Ndatsets = n_iterations,
+    percent = percentile,
+    corr = "Pearson",
+    display = FALSE,
+    graph = FALSE
+  )
+  
+  mrfa_pear_end <- Sys.time()
+  
+  if (verbose) {
+    cat("      Completed in", round(difftime(mrfa_pear_end, mrfa_pear_start, units = "secs"), 1), "seconds\n\n")
+    flush.console()
+  }
+  
+  # ========================================
+  # Step 6: Parallel Analysis (FA + PCA) (Pearson)
+  # ========================================
+  if (verbose) {
+    cat("[6/8] Running Parallel Analysis (FA + PCA) - Pearson...\n")
+    cat("      (This may take a while with", n_iterations, "iterations)\n")
+    flush.console()
+  }
+  
+  pa_pear_start <- Sys.time()
+  
+  pa_result_pearson <- fa.parallel(
+    x = data,
+    n.iter = n_iterations,
+    cor = "cor",
+    fa = "both",
+    fm = "minres",
+    quant = percentile / 100,
+    plot = FALSE,
+    main = "",
+    show.legend = FALSE
+  )
+  
+  pa_pear_end <- Sys.time()
+  
+  if (verbose) {
+    cat("      Completed in", round(difftime(pa_pear_end, pa_pear_start, units = "secs"), 1), "seconds\n\n")
+    flush.console()
+  }
+  
+  # ========================================
+  # Step 7: VSS for MAP test (Pearson)
+  # ========================================
+  if (verbose) {
+    cat("[7/8] Running VSS (MAP test) - Pearson...\n")
+    cat("      Testing", max_factors, "factor solutions\n")
+    flush.console()
+  }
+  
+  vss_pear_start <- Sys.time()
+  
+  vss_result_pearson <- VSS(
+    x = data,
+    n = max_factors,
+    cor = "cor",
+    fm = "minres",
+    plot = FALSE
+  )
+  
+  vss_pear_end <- Sys.time()
+  
+  if (verbose) {
+    cat("      Completed in", round(difftime(vss_pear_end, vss_pear_start, units = "secs"), 1), "seconds\n\n")
+    flush.console()
+  }
+  
+  # ========================================
+  # Step 8: Kaiser's Criterion (Pearson)
+  # ========================================
+  if (verbose) {
+    cat("[8/8] Calculating Kaiser's criterion - Pearson...\n")
+    flush.console()
+  }
+  
+  pc_eigenvalues_pearson <- pa_result_pearson$pc.values
+  kaiser_n_pearson <- sum(pc_eigenvalues_pearson > 1)
+  
+  if (verbose) {
+    cat("      Completed\n\n")
     cat("========================================\n")
     cat("All calculations finished!\n")
-    cat("Total time:", round(difftime(vss_end, mrfa_start, units = "secs"), 1), "seconds\n")
+    cat("Total time:", round(difftime(vss_pear_end, mrfa_start, units = "secs"), 1), "seconds\n")
     cat("========================================\n\n")
     flush.console()
   }
   
   # ========================================
-  # Step 5: Format Results
+  # Format Results - Polychoric
   # ========================================
   
-  # --- PA-MRFA ---
+  # --- PA-MRFA (Polychoric) ---
   mrfa_n_vars <- length(mrfa_result$Real_Data)
   pa_mrfa_formatted <- list(
     n_factors = mrfa_result$N_factors_percentiles,
@@ -153,7 +252,7 @@ determine_n_factors <- function(data,
     )
   )
   
-  # --- FA-based PA ---
+  # --- FA-based PA (Polychoric) ---
   fa_eigenvalues <- pa_result$fa.values
   pa_sim_mean <- pa_result$fa.sim
   
@@ -183,7 +282,7 @@ determine_n_factors <- function(data,
     )
   )
   
-  # --- PCA-based PA ---
+  # --- PCA-based PA (Polychoric) ---
   pc_sim_mean <- pa_result$pc.sim
   
   # Quantile threshold for simulated PCA eigenvalues
@@ -210,7 +309,7 @@ determine_n_factors <- function(data,
     )
   )
   
-  # --- MAP ---
+  # --- MAP (Polychoric) ---
   map_values <- vss_result$map
   map_n <- which.min(map_values) - 1
   
@@ -222,7 +321,7 @@ determine_n_factors <- function(data,
     )
   )
   
-  # --- Kaiser ---
+  # --- Kaiser (Polychoric) ---
   kaiser_result <- list(
     n_factors = kaiser_n,
     eigenvalues = pc_eigenvalues,
@@ -234,10 +333,104 @@ determine_n_factors <- function(data,
   )
   
   # ========================================
+  # Format Results - Pearson
+  # ========================================
+  
+  # --- PA-MRFA (Pearson) ---
+  mrfa_n_vars_pear <- length(mrfa_result_pearson$Real_Data)
+  pa_mrfa_pearson_formatted <- list(
+    n_factors = mrfa_result_pearson$N_factors_percentiles,
+    n_factors_mean = mrfa_result_pearson$N_factors_mean,
+    eigen_table = data.frame(
+      Factor = 1:mrfa_n_vars_pear,
+      Real_Pct = round(mrfa_result_pearson$Real_Data, 3),
+      Simulated_Pct = round(mrfa_result_pearson$Percentile_random, 3),
+      Simulated_Mean_Pct = round(mrfa_result_pearson$Mean_random, 3),
+      Retain = 1:mrfa_n_vars_pear <= mrfa_result_pearson$N_factors_percentiles,
+      Retain_mean = 1:mrfa_n_vars_pear <= mrfa_result_pearson$N_factors_mean
+    )
+  )
+  
+  # --- FA-based PA (Pearson) ---
+  fa_eigenvalues_pear <- pa_result_pearson$fa.values
+  pa_sim_mean_pear <- pa_result_pearson$fa.sim
+  
+  vals_pear <- pa_result_pearson$values
+  cn_pear <- colnames(vals_pear)
+  sim_cols_pear <- which(grepl("sim", cn_pear, ignore.case = TRUE) & grepl("fa", cn_pear, ignore.case = TRUE))
+  qv_pear <- apply(vals_pear[, sim_cols_pear, drop = FALSE], 2, quantile, probs = percentile / 100, na.rm = TRUE)
+  pa_sim_quant_pear <- rep(NA_real_, length(fa_eigenvalues_pear))
+  pa_sim_quant_pear[1:min(length(pa_sim_quant_pear), length(qv_pear))] <- as.numeric(qv_pear[1:min(length(pa_sim_quant_pear), length(qv_pear))])
+  
+  pa_n_mean_pear <- sum(fa_eigenvalues_pear > pa_sim_mean_pear[1:min(length(fa_eigenvalues_pear), length(pa_sim_mean_pear))])
+  pa_n_quant_pear <- pa_result_pearson$nfact
+  
+  pa_pearson_formatted <- list(
+    n_factors = pa_n_quant_pear,
+    n_factors_mean = pa_n_mean_pear,
+    eigen_table = data.frame(
+      Factor = 1:min(length(fa_eigenvalues_pear), length(pa_sim_mean_pear)),
+      Real = round(fa_eigenvalues_pear[1:min(length(fa_eigenvalues_pear), length(pa_sim_mean_pear))], 3),
+      Simulated = round(pa_sim_quant_pear[1:min(length(fa_eigenvalues_pear), length(pa_sim_mean_pear))], 3),
+      Simulated_mean = round(pa_sim_mean_pear[1:min(length(fa_eigenvalues_pear), length(pa_sim_mean_pear))], 3),
+      Retain = 1:min(length(fa_eigenvalues_pear), length(pa_sim_mean_pear)) <= pa_n_quant_pear,
+      Retain_mean = 1:min(length(fa_eigenvalues_pear), length(pa_sim_mean_pear)) <= pa_n_mean_pear
+    )
+  )
+  
+  # --- PCA-based PA (Pearson) ---
+  pc_sim_mean_pear <- pa_result_pearson$pc.sim
+  
+  sim_pc_cols_pear <- which(grepl("sim", cn_pear, ignore.case = TRUE) & grepl("pc", cn_pear, ignore.case = TRUE))
+  qv_pc_pear <- apply(vals_pear[, sim_pc_cols_pear, drop = FALSE], 2, quantile, probs = percentile / 100, na.rm = TRUE)
+  pc_sim_quant_pear <- rep(NA_real_, length(pc_eigenvalues_pearson))
+  pc_sim_quant_pear[1:min(length(pc_sim_quant_pear), length(qv_pc_pear))] <- as.numeric(qv_pc_pear[1:min(length(pc_sim_quant_pear), length(qv_pc_pear))])
+  
+  pa_pca_n_quant_pear <- pa_result_pearson$ncomp
+  pa_pca_n_mean_pear <- sum(pc_eigenvalues_pearson > pc_sim_mean_pear[1:min(length(pc_eigenvalues_pearson), length(pc_sim_mean_pear))])
+  
+  pa_pca_len_pear <- min(length(pc_eigenvalues_pearson), length(pc_sim_mean_pear))
+  pa_pca_pearson_formatted <- list(
+    n_factors = pa_pca_n_quant_pear,
+    n_factors_mean = pa_pca_n_mean_pear,
+    eigen_table = data.frame(
+      Component = 1:pa_pca_len_pear,
+      Real = round(pc_eigenvalues_pearson[1:pa_pca_len_pear], 3),
+      Simulated = round(pc_sim_quant_pear[1:pa_pca_len_pear], 3),
+      Simulated_mean = round(pc_sim_mean_pear[1:pa_pca_len_pear], 3),
+      Retain = 1:pa_pca_len_pear <= pa_pca_n_quant_pear,
+      Retain_mean = 1:pa_pca_len_pear <= pa_pca_n_mean_pear
+    )
+  )
+  
+  # --- MAP (Pearson) ---
+  map_values_pear <- vss_result_pearson$map
+  map_n_pear <- which.min(map_values_pear) - 1
+  
+  map_result_pearson <- list(
+    n_factors = map_n_pear,
+    map_table = data.frame(
+      Factors = 0:(length(map_values_pear) - 1),
+      MAP = round(map_values_pear, 6)
+    )
+  )
+  
+  # --- Kaiser (Pearson) ---
+  kaiser_result_pearson <- list(
+    n_factors = kaiser_n_pearson,
+    eigenvalues = pc_eigenvalues_pearson,
+    eigen_table = data.frame(
+      Factor = 1:length(pc_eigenvalues_pearson),
+      Eigenvalue = round(pc_eigenvalues_pearson, 3),
+      Retain = pc_eigenvalues_pearson > 1
+    )
+  )
+  
+  # ========================================
   # Return results
   # ========================================
   conditions <- list(
-    correlation_method = "Polychoric",
+    correlation_method = "Polychoric and Pearson",
     extraction_method_pa_mrfa = "MRFA",
     extraction_method_pa = "minres",
     pa_mrfa_datasets = n_iterations,
@@ -258,6 +451,11 @@ determine_n_factors <- function(data,
     pa = pa_formatted,
     pa_pca = pa_pca_formatted,
     map = map_result,
+    pa_mrfa_pearson = pa_mrfa_pearson_formatted,
+    kaiser_pearson = kaiser_result_pearson,
+    pa_pearson = pa_pearson_formatted,
+    pa_pca_pearson = pa_pca_pearson_formatted,
+    map_pearson = map_result_pearson,
     conditions = conditions,
     cor_matrix = pa_result$r,
     n_obs = n_obs,
