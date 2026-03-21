@@ -154,29 +154,16 @@ determine_n_factors <- function(data,
   )
   
   # --- FA-based PA ---
-  # Parallel analysis (FA): output both mean and quantile thresholds
-  #   - nfact is based on the quantile threshold when quant is specified
-  #   - fa.sim is the simulated mean (FA-side)
   fa_eigenvalues <- pa_result$fa.values
   pa_sim_mean <- pa_result$fa.sim
   
-  # Quantile threshold (e.g., 95th percentile) for simulated FA eigenvalues.
-  # Try to derive it from pa_result$values (preferred); otherwise fall back to NA.
+  # Quantile threshold for simulated FA eigenvalues
+  vals <- pa_result$values
+  cn <- colnames(vals)
+  sim_cols <- which(grepl("sim", cn, ignore.case = TRUE) & grepl("fa", cn, ignore.case = TRUE))
+  qv <- apply(vals[, sim_cols, drop = FALSE], 2, quantile, probs = percentile / 100, na.rm = TRUE)
   pa_sim_quant <- rep(NA_real_, length(fa_eigenvalues))
-  if (!is.null(pa_result$values)) {
-    vals <- pa_result$values
-    cn <- colnames(vals)
-    if (!is.null(cn)) {
-      sim_cols <- which(grepl("sim", cn, ignore.case = TRUE) & grepl("fa", cn, ignore.case = TRUE))
-      if (length(sim_cols) == 0 && ncol(vals) >= n_vars) {
-        sim_cols <- (ncol(vals) - n_vars + 1):ncol(vals)
-      }
-      if (length(sim_cols) > 0) {
-        qv <- apply(vals[, sim_cols, drop = FALSE], 2, quantile, probs = percentile / 100, na.rm = TRUE)
-        pa_sim_quant[1:min(length(pa_sim_quant), length(qv))] <- as.numeric(qv[1:min(length(pa_sim_quant), length(qv))])
-      }
-    }
-  }
+  pa_sim_quant[1:min(length(pa_sim_quant), length(qv))] <- as.numeric(qv[1:min(length(pa_sim_quant), length(qv))])
   
   # Suggested factor numbers for both rules
   pa_n_mean <- sum(fa_eigenvalues > pa_sim_mean[1:min(length(fa_eigenvalues), length(pa_sim_mean))])
@@ -200,18 +187,10 @@ determine_n_factors <- function(data,
   pc_sim_mean <- pa_result$pc.sim
   
   # Quantile threshold for simulated PCA eigenvalues
+  sim_pc_cols <- which(grepl("sim", cn, ignore.case = TRUE) & grepl("pc", cn, ignore.case = TRUE))
+  qv_pc <- apply(vals[, sim_pc_cols, drop = FALSE], 2, quantile, probs = percentile / 100, na.rm = TRUE)
   pc_sim_quant <- rep(NA_real_, length(pc_eigenvalues))
-  if (!is.null(pa_result$values)) {
-    vals <- pa_result$values
-    cn <- colnames(vals)
-    if (!is.null(cn)) {
-      sim_pc_cols <- which(grepl("sim", cn, ignore.case = TRUE) & grepl("pc", cn, ignore.case = TRUE))
-      if (length(sim_pc_cols) > 0) {
-        qv_pc <- apply(vals[, sim_pc_cols, drop = FALSE], 2, quantile, probs = percentile / 100, na.rm = TRUE)
-        pc_sim_quant[1:min(length(pc_sim_quant), length(qv_pc))] <- as.numeric(qv_pc[1:min(length(pc_sim_quant), length(qv_pc))])
-      }
-    }
-  }
+  pc_sim_quant[1:min(length(pc_sim_quant), length(qv_pc))] <- as.numeric(qv_pc[1:min(length(pc_sim_quant), length(qv_pc))])
   
   # Suggested component numbers for both rules
   pa_pca_n_quant <- pa_result$ncomp
