@@ -4,6 +4,7 @@
 # ===================================================
 
 library(psych)
+library(EFA.MRFA)
 
 determine_n_factors <- function(data,
                                 n_iterations,
@@ -30,10 +31,37 @@ determine_n_factors <- function(data,
   }
   
   # ========================================
-  # Step 1: Parallel Analysis (FA + PCA)
+  # Step 1: Parallel Analysis - MRFA
   # ========================================
   if (verbose) {
-    cat("[1/3] Running Parallel Analysis (FA + PCA)...\n")
+    cat("[1/4] Running Parallel Analysis (MRFA)...\n")
+    cat("      (This may take a while with", n_iterations, "datasets)\n")
+    flush.console()
+  }
+  
+  mrfa_start <- Sys.time()
+  
+  mrfa_result <- parallelMRFA(
+    X = data,
+    Ndatsets = n_iterations,
+    percent = percentile,
+    corr = "Polychoric",
+    display = FALSE,
+    graph = FALSE
+  )
+  
+  mrfa_end <- Sys.time()
+  
+  if (verbose) {
+    cat("      Completed in", round(difftime(mrfa_end, mrfa_start, units = "secs"), 1), "seconds\n\n")
+    flush.console()
+  }
+  
+  # ========================================
+  # Step 2: Parallel Analysis (FA + PCA)
+  # ========================================
+  if (verbose) {
+    cat("[2/4] Running Parallel Analysis (FA + PCA)...\n")
     cat("      (This may take a while with", n_iterations, "iterations)\n")
     flush.console()
   }
@@ -60,10 +88,10 @@ determine_n_factors <- function(data,
   }
   
   # ========================================
-  # Step 2: VSS for MAP test
+  # Step 3: VSS for MAP test
   # ========================================
   if (verbose) {
-    cat("[2/3] Running VSS (MAP test)...\n")
+    cat("[3/4] Running VSS (MAP test)...\n")
     cat("      Testing", max_factors, "factor solutions\n")
     flush.console()
   }
@@ -86,10 +114,10 @@ determine_n_factors <- function(data,
   }
   
   # ========================================
-  # Step 3: Kaiser's Criterion
+  # Step 4: Kaiser's Criterion
   # ========================================
   if (verbose) {
-    cat("[3/3] Calculating Kaiser's criterion...\n")
+    cat("[4/4] Calculating Kaiser's criterion...\n")
     flush.console()
   }
   
@@ -101,14 +129,29 @@ determine_n_factors <- function(data,
     cat("      Completed\n\n")
     cat("========================================\n")
     cat("All calculations finished!\n")
-    cat("Total time:", round(difftime(vss_end, pa_start, units = "secs"), 1), "seconds\n")
+    cat("Total time:", round(difftime(vss_end, mrfa_start, units = "secs"), 1), "seconds\n")
     cat("========================================\n\n")
     flush.console()
   }
   
   # ========================================
-  # Step 4: Format Results
+  # Step 5: Format Results
   # ========================================
+  
+  # --- PA-MRFA ---
+  mrfa_n_vars <- length(mrfa_result$Real_Data)
+  pa_mrfa_formatted <- list(
+    n_factors = mrfa_result$N_factors_percentiles,
+    n_factors_mean = mrfa_result$N_factors_mean,
+    eigen_table = data.frame(
+      Factor = 1:mrfa_n_vars,
+      Real_Pct = round(mrfa_result$Real_Data, 3),
+      Simulated_Pct = round(mrfa_result$Percentile_random, 3),
+      Simulated_Mean_Pct = round(mrfa_result$Mean_random, 3),
+      Retain = 1:mrfa_n_vars <= mrfa_result$N_factors_percentiles,
+      Retain_mean = 1:mrfa_n_vars <= mrfa_result$N_factors_mean
+    )
+  )
   
   # --- FA-based PA ---
   # Parallel analysis (FA): output both mean and quantile thresholds
@@ -216,7 +259,10 @@ determine_n_factors <- function(data,
   # ========================================
   conditions <- list(
     correlation_method = "Polychoric",
+    extraction_method_pa_mrfa = "MRFA",
     extraction_method_pa = "minres",
+    pa_mrfa_datasets = n_iterations,
+    pa_mrfa_random_method = "Permutation of the raw data",
     pa_iterations = n_iterations,
     pa_percentile = percentile,
     pa_fa_reference = "Mean and quantile (FA simulated)",
@@ -228,6 +274,7 @@ determine_n_factors <- function(data,
   )
   
   return(list(
+    pa_mrfa = pa_mrfa_formatted,
     kaiser = kaiser_result,
     pa = pa_formatted,
     pa_pca = pa_pca_formatted,

@@ -14,23 +14,26 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   cond <- results$conditions
   cat("Calculation Conditions\n")
   cat("----------------------\n")
-  cat("  Correlation method:       ", cond$correlation_method, "\n")
-  cat("  Extraction method (PA):   ", cond$extraction_method_pa, "\n")
-  cat("  PA iterations:            ", cond$pa_iterations, "\n")
-  cat("  PA percentile:            ", cond$pa_percentile, "\n")
+  cat("  Correlation method:        ", cond$correlation_method, "\n")
+  cat("  Extraction method (MRFA):  ", cond$extraction_method_pa_mrfa, "\n")
+  cat("  Extraction method (PA):    ", cond$extraction_method_pa, "\n")
+  cat("  PA-MRFA datasets:          ", cond$pa_mrfa_datasets, "\n")
+  cat("  PA-MRFA random method:     ", cond$pa_mrfa_random_method, "\n")
+  cat("  PA iterations:             ", cond$pa_iterations, "\n")
+  cat("  PA percentile:             ", cond$pa_percentile, "\n")
   if (!is.null(cond$pa_fa_reference)) {
-    cat("  PA FA reference:          ", cond$pa_fa_reference, "\n")
+    cat("  PA FA reference:           ", cond$pa_fa_reference, "\n")
   }
   if (!is.null(cond$pa_pca_reference)) {
-    cat("  PA PCA reference:         ", cond$pa_pca_reference, "\n")
+    cat("  PA PCA reference:          ", cond$pa_pca_reference, "\n")
   }
   if (!is.null(cond$missing_method)) {
-    cat("  Missing data handling:    ", cond$missing_method, "\n")
+    cat("  Missing data handling:     ", cond$missing_method, "\n")
   }
   if (!is.null(cond$scale_min) && !is.null(cond$scale_max)) {
-    cat("  Scale range:              ", cond$scale_min, "-", cond$scale_max, "\n")
+    cat("  Scale range:               ", cond$scale_min, "-", cond$scale_max, "\n")
   }
-  cat("  Kaiser eigenvalue source: ", cond$kaiser_eigenvalue_source, "\n")
+  cat("  Kaiser eigenvalue source:  ", cond$kaiser_eigenvalue_source, "\n")
   cat("\n")
   
   # Sample info
@@ -39,7 +42,31 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   cat("  Variables:", n_vars, "\n")
   cat("  Observations:", n_obs, "\n\n")
   
-  # Parallel Analysis - FA (FIRST)
+  # Parallel Analysis - MRFA (FIRST)
+  if (!is.null(results$pa_mrfa)) {
+    cat("Parallel Analysis (MRFA)\n")
+    cat("------------------------\n")
+    cat("  Suggested:", results$pa_mrfa$n_factors, "factors\n")
+    if (!is.null(results$pa_mrfa$n_factors_mean)) {
+      cat("  (Mean reference):", results$pa_mrfa$n_factors_mean, "factors\n")
+    }
+    cat("\n")
+    
+    mrfa_df <- results$pa_mrfa$eigen_table
+    cat("  Comparison of % Explained Common Variance:\n")
+    for (i in 1:nrow(mrfa_df)) {
+      marker <- if (mrfa_df$Retain[i]) " *" else ""
+      cat(sprintf("    F%02d: Real=%6.3f%% | Percentile=%6.3f%% | Mean=%6.3f%%%s\n",
+                  mrfa_df$Factor[i],
+                  mrfa_df$Real_Pct[i],
+                  mrfa_df$Simulated_Pct[i],
+                  mrfa_df$Simulated_Mean_Pct[i],
+                  marker))
+    }
+    cat("\n")
+  }
+  
+  # Parallel Analysis - FA (SECOND)
   cat("Parallel Analysis (Factor Analysis)\n")
   cat("------------------------------------\n")
   cat("  Suggested:", results$pa$n_factors, "factors\n")
@@ -69,7 +96,7 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   }
   cat("\n")
   
-  # Parallel Analysis - PCA (SECOND)
+  # Parallel Analysis - PCA (THIRD)
   if (!is.null(results$pa_pca)) {
     cat("Parallel Analysis (PCA)\n")
     cat("-----------------------\n")
@@ -101,7 +128,7 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
     cat("\n")
   }
   
-  # MAP test (THIRD)
+  # MAP test (FOURTH)
   cat("MAP Test (Velicer's MAP)\n")
   cat("------------------------\n")
   cat("  Suggested:", results$map$n_factors, "factors\n\n")
@@ -117,7 +144,7 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   }
   cat("\n")
   
-  # Kaiser's criterion (FOURTH)
+  # Kaiser's criterion (FIFTH)
   cat("Kaiser's Criterion\n")
   cat("------------------\n")
   cat("  Eigenvalues > 1:", results$kaiser$n_factors, "\n\n")
@@ -139,18 +166,24 @@ display_factor_number_results <- function(results, n_obs, n_vars) {
   cat("========================================\n")
   cat("SUMMARY\n")
   cat("========================================\n")
-  cat("Parallel Analysis (FA):  ", results$pa$n_factors, "factors\n")
-  if (!is.null(results$pa$n_factors_mean)) {
-    cat("PA FA (mean reference):  ", results$pa$n_factors_mean, "factors\n")
-  }
-  if (!is.null(results$pa_pca)) {
-    cat("Parallel Analysis (PCA): ", results$pa_pca$n_factors, "components\n")
-    if (!is.null(results$pa_pca$n_factors_mean)) {
-      cat("PA PCA (mean reference): ", results$pa_pca$n_factors_mean, "components\n")
+  if (!is.null(results$pa_mrfa)) {
+    cat("Parallel Analysis (MRFA): ", results$pa_mrfa$n_factors, "factors\n")
+    if (!is.null(results$pa_mrfa$n_factors_mean)) {
+      cat("PA MRFA (mean reference): ", results$pa_mrfa$n_factors_mean, "factors\n")
     }
   }
-  cat("MAP test:                ", results$map$n_factors, "factors\n")
-  cat("Kaiser's criterion:      ", results$kaiser$n_factors, "factors\n")
+  cat("Parallel Analysis (FA):   ", results$pa$n_factors, "factors\n")
+  if (!is.null(results$pa$n_factors_mean)) {
+    cat("PA FA (mean reference):   ", results$pa$n_factors_mean, "factors\n")
+  }
+  if (!is.null(results$pa_pca)) {
+    cat("Parallel Analysis (PCA):  ", results$pa_pca$n_factors, "components\n")
+    if (!is.null(results$pa_pca$n_factors_mean)) {
+      cat("PA PCA (mean reference):  ", results$pa_pca$n_factors_mean, "components\n")
+    }
+  }
+  cat("MAP test:                 ", results$map$n_factors, "factors\n")
+  cat("Kaiser's criterion:       ", results$kaiser$n_factors, "factors\n")
   cat("========================================\n")
   
   invisible(NULL)
@@ -169,9 +202,14 @@ show_factor_number_evaluation <- function(results) {
   pa_mean_n <- results$pa$n_factors_mean
   pa_pca_n <- if (!is.null(results$pa_pca)) results$pa_pca$n_factors else NULL
   pa_pca_mean_n <- if (!is.null(results$pa_pca)) results$pa_pca$n_factors_mean else NULL
+  pa_mrfa_n <- if (!is.null(results$pa_mrfa)) results$pa_mrfa$n_factors else NULL
+  pa_mrfa_mean_n <- if (!is.null(results$pa_mrfa)) results$pa_mrfa$n_factors_mean else NULL
   
-  # Agreement check (PA FA quantile, PA PCA quantile, MAP, Kaiser)
+  # Agreement check (PA MRFA quantile, PA FA quantile, PA PCA quantile, MAP, Kaiser)
   all_values <- c(pa_n, map_n, kaiser_n)
+  if (!is.null(pa_mrfa_n)) {
+    all_values <- c(all_values, pa_mrfa_n)
+  }
   if (!is.null(pa_pca_n)) {
     all_values <- c(all_values, pa_pca_n)
   }
@@ -189,6 +227,9 @@ show_factor_number_evaluation <- function(results) {
     cat("  Range:", min(all_values), "-", max(all_values), "\n")
   }
   
+  if (!is.null(pa_mrfa_mean_n)) {
+    cat("  PA MRFA (mean reference):", pa_mrfa_mean_n, "factors\n")
+  }
   if (!is.null(pa_mean_n)) {
     cat("  PA FA (mean reference):", pa_mean_n, "factors\n")
   }
@@ -199,8 +240,9 @@ show_factor_number_evaluation <- function(results) {
   cat("\n")
   cat("Method Characteristics\n")
   cat("----------------------\n")
-  cat("  Parallel Analysis (FA):  Recommended for ordinal data\n")
-  cat("  Parallel Analysis (PCA): Component-based comparison\n")
+  cat("  Parallel Analysis (MRFA): MRFA extraction, % common variance comparison\n")
+  cat("  Parallel Analysis (FA):   minres extraction, eigenvalue comparison\n")
+  cat("  Parallel Analysis (PCA):  Component-based comparison\n")
   cat("  MAP: Minimizes partial correlations\n")
   cat("  Kaiser: Tends to overextract\n")
   cat("========================================\n")
