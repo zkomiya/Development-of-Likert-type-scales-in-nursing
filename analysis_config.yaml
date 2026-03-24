@@ -100,6 +100,11 @@ scale_structure:
 factor_number:
   parallel_analysis_iterations: 1000
   percentile: 95
+  # Sensitivity analysis: exclude items
+  # Generates all power-set combinations of listed items
+  # e.g., ["Q19","Q23"] -> full, excl_Q19, excl_Q23, excl_Q19_Q23
+  # null or empty: no sensitivity analysis (full dataset only)
+  sensitivity_exclude_items: ["Q19"]
 
 # ===== EFA SETTINGS =====
 efa_settings:
@@ -110,7 +115,7 @@ efa_settings:
   # Available: "minres", "uls", "pa", "ml", "wls", "gls"
   extraction_methods: ["wls", "uls","ml","pa", "minres"]
   # Multiple numbers of factors to extract
-  n_factors_list: [4, 5,6]
+  n_factors_list: [2,4,5,6]
   gamma_values: [0.0]
   kaiser_normalize: true
   max_iterations: 1000
@@ -120,6 +125,11 @@ efa_settings:
   # null: show all values
   # numeric (e.g., 0.30): suppress absolute values below this threshold
   display_cutoff: null
+  # Sensitivity analysis: exclude items
+  # Generates all power-set combinations of listed items
+  # e.g., ["Q19","Q23"] -> full, excl_Q19, excl_Q23, excl_Q19_Q23
+  # null or empty: no sensitivity analysis (full dataset only)
+  sensitivity_exclude_items: ["Q19"]
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
