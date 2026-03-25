@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_30    
+  dataset: items_29    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
@@ -104,7 +104,7 @@ factor_number:
   # Generates all power-set combinations of listed items
   # e.g., ["Q19","Q23"] -> full, excl_Q19, excl_Q23, excl_Q19_Q23
   # null or empty: no sensitivity analysis (full dataset only)
-  sensitivity_exclude_items: ["Q19"]
+  sensitivity_exclude_items: []
 
 # ===== EFA SETTINGS =====
 efa_settings:
@@ -129,7 +129,7 @@ efa_settings:
   # Generates all power-set combinations of listed items
   # e.g., ["Q19","Q23"] -> full, excl_Q19, excl_Q23, excl_Q19_Q23
   # null or empty: no sensitivity analysis (full dataset only)
-  sensitivity_exclude_items: ["Q19"]
+  sensitivity_exclude_items: []
 
 # ===== EFA EVALUATION SETTINGS =====
 efa_evaluation:
