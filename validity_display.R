@@ -1,6 +1,9 @@
 # ===================================================
 # Validity Display (View Layer)
-# Version: 5.0 - Pearson only (statistically appropriate)
+# Version: 6.0 - No load_config() in display
+# Changes from v5.0:
+#   - Removed load_config() calls
+#   - Subscale config received as arguments from controller
 # ===================================================
 
 # Display header
@@ -36,12 +39,8 @@ validity_display_total <- function(results) {
 }
 
 # Subscale level display
-validity_display_subscales <- function(results) {
+validity_display_subscales <- function(results, target_subscales) {
   cat("\n=== Subscale Correlations ===\n\n")
-  
-  # Load config to get proper names from YAML
-  config <- load_config()
-  subscale_config <- config$analysis$item_total_analysis
   
   # Get subscale names
   subscale_names <- names(results$subscale_level$gb)
@@ -51,8 +50,8 @@ validity_display_subscales <- function(results) {
   cat("--------------------------------------------------------------------------------\n")
   
   for (subscale in subscale_names) {
-    # Get name from YAML config
-    display_name <- subscale_config[[subscale]]$name
+    # Get name from subscale config
+    display_name <- target_subscales[[subscale]]$name
     if (nchar(display_name) > 40) {
       display_name <- paste0(substr(display_name, 1, 37), "...")
     }
@@ -71,8 +70,8 @@ validity_display_subscales <- function(results) {
   cat("--------------------------------------------------------------------------------\n")
   
   for (subscale in subscale_names) {
-    # Get name from YAML config
-    display_name <- subscale_config[[subscale]]$name
+    # Get name from subscale config
+    display_name <- target_subscales[[subscale]]$name
     if (nchar(display_name) > 40) {
       display_name <- paste0(substr(display_name, 1, 37), "...")
     }
@@ -87,24 +86,19 @@ validity_display_subscales <- function(results) {
   }
 }
 
-# Subscale × subscale matrix display
-validity_display_subscale_matrix <- function(results) {
-  cat("\n=== 30items Subscales × REHAB GB Subscales Correlation Matrix ===\n\n")
-  
-  # Load configs for names
-  config <- load_config()
-  items30_config <- config$analysis$item_total_analysis
-  gb_config <- config$analysis$rehab_subscales$gb_subscales
+# Subscale x subscale matrix display
+validity_display_subscale_matrix <- function(results, target_subscales, rehab_gb_subscales) {
+  cat("\n=== 30items Subscales x REHAB GB Subscales Correlation Matrix ===\n\n")
   
   # Get subscale names
-  items30_names <- names(results$subscale_x_subscale)
-  gb_names <- names(results$subscale_x_subscale[[items30_names[1]]])
+  target_names <- names(results$subscale_x_subscale)
+  gb_names <- names(results$subscale_x_subscale[[target_names[1]]])
   
   # Pearson correlation matrix
   cat("Pearson Correlations (r):\n")
   cat(sprintf("%-45s", ""))
   for (gb_name in gb_names) {
-    display_name <- gb_config[[gb_name]]$name
+    display_name <- rehab_gb_subscales[[gb_name]]$name
     if (nchar(display_name) > 14) {
       display_name <- substr(display_name, 1, 14)
     }
@@ -113,15 +107,15 @@ validity_display_subscale_matrix <- function(results) {
   cat("\n")
   cat(paste(rep("-", 45 + 16 * length(gb_names)), collapse=""), "\n")
   
-  for (items30_name in items30_names) {
-    display_name <- items30_config[[items30_name]]$name
+  for (target_name in target_names) {
+    display_name <- target_subscales[[target_name]]$name
     if (nchar(display_name) > 43) {
       display_name <- paste0(substr(display_name, 1, 40), "...")
     }
     cat(sprintf("%-45s", display_name))
     
     for (gb_name in gb_names) {
-      r <- results$subscale_x_subscale[[items30_name]][[gb_name]]$r
+      r <- results$subscale_x_subscale[[target_name]][[gb_name]]$r
       cat(sprintf("%16.3f", r))
     }
     cat("\n")

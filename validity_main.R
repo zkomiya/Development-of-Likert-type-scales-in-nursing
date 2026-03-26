@@ -1,10 +1,15 @@
 # ===================================================
 # Validity Main (Controller Layer)
-# Version: 6.0 - Pearson only analysis
 # ===================================================
 
 # Main validity analysis function
 analyze_validity <- function(target_obj, rehab_obj) {
+  
+  # Load config (controller layer only)
+  config <- load_config()
+  dataset_name <- config$analysis$data_source$dataset
+  target_subscales <- config$analysis$scale_structure[[dataset_name]]
+  rehab_gb_subscales <- config$analysis$rehab_subscales$gb_subscales
   
   # Display header
   validity_display_header()
@@ -34,8 +39,10 @@ analyze_validity <- function(target_obj, rehab_obj) {
   cat("Step 2: Correlation Analysis\n")
   cat("-----------------------------\n")
   
-  # Pass entire objects (including keys) to calculator
-  results <- analyze_validity_correlations(target_obj, rehab_obj)
+  # Pass entire objects and subscale definitions to calculator
+  results <- analyze_validity_correlations(
+    target_obj, rehab_obj, target_subscales, rehab_gb_subscales
+  )
   
   # Step 3: Display results
   cat("Step 3: Results\n")
@@ -45,10 +52,10 @@ analyze_validity <- function(target_obj, rehab_obj) {
   validity_display_total(results)
   
   # Subscale level
-  validity_display_subscales(results)
+  validity_display_subscales(results, target_subscales)
   
   # Subscale x subscale matrix
-  validity_display_subscale_matrix(results)
+  validity_display_subscale_matrix(results, target_subscales, rehab_gb_subscales)
   
   cat("\n========================================\n")
   cat("Analysis Complete\n")

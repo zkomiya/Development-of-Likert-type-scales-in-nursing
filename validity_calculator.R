@@ -1,9 +1,11 @@
 # ===================================================
 # Validity Calculator (Model Layer)
-# Version: 7.0 - Pearson correlation with progress messages
-# Changes from v6.0:
-#   - Added progress messages for better user feedback
-#   - Removed unnecessary Polychoric correlation for continuous data
+# Version: 8.0 - No load_config() in calculator
+# Changes from v7.0:
+#   - Removed load_config() from calculate_rehab_gb_subscale_scores()
+#     and calculate_target_subscale_scores()
+#   - Subscale definitions passed as arguments from controller
+#   - Renamed calculate_30items_scores to calculate_target_subscale_scores
 # ===================================================
 
 library(pwr)
@@ -30,10 +32,7 @@ calculate_rehab_scores <- function(rehab_data) {
 }
 
 # Calculate REHAB GB subscale scores
-calculate_rehab_gb_subscale_scores <- function(rehab_data) {
-  CONFIG <- load_config()
-  gb_subscales <- CONFIG$analysis$rehab_subscales$gb_subscales
-  
+calculate_rehab_gb_subscale_scores <- function(rehab_data, gb_subscales) {
   scores <- list()
   for (name in names(gb_subscales)) {
     subscale_info <- gb_subscales[[name]]
@@ -47,19 +46,15 @@ calculate_rehab_gb_subscale_scores <- function(rehab_data) {
   return(scores)
 }
 
-# Calculate 30items subscale scores
-calculate_30items_scores <- function(data) {
-  # Load subscale definitions from config
-  CONFIG <- load_config()
-  subscales <- CONFIG$analysis$item_total_analysis
-  
+# Calculate target scale subscale scores
+calculate_target_subscale_scores <- function(data, subscale_definitions) {
   scores <- list()
   scores$total <- rowSums(data, na.rm = TRUE)
   
   # Calculate each subscale
-  for (name in names(subscales)) {
-    if (name != "enable_subscales" && !is.null(subscales[[name]]$items)) {
-      items <- subscales[[name]]$items
+  for (name in names(subscale_definitions)) {
+    if (!is.null(subscale_definitions[[name]]$items)) {
+      items <- subscale_definitions[[name]]$items
       available_items <- items[items %in% names(data)]
       if (length(available_items) > 0) {
         scores[[name]] <- rowSums(data[available_items], na.rm = TRUE)
@@ -104,7 +99,8 @@ calculate_correlation_with_ci_power <- function(x, y, alpha = 0.05) {
 }
 
 # Main validity analysis function with ID matching
-analyze_validity_correlations <- function(target_obj, rehab_obj) {
+analyze_validity_correlations <- function(target_obj, rehab_obj,
+                                          target_subscales, rehab_gb_subscales) {
   
   # Load data structure functions
   source("data_structure.R")
@@ -155,8 +151,12 @@ analyze_validity_correlations <- function(target_obj, rehab_obj) {
   # Calculate scores on matched data
   cat("Calculating scores...\n")
   rehab_scores <- calculate_rehab_scores(rehab_matched)
-  rehab_gb_subscale_scores <- calculate_rehab_gb_subscale_scores(rehab_matched)
-  items30_scores <- calculate_30items_scores(target_matched)
+  rehab_gb_subscale_scores <- calculate_rehab_gb_subscale_scores(
+    rehab_matched, rehab_gb_subscales
+  )
+  target_scores <- calculate_target_subscale_scores(
+    target_matched, target_subscales
+  )
   cat("Score calculation complete.\n\n")
   
   # Initialize results
@@ -166,19 +166,19 @@ analyze_validity_correlations <- function(target_obj, rehab_obj) {
   cat("Calculating total-level correlations...\n")
   cat("  REHAB-GB correlation...")
   results$total_level <- list(
-    gb = calculate_correlation_with_ci_power(items30_scores$total, rehab_scores$gb),
+    gb = calculate_correlation_with_ci_power(target_scores$total, rehab_scores$gb),
     db = NULL
   )
   cat(" done\n")
   
   cat("  REHAB-DB correlation...")
-  results$total_level$db <- calculate_correlation_with_ci_power(items30_scores$total, rehab_scores$db)
+  results$total_level$db <- calculate_correlation_with_ci_power(target_scores$total, rehab_scores$db)
   cat(" done\n")
   cat("Total-level correlations complete.\n\n")
   
   # Subscale correlations with progress messages
   cat("Calculating subscale-level correlations...\n")
-  subscale_names <- names(items30_scores)[names(items30_scores) != "total"]
+  subscale_names <- names(target_scores)[names(target_scores) != "total"]
   results$subscale_level <- list(gb = list(), db = list())
   
   for (i in seq_along(subscale_names)) {
@@ -186,9 +186,9 @@ analyze_validity_correlations <- function(target_obj, rehab_obj) {
     cat(sprintf("  Subscale %d/%d: %s...", i, length(subscale_names), subscale))
     
     results$subscale_level$gb[[subscale]] <- 
-      calculate_correlation_with_ci_power(items30_scores[[subscale]], rehab_scores$gb)
+      calculate_correlation_with_ci_power(target_scores[[subscale]], rehab_scores$gb)
     results$subscale_level$db[[subscale]] <- 
-      calculate_correlation_with_ci_power(items30_scores[[subscale]], rehab_scores$db)
+      calculate_correlation_with_ci_power(target_scores[[subscale]], rehab_scores$db)
     
     cat(" done\n")
   }
@@ -201,8 +201,8 @@ analyze_validity_correlations <- function(target_obj, rehab_obj) {
   total_combinations <- length(subscale_names) * length(rehab_gb_subscale_scores)
   current <- 0
   
-  for (items30_subscale in subscale_names) {
-    results$subscale_x_subscale[[items30_subscale]] <- list()
+  for (target_subscale in subscale_names) {
+    results$subscale_x_subscale[[target_subscale]] <- list()
     
     for (gb_subscale in names(rehab_gb_subscale_scores)) {
       current <- current + 1
@@ -214,9 +214,9 @@ analyze_validity_correlations <- function(target_obj, rehab_obj) {
                     round(100 * current / total_combinations)))
       }
       
-      results$subscale_x_subscale[[items30_subscale]][[gb_subscale]] <- 
+      results$subscale_x_subscale[[target_subscale]][[gb_subscale]] <- 
         calculate_correlation_with_ci_power(
-          items30_scores[[items30_subscale]], 
+          target_scores[[target_subscale]], 
           rehab_gb_subscale_scores[[gb_subscale]]
         )
     }
