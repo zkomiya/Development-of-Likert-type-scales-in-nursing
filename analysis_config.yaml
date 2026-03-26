@@ -79,22 +79,22 @@ scale_structure:
     awareness_of_illness:
       name: "病気と治療の必要性の自覚"
       items: ["Q01", "Q02", "Q03"]
-  items_30:
-    factor_1:
-      name: "DUMMY"
-      items: ["Q01", "Q02", "Q03"]
   items_29:
     factor_1:
-      name: "DUMMY"
+      name: "精神生活の安定・自己調整"
+      items: ["Q10", "Q12", "Q14","Q15","Q16"]
+    factor_2:
+      name: "疾患・治療理解"
       items: ["Q01", "Q02", "Q03"]
-  items_28-Q07:
-    factor_1:
-      name: "DUMMY"
-      items: ["Q01", "Q02", "Q03"]
-  items_30-Q19:
-    factor_1:
-      name: "DUMMY"
-      items: ["Q01", "Q02", "Q03"]
+    factor_3:
+      name: "退院準備への主体性・援助希求"
+      items: ["Q07", "Q11", "Q13","Q24","Q25","Q30"]
+    factor_4:
+      name: "生活管理・地域生活技能"
+      items: ["Q04", "Q05", "Q06","Q08","Q09","Q17","Q18","Q20","Q21","Q22","Q23"]
+    factor_5:
+      name: "現時点の危険行動の不在"
+      items: ["Q26", "Q27", "Q28","Q29"]
 
 # ===== FACTOR NUMBER DETERMINATION =====
 factor_number:
@@ -141,16 +141,16 @@ efa_evaluation:
 rehab_subscales:
   gb_subscales:
     self_care:
-      name: "Self-care"
-      items: ["R_Q08", "R_Q09", "R_Q10"]
+      name: "社会的活動性"
+      items: ["R_Q08", "R_Q09", "R_Q10","R_Q11","R_Q12","R_Q13"]
     social_activity:
-      name: "Social Activity"
+      name: "社会的活動性"
       items: ["R_Q11", "R_Q12", "R_Q13"]
     community_skills:
-      name: "Community Skills"  
+      name: "ことばの技能"  
       items: ["R_Q14", "R_Q15", "R_Q16"]
     speech_skills:
-      name: "Speech Skills"
+      name: "ことばのわかりやすさ"
       items: ["R_Q17", "R_Q18", "R_Q19"]
     disturbed_speech:
       name: "Disturbed Speech"
