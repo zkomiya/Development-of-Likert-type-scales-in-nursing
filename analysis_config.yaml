@@ -140,19 +140,16 @@ efa_evaluation:
 # REHAB subscale definitions
 rehab_subscales:
   gb_subscales:
-    self_care:
+    factor_1:
       name: "社会的活動性"
       items: ["R_Q08", "R_Q09", "R_Q10","R_Q11","R_Q12","R_Q13"]
-    social_activity:
-      name: "社会的活動性"
-      items: ["R_Q11", "R_Q12", "R_Q13"]
-    community_skills:
+    factor_2:
       name: "ことばの技能"  
       items: ["R_Q14", "R_Q15", "R_Q16"]
-    speech_skills:
+    factor_3:
       name: "ことばのわかりやすさ"
       items: ["R_Q17", "R_Q18", "R_Q19"]
-    disturbed_speech:
+    factor_4:
       name: "Disturbed Speech"
       items: ["R_Q20", "R_Q21", "R_Q22", "R_Q23"]
 
