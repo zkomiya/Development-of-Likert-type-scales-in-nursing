@@ -144,14 +144,17 @@ rehab_subscales:
       name: "社会的活動性"
       items: ["R_Q08", "R_Q09", "R_Q10","R_Q11","R_Q12","R_Q13"]
     factor_2:
-      name: "ことばの技能"  
-      items: ["R_Q14", "R_Q15", "R_Q16"]
+      name: "ことばのわかりやすさ"  
+      items: ["R_Q14", "R_Q15"]
     factor_3:
-      name: "ことばのわかりやすさ"
-      items: ["R_Q17", "R_Q18", "R_Q19"]
+      name: "セルフケア"
+      items: ["R_Q16","R_Q17", "R_Q18", "R_Q19","R_Q20"]
     factor_4:
-      name: "Disturbed Speech"
-      items: ["R_Q20", "R_Q21", "R_Q22", "R_Q23"]
+      name: "社会生活の技能"
+      items: ["R_Q21", "R_Q22"]
+    factor_5:
+      name: "ことばの技能"
+      items: ["R_Q12", "R_Q13"]    
 
 # Interrater analysis
 interrater_analysis:
