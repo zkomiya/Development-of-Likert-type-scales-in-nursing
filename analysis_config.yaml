@@ -188,14 +188,6 @@ validity_hypotheses:
     target: factor_3            # 退院準備への主体性・援助希求
     proximal: rehab_gb_factor_1 # 社会的活動性
     distal: deviant_behavior    # 逸脱行動
-  H7:
-    target: factor_3            # 退院準備への主体性・援助希求
-    proximal: rehab_gb_factor_5 # ことばの技能
-    distal: rehab_gb_factor_4   # 社会生活の技能
-  H8:
-    target: factor_1            # 精神生活の安定・自己調整
-    proximal: rehab_gb_factor_2 # ことばのわかりやすさ
-    distal: rehab_gb_factor_4   # 社会生活の技能
 
 # Interrater analysis
 interrater_analysis:

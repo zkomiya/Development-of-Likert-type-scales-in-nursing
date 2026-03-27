@@ -8,7 +8,7 @@ analyze_validity <- function(target_obj, rehab_obj) {
   config <- load_config()
   dataset_name <- config$analysis$data_source$dataset
   target_subscales <- config$analysis$scale_structure[[dataset_name]]
-  rehab_gb_subscales <- config$analysis$rehab_subscales$gb_subscales
+  rehab_gb_subscales <- config$analysis$rehab_subscales$general_behavior
   rehab_db_definition <- config$analysis$rehab_subscales$deviant_behavior
   hypotheses <- config$analysis$validity_hypotheses
   
