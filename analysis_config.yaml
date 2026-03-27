@@ -139,22 +139,64 @@ efa_evaluation:
     
 # REHAB subscale definitions
 rehab_subscales:
-  gb_subscales:
-    factor_1:
-      name: "社会的活動性"
-      items: ["R_Q08", "R_Q09", "R_Q10","R_Q11","R_Q12","R_Q13"]
-    factor_2:
-      name: "ことばのわかりやすさ"  
-      items: ["R_Q14", "R_Q15"]
-    factor_3:
-      name: "セルフケア"
-      items: ["R_Q16","R_Q17", "R_Q18", "R_Q19","R_Q20"]
-    factor_4:
-      name: "社会生活の技能"
-      items: ["R_Q21", "R_Q22"]
-    factor_5:
-      name: "ことばの技能"
-      items: ["R_Q12", "R_Q13"]    
+  deviant_behavior:
+    name: "逸脱行動"
+    items: ["R_Q01","R_Q02","R_Q03","R_Q04","R_Q05","R_Q06","R_Q07"]
+  general_behavior:
+    subscales:
+    　rehab_gb_factor_1:
+        name: "社会的活動性"
+        items: ["R_Q08","R_Q09","R_Q10","R_Q11","R_Q12","R_Q13"]
+      rehab_gb_factor_2:
+        name: "ことばのわかりやすさ"
+        items: ["R_Q14","R_Q15"]
+      rehab_gb_factor_3:
+        name: "セルフケア"
+        items: ["R_Q16","R_Q17","R_Q18","R_Q19","R_Q20"]
+      rehab_gb_factor_4:
+        name: "社会生活の技能"
+        items: ["R_Q21","R_Q22"]
+      rehab_gb_factor_5:
+        name: "ことばの技能"
+        items: ["R_Q12","R_Q13"]
+      rehab_gb_factor_6:
+        name: "全般的評価"
+        items: ["R_Q23"]
+        
+####################################################
+validity_hypotheses:
+  H1:
+    target: factor_4            # 生活管理・地域生活技能
+    proximal: rehab_gb_factor_4 # 社会生活の技能
+    distal: deviant_behavior    # 逸脱行動
+  H2:
+    target: factor_4            # 生活管理・地域生活技能
+    proximal: rehab_gb_factor_3 # セルフケア
+    distal: deviant_behavior    # 逸脱行動
+  H3:
+    target: factor_4            # 生活管理・地域生活技能
+    proximal: rehab_gb_factor_4 # 社会生活の技能
+    distal: rehab_gb_factor_2   # ことばのわかりやすさ
+  H4:
+    target: factor_5            # 現時点の危険行動の不在
+    proximal: deviant_behavior  # 逸脱行動
+    distal: rehab_gb_factor_4   # 社会生活の技能
+  H5:
+    target: factor_5            # 現時点の危険行動の不在
+    proximal: deviant_behavior  # 逸脱行動
+    distal: rehab_gb_factor_3   # セルフケア
+  H6:
+    target: factor_3            # 退院準備への主体性・援助希求
+    proximal: rehab_gb_factor_1 # 社会的活動性
+    distal: deviant_behavior    # 逸脱行動
+  H7:
+    target: factor_3            # 退院準備への主体性・援助希求
+    proximal: rehab_gb_factor_5 # ことばの技能
+    distal: rehab_gb_factor_4   # 社会生活の技能
+  H8:
+    target: factor_1            # 精神生活の安定・自己調整
+    proximal: rehab_gb_factor_2 # ことばのわかりやすさ
+    distal: rehab_gb_factor_4   # 社会生活の技能
 
 # Interrater analysis
 interrater_analysis:
