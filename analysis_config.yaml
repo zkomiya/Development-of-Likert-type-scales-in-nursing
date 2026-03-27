@@ -143,7 +143,6 @@ rehab_subscales:
     name: "逸脱行動"
     items: ["R_Q01","R_Q02","R_Q03","R_Q04","R_Q05","R_Q06","R_Q07"]
   general_behavior:
-    subscales:
       rehab_gb_factor_1:
         name: "社会的活動性"
         items: ["R_Q08","R_Q09","R_Q10","R_Q11","R_Q12","R_Q13"]
