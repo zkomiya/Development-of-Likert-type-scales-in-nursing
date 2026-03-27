@@ -34,7 +34,6 @@ data_keys:
   efa_unit_test_clean_28items_v2: "患者ID"
   efa_unit_test_skew_cross_28items_v2: "患者ID"
   efa_unit_test_collinear_28items: "患者ID"
-  
 
 # ===== SATISFICING SETTINGS =====
 satisficing:
@@ -189,6 +188,7 @@ validity_hypotheses:
     proximal: rehab_gb_factor_1 # 社会的活動性
     distal: deviant_behavior    # 逸脱行動
 
+###############################################################################
 # Interrater analysis
 interrater_analysis:
   kappa_weight: "squared"
