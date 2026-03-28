@@ -1,6 +1,5 @@
 # ===================================================
 # CFA Main (Controller Layer)
-# Description: Main controller for comprehensive CFA analysis
 # ===================================================
 
 # Main CFA analysis function - Extended version
@@ -28,6 +27,7 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
   }
   
   model_def <- dataset_models[[model_name]]
+  display_names <- model_def$display_names
   
   # Get CFA settings
   cfa_settings <- config$analysis$cfa_settings
@@ -45,7 +45,7 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
     cat("\nModel structure:\n")
     for (factor in names(model_def$structure)) {
       n_items <- length(model_def$structure[[factor]])
-      cat(sprintf("  %s: %d items\n", factor, n_items))
+      cat(sprintf("  %s: %d items\n", display_names[[factor]], n_items))
     }
     if (!is.null(model_def$higher_order)) {
       cat("  Higher-order factors defined\n")
@@ -65,7 +65,7 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
       se = cfa_settings$se
     )
   }, error = function(e) {
-    cat("\n Error during model estimation:\n")
+    cat("\n[ERROR] Error during model estimation:\n")
     cat(e$message, "\n")
     return(NULL)
   })
@@ -132,10 +132,10 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
     cat("\n")
     cfa_display_extended_fit(extended_fit)
     cfa_display_residuals(residual_diagnostics)
-    cfa_display_modification_indices(modification_indices)
-    cfa_display_reliability_validity(reliability_validity)
+    cfa_display_modification_indices(modification_indices, display_names)
+    cfa_display_reliability_validity(reliability_validity, display_names)
     cfa_display_problems(estimation_problems)
-    cfa_display_parameters(detailed_parameters)
+    cfa_display_parameters(detailed_parameters, display_names)
   }
   
   cat("\n========================================\n")
@@ -194,7 +194,7 @@ compare_cfa_models <- function(data_obj, model_names, display_individual = FALSE
       results_list[[model_name]] <- result
       fit_list[[model_name]] <- result$fit
     } else {
-      cat(sprintf("Model %s failed to converge\n", model_name))
+      cat(sprintf("[ERROR] Model %s failed to converge\n", model_name))
     }
     
     cat("\n")

@@ -1,8 +1,21 @@
 # ===================================================
 # CFA Display (View Layer)
-# Version: 3.0 - Extended displays with export functions
-# Description: Display functions for comprehensive CFA results
 # ===================================================
+
+# Translate factor names using display_names mapping
+# Returns original name if not found in mapping (e.g., item names)
+translate_factor_name <- function(name, display_names) {
+  if (name %in% names(display_names)) {
+    return(display_names[[name]])
+  }
+  name
+}
+
+# Translate a vector of names
+translate_factor_names <- function(names_vec, display_names) {
+  sapply(names_vec, translate_factor_name, display_names = display_names,
+         USE.NAMES = FALSE)
+}
 
 # Display header
 cfa_display_header <- function(model_name) {
@@ -17,18 +30,18 @@ cfa_display_extended_fit <- function(extended_fit) {
   
   cat("CHI-SQUARE TEST\n")
   cat("---------------\n")
-  cat(sprintf("χ² = %.2f, df = %d, p = %.4f\n", 
+  cat(sprintf("chi2 = %.2f, df = %d, p = %.4f\n", 
               extended_fit$chi_square$chi2, 
               extended_fit$chi_square$df,
               extended_fit$chi_square$pvalue))
-  cat(sprintf("χ²/df = %.2f\n", extended_fit$chi_square$chi2_df_ratio))
+  cat(sprintf("chi2/df = %.2f\n", extended_fit$chi_square$chi2_df_ratio))
   
   if (!is.na(extended_fit$chi_square$chi2_scaled)) {
-    cat(sprintf("χ² scaled = %.2f, df = %d, p = %.4f\n",
+    cat(sprintf("chi2 scaled = %.2f, df = %d, p = %.4f\n",
                 extended_fit$chi_square$chi2_scaled,
                 extended_fit$chi_square$df_scaled,
                 extended_fit$chi_square$pvalue_scaled))
-    cat(sprintf("χ²/df scaled = %.2f\n", extended_fit$chi_square$chi2_df_ratio_scaled))
+    cat(sprintf("chi2/df scaled = %.2f\n", extended_fit$chi_square$chi2_df_ratio_scaled))
   }
   
   cat("\nABSOLUTE FIT INDICES\n")
@@ -113,7 +126,7 @@ cfa_display_residuals <- function(residual_summary) {
 }
 
 # Display modification indices
-cfa_display_modification_indices <- function(mi_summary) {
+cfa_display_modification_indices <- function(mi_summary, display_names) {
   
   cat("\nMODIFICATION INDICES\n")
   cat("--------------------\n")
@@ -125,6 +138,8 @@ cfa_display_modification_indices <- function(mi_summary) {
   if (nrow(mi_summary$top_10_overall) > 0) {
     display_df <- mi_summary$top_10_overall[, c("lhs", "op", "rhs", "mi", "epc", "sepc.all")]
     colnames(display_df) <- c("LHS", "OP", "RHS", "MI", "EPC", "Std.EPC")
+    display_df$LHS <- translate_factor_names(display_df$LHS, display_names)
+    display_df$RHS <- translate_factor_names(display_df$RHS, display_names)
     print(display_df, row.names = FALSE)
   }
   
@@ -132,6 +147,7 @@ cfa_display_modification_indices <- function(mi_summary) {
   if (nrow(mi_summary$top_5_loadings) > 0) {
     display_df <- mi_summary$top_5_loadings[, c("lhs", "op", "rhs", "mi", "sepc.all")]
     colnames(display_df) <- c("Factor", "OP", "Item", "MI", "Std.EPC")
+    display_df$Factor <- translate_factor_names(display_df$Factor, display_names)
     print(display_df, row.names = FALSE)
   }
   
@@ -139,12 +155,14 @@ cfa_display_modification_indices <- function(mi_summary) {
   if (nrow(mi_summary$top_5_covariances) > 0) {
     display_df <- mi_summary$top_5_covariances[, c("lhs", "op", "rhs", "mi", "sepc.all")]
     colnames(display_df) <- c("Var1", "OP", "Var2", "MI", "Std.EPC")
+    display_df$Var1 <- translate_factor_names(display_df$Var1, display_names)
+    display_df$Var2 <- translate_factor_names(display_df$Var2, display_names)
     print(display_df, row.names = FALSE)
   }
 }
 
 # Display reliability and validity
-cfa_display_reliability_validity <- function(rel_val) {
+cfa_display_reliability_validity <- function(rel_val, display_names) {
   
   cat("\nRELIABILITY AND VALIDITY\n")
   cat("------------------------\n")
@@ -164,7 +182,7 @@ cfa_display_reliability_validity <- function(rel_val) {
   
   for (factor in factors) {
     summary_df <- rbind(summary_df, data.frame(
-      Factor = factor,
+      Factor = translate_factor_name(factor, display_names),
       Items = rel_val[[factor]]$n_items,
       CR = rel_val[[factor]]$cr,
       AVE = rel_val[[factor]]$ave,
@@ -180,7 +198,7 @@ cfa_display_reliability_validity <- function(rel_val) {
   cat("\nFactor Loading Ranges:\n")
   for (factor in factors) {
     cat(sprintf("%s: %.3f - %.3f (Mean = %.3f)\n",
-                factor,
+                translate_factor_name(factor, display_names),
                 rel_val[[factor]]$min_loading,
                 rel_val[[factor]]$max_loading,
                 rel_val[[factor]]$mean_loading))
@@ -188,12 +206,15 @@ cfa_display_reliability_validity <- function(rel_val) {
   
   # Discriminant validity matrix (if multiple factors)
   if (length(factors) > 1) {
-    cat("\nDiscriminant Validity (√AVE vs correlations):\n")
+    cat("\nDiscriminant Validity (sqrt(AVE) vs correlations):\n")
+    
+    # Translated factor names for display
+    display_factor_names <- translate_factor_names(factors, display_names)
     
     # Create matrix
     disc_matrix <- matrix(NA, length(factors), length(factors))
-    rownames(disc_matrix) <- factors
-    colnames(disc_matrix) <- factors
+    rownames(disc_matrix) <- display_factor_names
+    colnames(disc_matrix) <- display_factor_names
     
     for (i in 1:length(factors)) {
       disc_matrix[i, i] <- rel_val[[factors[i]]]$sqrt_ave
@@ -207,7 +228,7 @@ cfa_display_reliability_validity <- function(rel_val) {
     }
     
     print(round(disc_matrix, 3))
-    cat("Note: Diagonal = √AVE, Off-diagonal = |correlation|\n")
+    cat("Note: Diagonal = sqrt(AVE), Off-diagonal = |correlation|\n")
   }
 }
 
@@ -245,7 +266,7 @@ cfa_display_problems <- function(problems) {
 }
 
 # Display detailed parameters
-cfa_display_parameters <- function(detailed_params) {
+cfa_display_parameters <- function(detailed_params, display_names) {
   
   cat("\nPARAMETER ESTIMATES\n")
   cat("-------------------\n")
@@ -260,6 +281,7 @@ cfa_display_parameters <- function(detailed_params) {
                                                c("lhs", "rhs", "est", "se", "z", "pvalue", "ci.lower", "ci.upper", "std.all")]
   colnames(loadings_display) <- c("Factor", "Item", "Est", "SE", "Z", "p", 
                                   "CI.Low", "CI.High", "Std")
+  loadings_display$Factor <- translate_factor_names(loadings_display$Factor, display_names)
   print(loadings_display, row.names = FALSE, digits = 3)
   
   if (nrow(detailed_params$covariances) > 0) {
@@ -267,6 +289,8 @@ cfa_display_parameters <- function(detailed_params) {
     cov_display <- detailed_params$covariances[,
                                                c("lhs", "rhs", "est", "se", "z", "pvalue", "std.all")]
     colnames(cov_display) <- c("Factor1", "Factor2", "Est", "SE", "Z", "p", "Std")
+    cov_display$Factor1 <- translate_factor_names(cov_display$Factor1, display_names)
+    cov_display$Factor2 <- translate_factor_names(cov_display$Factor2, display_names)
     print(cov_display, row.names = FALSE, digits = 3)
   }
   
@@ -294,7 +318,7 @@ cfa_display_summary_table <- function(results) {
   cat("-------------------\n")
   
   summary_df <- data.frame(
-    Metric = c("N", "χ²", "df", "p-value", "χ²/df", 
+    Metric = c("N", "chi2", "df", "p-value", "chi2/df", 
                "CFI", "TLI", "RMSEA", "RMSEA 90%CI", "SRMR",
                "AIC", "BIC", "Parameters", "Converged"),
     Value = c(
@@ -328,14 +352,14 @@ cfa_display_model_comparison <- function(results_list) {
   model_names <- names(results_list)
   
   # Create comparison matrix
-  metrics <- c("χ²", "df", "p", "CFI", "TLI", "RMSEA", "SRMR", "AIC", "BIC")
+  metrics <- c("chi2", "df", "p", "CFI", "TLI", "RMSEA", "SRMR", "AIC", "BIC")
   comparison_matrix <- matrix(NA, nrow = length(metrics), ncol = length(model_names))
   rownames(comparison_matrix) <- metrics
   colnames(comparison_matrix) <- model_names
   
   for (i in 1:length(model_names)) {
     res <- results_list[[model_names[i]]]
-    comparison_matrix["χ²", i] <- sprintf("%.2f", res$fit_indices$chi_square$chi2)
+    comparison_matrix["chi2", i] <- sprintf("%.2f", res$fit_indices$chi_square$chi2)
     comparison_matrix["df", i] <- res$fit_indices$chi_square$df
     comparison_matrix["p", i] <- sprintf("%.4f", res$fit_indices$chi_square$pvalue)
     comparison_matrix["CFI", i] <- sprintf("%.3f", res$fit_indices$incremental$cfi)
