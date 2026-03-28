@@ -65,7 +65,7 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
       se = cfa_settings$se
     )
   }, error = function(e) {
-    cat("\n⚠ Error during model estimation:\n")
+    cat("\n Error during model estimation:\n")
     cat(e$message, "\n")
     return(NULL)
   })
@@ -194,7 +194,7 @@ compare_cfa_models <- function(data_obj, model_names, display_individual = FALSE
       results_list[[model_name]] <- result
       fit_list[[model_name]] <- result$fit
     } else {
-      cat(sprintf("⚠ Model %s failed to converge\n", model_name))
+      cat(sprintf("Model %s failed to converge\n", model_name))
     }
     
     cat("\n")
