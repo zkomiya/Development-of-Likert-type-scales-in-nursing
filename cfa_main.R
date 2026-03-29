@@ -37,20 +37,13 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
     cfa_display_header(model_def$name)
   }
   
-  # Step 1: Generate lavaan syntax
-  cat("Step 1: Generating model specification\n")
-  model_syntax <- generate_lavaan_syntax(model_def)
+  # Step 1: Load lavaan syntax from YAML
+  cat("Step 1: Loading model specification\n")
+  model_syntax <- model_def$model_syntax
   
   if (display_results) {
-    cat("\nModel structure:\n")
-    for (factor in names(model_def$structure)) {
-      n_items <- length(model_def$structure[[factor]])
-      cat(sprintf("  %s: %d items\n", display_names[[factor]], n_items))
-    }
-    if (!is.null(model_def$higher_order)) {
-      cat("  Higher-order factors defined\n")
-    }
-    cat("\n")
+    cat("\nModel syntax:\n")
+    cat(model_syntax, "\n")
   }
   
   # Step 2: Perform CFA

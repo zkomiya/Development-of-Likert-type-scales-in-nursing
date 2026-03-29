@@ -6,33 +6,6 @@
 
 library(lavaan)
 
-# Generate lavaan syntax from YAML model definition
-generate_lavaan_syntax <- function(model_def) {
-  syntax_parts <- c()
-  
-  # First-order factors
-  for (factor_name in names(model_def$structure)) {
-    items <- model_def$structure[[factor_name]]
-    items_str <- paste(items, collapse = " + ")
-    factor_line <- paste0(factor_name, " =~ ", items_str)
-    syntax_parts <- c(syntax_parts, factor_line)
-  }
-  
-  # Higher-order factors (if exists)
-  if (!is.null(model_def$higher_order)) {
-    for (ho_factor in names(model_def$higher_order)) {
-      first_order_factors <- model_def$higher_order[[ho_factor]]
-      factors_str <- paste(first_order_factors, collapse = " + ")
-      ho_line <- paste0(ho_factor, " =~ ", factors_str)
-      syntax_parts <- c(syntax_parts, "", ho_line)
-    }
-  }
-  
-  # Combine all parts
-  syntax <- paste(syntax_parts, collapse = "\n")
-  return(syntax)
-}
-
 # Perform CFA
 perform_cfa <- function(data, model_syntax, estimator = "WLSMV", 
                         missing = "pairwise", se = "robust") {

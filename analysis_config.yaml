@@ -212,152 +212,36 @@ cfa_models:
   items_30:
     five_factor_model:
       name: "5-Factor Model (30 items)"
-      structure:
-        self_management:
-          - "Q04"
-          - "Q05"
-          - "Q06"
-          - "Q09"
-          - "Q12"
-          - "Q21"
-          - "Q22"
-          - "Q23"
-        safety_awareness:
-          - "Q08"
-          - "Q18"
-          - "Q19"
-          - "Q20"
-          - "Q24"
-          - "Q28"
-          - "Q29"
-          - "Q30"
-        self_expression:
-          - "Q07"
-          - "Q11"
-          - "Q14"
-          - "Q25"
-          - "Q26"
-        mental_stability:
-          - "Q10"
-          - "Q13"
-          - "Q15"
-          - "Q16"
-          - "Q17"
-          - "Q27"
-        illness_awareness:
-          - "Q01"
-          - "Q02"
-          - "Q03"
+      model_syntax: |
+        self_management =~ Q04 + Q05 + Q06 + Q09 + Q12 + Q21 + Q22 + Q23
+        safety_awareness =~ Q08 + Q18 + Q19 + Q20 + Q24 + Q28 + Q29 + Q30
+        self_expression =~ Q07 + Q11 + Q14 + Q25 + Q26
+        mental_stability =~ Q10 + Q13 + Q15 + Q16 + Q17 + Q27
+        illness_awareness =~ Q01 + Q02 + Q03
     four_factor_model:
       name: "4-Factor Model (30 items)"
-      structure:
-        self_management:
-          - "Q04"
-          - "Q05"
-          - "Q06"
-          - "Q09"
-          - "Q12"
-          - "Q21"
-          - "Q22"
-          - "Q23"
-        safety_and_stability:
-          - "Q08"
-          - "Q10"
-          - "Q13"
-          - "Q15"
-          - "Q16"
-          - "Q17"
-          - "Q18"
-          - "Q19"
-          - "Q20"
-          - "Q24"
-          - "Q27"
-          - "Q28"
-          - "Q29"
-          - "Q30"
-        self_expression:
-          - "Q07"
-          - "Q11"
-          - "Q14"
-          - "Q25"
-          - "Q26"
-        illness_awareness:
-          - "Q01"
-          - "Q02"
-          - "Q03"
+      model_syntax: |
+        self_management =~ Q04 + Q05 + Q06 + Q09 + Q12 + Q21 + Q22 + Q23
+        safety_and_stability =~ Q08 + Q10 + Q13 + Q15 + Q16 + Q17 + Q18 + Q19 + Q20 + Q24 + Q27 + Q28 + Q29 + Q30
+        self_expression =~ Q07 + Q11 + Q14 + Q25 + Q26
+        illness_awareness =~ Q01 + Q02 + Q03
 
   items_28:
     five_factor_model:
       name: "5-Factor Model (28 items) DUMMY"
-      structure:
-        self_management:
-          - "Q04"
-          - "Q05"
-          - "Q06"
-          - "Q09"
-          - "Q12"
-          - "Q21"
-          - "Q22"
-          - "Q23"
-        safety_awareness:
-          - "Q08"
-          - "Q18"
-          - "Q19"
-          - "Q20"
-          - "Q24"
-          - "Q28"
-        self_expression:
-          - "Q07"
-          - "Q11"
-          - "Q14"
-          - "Q25"
-          - "Q26"
-        mental_stability:
-          - "Q10"
-          - "Q13"
-          - "Q15"
-          - "Q16"
-          - "Q17"
-          - "Q27"
-        illness_awareness:
-          - "Q01"
-          - "Q02"
-          - "Q03"
+      model_syntax: |
+        self_management =~ Q04 + Q05 + Q06 + Q09 + Q12 + Q21 + Q22 + Q23
+        safety_awareness =~ Q08 + Q18 + Q19 + Q20 + Q24 + Q28
+        self_expression =~ Q07 + Q11 + Q14 + Q25 + Q26
+        mental_stability =~ Q10 + Q13 + Q15 + Q16 + Q17 + Q27
+        illness_awareness =~ Q01 + Q02 + Q03
     four_factor_model:
       name: "4-Factor Model (28 items) DUMMY"
-      structure:
-        self_management:
-          - "Q04"
-          - "Q05"
-          - "Q06"
-          - "Q09"
-          - "Q12"
-          - "Q21"
-          - "Q22"
-          - "Q23"
-        safety_and_stability:
-          - "Q08"
-          - "Q10"
-          - "Q13"
-          - "Q15"
-          - "Q16"
-          - "Q17"
-          - "Q18"
-          - "Q19"
-          - "Q20"
-          - "Q24"
-          - "Q27"
-          - "Q28"
-        self_expression:
-          - "Q07"
-          - "Q11"
-          - "Q14"
-          - "Q25"
-          - "Q26"
-        illness_awareness:
-          - "Q01"
-          - "Q02"
-          - "Q03"
+      model_syntax: |
+        self_management =~ Q04 + Q05 + Q06 + Q09 + Q12 + Q21 + Q22 + Q23
+        safety_and_stability =~ Q08 + Q10 + Q13 + Q15 + Q16 + Q17 + Q18 + Q19 + Q20 + Q24 + Q27 + Q28
+        self_expression =~ Q07 + Q11 + Q14 + Q25 + Q26
+        illness_awareness =~ Q01 + Q02 + Q03
           
   items_29:
     five_factor_model:
@@ -368,38 +252,11 @@ cfa_models:
         factor_3: "退院準備への主体性・援助希求"
         factor_4: "生活管理・地域生活技能"
         factor_5: "現時点の危険行動の不在"      
-      structure:
-        factor_1: #精神生活の安定・自己調整
-          - "Q10"
-          - "Q12"
-          - "Q14"
-          - "Q15"
-          - "Q16"
-        factor_2: #疾患・治療理解
-          - "Q01"
-          - "Q02"
-          - "Q03"
-        factor_3: #退院準備への主体性・援助希求
-          - "Q07"
-          - "Q11"
-          - "Q13"
-          - "Q24"
-          - "Q25"
-          - "Q30"
-        factor_4: #生活管理・地域生活技能
-          - "Q04"
-          - "Q05"
-          - "Q06"
-          - "Q08"
-          - "Q09"
-          - "Q17"
-          - "Q18"
-          - "Q20"
-          - "Q21"
-          - "Q22"
-          - "Q23"
-        factor_5: #現時点の危険行動の不在
-          - "Q26"
-          - "Q27"
-          - "Q28"
-          - "Q29"
+      model_syntax: |
+        factor_1 =~ Q10 + Q12 + Q14 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+        Q20 ~~ Q21
+
