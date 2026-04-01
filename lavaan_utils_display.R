@@ -350,7 +350,11 @@ display_cfa_esem_comparison <- function(cfa_results, esem_results) {
   
   print(comparison_df, row.names = FALSE)
   
-  # --- 2. Factor correlations comparison ---
+  # --- 2. ESEM factor loading matrix ---
+  display_names <- esem_results$model_def$display_names
+  esem_display_loadings(esem_results$esem_loadings, display_names)
+  
+  # --- 3. Factor correlations comparison ---
   cat("\nFACTOR CORRELATIONS COMPARISON\n")
   cat("-------------------------------\n")
   
@@ -363,7 +367,7 @@ display_cfa_esem_comparison <- function(cfa_results, esem_results) {
   cat("\nESEM factor correlations:\n")
   print(round(esem_cors, 3))
   
-  # --- 3. Reliability comparison ---
+  # --- 4. Reliability comparison ---
   cat("\nRELIABILITY COMPARISON (CR / AVE)\n")
   cat("----------------------------------\n")
   
