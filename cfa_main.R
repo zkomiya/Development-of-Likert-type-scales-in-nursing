@@ -166,12 +166,34 @@ show_cfa_summary <- function(results) {
   display_summary_table(results)
 }
 
-# Compare multiple CFA models - Extended version
-compare_cfa_models <- function(data_obj, model_names, display_individual = FALSE) {
+# Compare all CFA models for current dataset
+compare_cfa_models <- function(data_obj, display_individual = FALSE) {
   
   cat("========================================\n")
   cat("CFA MODEL COMPARISON\n")
   cat("========================================\n\n")
+  
+  # Load configuration
+  config <- load_config()
+  dataset_name <- config$analysis$data_source$dataset
+  dataset_models <- config$analysis$cfa_models[[dataset_name]]
+  
+  if (is.null(dataset_models)) {
+    stop(sprintf("No CFA models defined for dataset '%s'", dataset_name))
+  }
+  
+  # Get all model names (exclude non-model keys like lrt_chain)
+  all_keys <- names(dataset_models)
+  model_names <- all_keys[sapply(dataset_models[all_keys], function(x) {
+    is.list(x) && !is.null(x$model_syntax)
+  })]
+  
+  if (length(model_names) == 0) {
+    stop(sprintf("No valid CFA models found for dataset '%s'", dataset_name))
+  }
+  
+  cat(sprintf("Dataset: %s\n", dataset_name))
+  cat(sprintf("Models to run: %d\n\n", length(model_names)))
   
   # Run all models
   results_list <- list()
@@ -222,12 +244,23 @@ compare_cfa_models <- function(data_obj, model_names, display_individual = FALSE
     
     print(comparison_df, row.names = FALSE, digits = 3)
     
-    # Chi-square difference test
-    if (length(fit_list) > 1) {
-      cat("\nCHI-SQUARE DIFFERENCE TEST\n")
-      cat("--------------------------\n")
-      comparison <- do.call(lavTestLRT, fit_list)
-      print(comparison)
+    # Scaled chi-square difference test (for nested models defined in lrt_chain)
+    lrt_chain <- dataset_models$lrt_chain
+    lrt_result <- NULL
+    
+    if (!is.null(lrt_chain)) {
+      # Filter to models that successfully converged
+      available_chain <- lrt_chain[lrt_chain %in% names(fit_list)]
+      
+      if (length(available_chain) >= 2) {
+        lrt_fit_list <- fit_list[available_chain]
+        lrt_result <- calculate_lrt_chain(lrt_fit_list)
+        display_lrt_chain(lrt_result)
+      } else {
+        cat("\n[ERROR] LRT chain requires at least 2 converged models\n")
+        cat(sprintf("  Defined in lrt_chain: %s\n", paste(lrt_chain, collapse = ", ")))
+        cat(sprintf("  Successfully converged: %s\n", paste(names(fit_list), collapse = ", ")))
+      }
     }
     
     # Use display function for model comparison
@@ -237,6 +270,6 @@ compare_cfa_models <- function(data_obj, model_names, display_individual = FALSE
   invisible(list(
     models = results_list,
     comparison = if(exists("comparison_df")) comparison_df else NULL,
-    chi2_test = if(exists("comparison")) comparison else NULL
+    lrt = lrt_result
   ))
 }

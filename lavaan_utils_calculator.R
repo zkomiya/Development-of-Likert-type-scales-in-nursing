@@ -233,3 +233,17 @@ calculate_detailed_parameters <- function(fit) {
   
   return(detailed_params)
 }
+
+# Calculate LRT chain for nested models (most constrained first)
+# fit_list: named list of lavaan fit objects in nested order
+calculate_lrt_chain <- function(fit_list) {
+  
+  lrt_table <- do.call(lavTestLRT, c(list(object = fit_list[[1]]), unname(fit_list[-1])))
+  rownames(lrt_table) <- names(fit_list)
+  
+  return(list(
+    lrt_table = lrt_table,
+    n_models = length(fit_list),
+    model_names = names(fit_list)
+  ))
+}

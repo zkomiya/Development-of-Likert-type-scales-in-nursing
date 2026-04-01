@@ -409,3 +409,16 @@ display_cfa_esem_comparison <- function(cfa_results, esem_results) {
     cat("ESEM factors: ", paste(esem_factors, collapse = ", "), "\n")
   }
 }
+
+# Display LRT chain results
+display_lrt_chain <- function(lrt_result) {
+  
+  cat("\nSCALED CHI-SQUARE DIFFERENCE TEST (lavTestLRT)\n")
+  cat("------------------------------------------------\n")
+  cat(sprintf("Number of nested models: %d\n", lrt_result$n_models))
+  cat(sprintf("Model order: %s\n",
+              paste(lrt_result$model_names, collapse = " -> ")))
+  cat("\n")
+  
+  print(lrt_result$lrt_table)
+}
