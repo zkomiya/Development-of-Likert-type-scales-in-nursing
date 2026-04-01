@@ -70,22 +70,22 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
   # Step 3: Calculate all extended metrics
   cat("Step 3: Calculating comprehensive metrics\n")
   
-  # Extended fit indices
+  # Extended fit indices (lavaan_utils)
   extended_fit <- calculate_extended_fit_indices(cfa_fit)
   
-  # Residual diagnostics
+  # Residual diagnostics (lavaan_utils)
   residual_diagnostics <- calculate_residual_diagnostics(cfa_fit)
   
-  # Modification indices
+  # Modification indices (lavaan_utils)
   modification_indices <- calculate_modification_indices(cfa_fit)
   
-  # Reliability and validity
-  reliability_validity <- calculate_reliability_validity(cfa_fit)
+  # Reliability and validity (CFA-specific)
+  reliability_validity <- calculate_cfa_reliability_validity(cfa_fit)
   
-  # Estimation problems
+  # Estimation problems (lavaan_utils)
   estimation_problems <- check_estimation_problems(cfa_fit)
   
-  # Detailed parameters
+  # Detailed parameters (lavaan_utils)
   detailed_parameters <- calculate_detailed_parameters(cfa_fit)
   
   # Step 4: Create comprehensive results object
@@ -123,12 +123,12 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
   # Step 5: Display results if requested
   if (display_results) {
     cat("\n")
-    cfa_display_extended_fit(extended_fit)
-    cfa_display_residuals(residual_diagnostics)
-    cfa_display_modification_indices(modification_indices, display_names)
+    display_extended_fit(extended_fit)
+    display_residuals(residual_diagnostics)
+    display_modification_indices(modification_indices, display_names)
     cfa_display_reliability_validity(reliability_validity, display_names)
-    cfa_display_problems(estimation_problems)
-    cfa_display_parameters(detailed_parameters, display_names)
+    display_problems(estimation_problems)
+    display_parameters(detailed_parameters, display_names)
   }
   
   cat("\n========================================\n")
@@ -141,11 +141,11 @@ analyze_cfa <- function(data_obj, model_name, display_results = TRUE) {
 # Function to extract specific results
 extract_cfa_results <- function(results, what = "all") {
   
-  valid_options <- c("all", "fit", "residuals", "mi", "reliability", 
+  valid_options <- c("all", "fit", "residuals", "mi", "reliability",
                      "parameters", "problems")
   
   if (!what %in% valid_options) {
-    stop(sprintf("Invalid option. Choose from: %s", 
+    stop(sprintf("Invalid option. Choose from: %s",
                  paste(valid_options, collapse = ", ")))
   }
   
@@ -163,7 +163,7 @@ extract_cfa_results <- function(results, what = "all") {
 
 # Show summary table wrapper
 show_cfa_summary <- function(results) {
-  cfa_display_summary_table(results)
+  display_summary_table(results)
 }
 
 # Compare multiple CFA models - Extended version
@@ -231,7 +231,7 @@ compare_cfa_models <- function(data_obj, model_names, display_individual = FALSE
     }
     
     # Use display function for model comparison
-    cfa_display_model_comparison(results_list)
+    display_model_comparison(results_list)
   }
   
   invisible(list(
