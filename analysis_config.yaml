@@ -259,8 +259,8 @@ cfa_models:
         factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
         factor_5 =~ Q26 + Q27 + Q28 + Q29
         Q20 ~~ Q21
-        Q27 ~~ Q28
         Q08 ~~ Q09
+        Q27 ~~ Q28
         Q24 ~~ Q25
 
 # ===== ESEM Settings =====
