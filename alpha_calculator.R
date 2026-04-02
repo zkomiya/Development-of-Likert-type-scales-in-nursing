@@ -1,5 +1,10 @@
 # ===================================================
 # Cronbach's Alpha Calculator (Model Layer)
+# Version: 7.0 - subscale_defs argument, removed load_config
+# Changes from v6.0:
+#   - Removed config parameter and load_config() call
+#   - Added subscale_defs parameter (list from scale_structure)
+#   - Subscales always calculated when subscale_defs is provided
 # ===================================================
 
 library(psych)
