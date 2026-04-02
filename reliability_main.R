@@ -1,9 +1,5 @@
 # ===================================================
 # Reliability Analysis Main (Unified Controller)
-# Version: 2.0 - YAML-based configuration only
-# Changes from v1.0:
-#   - Removed enable_subscales and subscale_config from arguments
-#   - Now reads all configuration from YAML only
 # ===================================================
 
 analyze_reliability <- function(data_obj) {
@@ -15,32 +11,23 @@ analyze_reliability <- function(data_obj) {
   
   # Load configuration from YAML
   config <- load_config()
-  enable_subscales <- config$analysis$item_total_analysis$enable_subscales
-  subscale_config <- config$analysis$item_total_analysis
+  dataset_name <- config$data_source$dataset
+  
+  # Get subscale definitions from scale_structure
+  subscale_defs <- config$scale_structure[[dataset_name]]
   
   cat("========================================\n")
   cat("RELIABILITY ANALYSIS\n")
   cat("========================================\n\n")
   
-  # Create config for calculations
-  config_for_analysis <- NULL
-  if (enable_subscales && !is.null(subscale_config)) {
-    config_for_analysis <- list(
-      analysis = list(
-        item_total_analysis = subscale_config
-      )
-    )
-    config_for_analysis$analysis$item_total_analysis$enable_subscales <- enable_subscales
-  }
-  
   # Calculate Cronbach's Alpha
   cat("--- Cronbach's Alpha ---\n")
-  alpha_results <- calculate_cronbach_alpha(data, config = config_for_analysis)
+  alpha_results <- calculate_cronbach_alpha(data, subscale_defs = subscale_defs)
   alpha_display_overall(alpha_results$overall)
   
   # Calculate McDonald's Omega
   cat("\n--- McDonald's Omega ---\n")
-  omega_results <- calculate_omega(data, config = config_for_analysis)
+  omega_results <- calculate_omega(data, subscale_defs = subscale_defs)
   omega_display_overall(omega_results$overall)
   
   # Display subscales if available
@@ -88,10 +75,8 @@ analyze_reliability <- function(data_obj) {
   results <- list(
     alpha = alpha_results,
     omega = omega_results,
-    config_used = list(
-      enable_subscales = enable_subscales,
-      subscale_config = subscale_config
-    )
+    dataset = dataset_name,
+    subscale_defs_used = subscale_defs
   )
   
   invisible(results)

@@ -63,6 +63,7 @@ correlation_analysis:
 # Factor and subscale definitions per dataset
 # Used across multiple analyses (ii, item_total, etc.)
 scale_structure:
+########
   items_28:
     self_management_skills:
       name: "セルフマネジメント能力"
@@ -79,6 +80,7 @@ scale_structure:
     awareness_of_illness:
       name: "病気と治療の必要性の自覚"
       items: ["Q01", "Q02", "Q03"]
+########      
   items_29:
     factor_1:
       name: "精神生活の安定・自己調整"
@@ -95,6 +97,23 @@ scale_structure:
     factor_5:
       name: "現時点の危険行動の不在"
       items: ["Q26", "Q27", "Q28","Q29"]
+##########      
+  items_30-Q14-Q19:
+    factor_1:
+      name: "精神生活の安定・自己調整"
+      items: ["Q10", "Q12","Q15","Q16"]
+    factor_2:
+      name: "疾患・治療理解"
+      items: ["Q01", "Q02", "Q03"]
+    factor_3:
+      name: "退院準備への主体性・援助希求"
+      items: ["Q07", "Q11", "Q13","Q24","Q25","Q30"]
+    factor_4:
+      name: "生活管理・地域生活技能"
+      items: ["Q04", "Q05", "Q06","Q08","Q09","Q17","Q18","Q20","Q21","Q22","Q23"]
+    factor_5:
+      name: "現時点の危険行動の不在"
+      items: ["Q26", "Q27", "Q28","Q29"]    
 
 # ===== FACTOR NUMBER DETERMINATION =====
 factor_number:

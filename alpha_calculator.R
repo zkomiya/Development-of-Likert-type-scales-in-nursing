@@ -1,12 +1,11 @@
 # ===================================================
 # Cronbach's Alpha Calculator (Model Layer)
-# Version: 6.0 - Inline complete cases info
 # ===================================================
 
 library(psych)
 
 # Main calculation function using psych::alpha
-calculate_cronbach_alpha <- function(data, config = NULL) {
+calculate_cronbach_alpha <- function(data, subscale_defs = NULL) {
   
   # Complete cases info - inline
   complete_rows <- complete.cases(data)
@@ -36,35 +35,26 @@ calculate_cronbach_alpha <- function(data, config = NULL) {
     item_data = data
   )
   
-  # Handle subscales if configured
-  if (is.null(config)) {
-    config <- load_config()
-  }
-  
-  if (!is.null(config) && 
-      !is.null(config$analysis$item_total_analysis$enable_subscales) &&
-      config$analysis$item_total_analysis$enable_subscales == TRUE) {
+  # Handle subscales if definitions provided
+  if (!is.null(subscale_defs) && length(subscale_defs) > 0) {
     
     subscale_results <- list()
-    subscale_configs <- config$analysis$item_total_analysis
     
-    for (name in names(subscale_configs)) {
-      if (name != "enable_subscales" && !is.null(subscale_configs[[name]]$items)) {
-        subscale_info <- subscale_configs[[name]]
-        available_items <- subscale_info$items[subscale_info$items %in% names(data)]
+    for (name in names(subscale_defs)) {
+      subscale_info <- subscale_defs[[name]]
+      available_items <- subscale_info$items[subscale_info$items %in% names(data)]
+      
+      if (length(available_items) >= 2) {
+        subscale_data <- data[, available_items, drop = FALSE]
+        subscale_alpha_result <- psych::alpha(subscale_data, check.keys = FALSE)
         
-        if (length(available_items) >= 2) {
-          subscale_data <- data[, available_items, drop = FALSE]
-          subscale_alpha_result <- psych::alpha(subscale_data, check.keys = FALSE)
-          
-          subscale_results[[name]] <- list(
-            raw_alpha = subscale_alpha_result$total$raw_alpha,
-            std_alpha = subscale_alpha_result$total$std.alpha,
-            n_items = length(available_items),
-            items = available_items,
-            name = subscale_info$name
-          )
-        }
+        subscale_results[[name]] <- list(
+          raw_alpha = subscale_alpha_result$total$raw_alpha,
+          std_alpha = subscale_alpha_result$total$std.alpha,
+          n_items = length(available_items),
+          items = available_items,
+          name = subscale_info$name
+        )
       }
     }
     

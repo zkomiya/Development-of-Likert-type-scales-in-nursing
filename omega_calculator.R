@@ -1,12 +1,11 @@
 # ===================================================
 # McDonald's Omega Calculator (Model Layer)
-# Version: 1.0 - psych package implementation
 # ===================================================
 
 library(psych)
 
 # Main omega calculation function
-calculate_omega <- function(data, config = NULL) {
+calculate_omega <- function(data, subscale_defs = NULL) {
   
   # Complete cases info - inline
   complete_rows <- complete.cases(data)
@@ -40,39 +39,34 @@ calculate_omega <- function(data, config = NULL) {
     item_data = data
   )
   
-  # Handle subscales if configured
-  if (!is.null(config) && 
-      !is.null(config$analysis$item_total_analysis$enable_subscales) &&
-      config$analysis$item_total_analysis$enable_subscales == TRUE) {
+  # Handle subscales if definitions provided
+  if (!is.null(subscale_defs) && length(subscale_defs) > 0) {
     
     subscale_results <- list()
-    subscale_configs <- config$analysis$item_total_analysis
     
-    for (name in names(subscale_configs)) {
-      if (name != "enable_subscales" && !is.null(subscale_configs[[name]]$items)) {
-        subscale_info <- subscale_configs[[name]]
-        available_items <- subscale_info$items[subscale_info$items %in% names(data)]
+    for (name in names(subscale_defs)) {
+      subscale_info <- subscale_defs[[name]]
+      available_items <- subscale_info$items[subscale_info$items %in% names(data)]
+      
+      if (length(available_items) >= 3) {  # Need at least 3 items for omega
+        subscale_data <- data[, available_items, drop = FALSE]
         
-        if (length(available_items) >= 3) {  # Need at least 3 items for omega
-          subscale_data <- data[, available_items, drop = FALSE]
-          
-          subscale_omega_result <- suppressWarnings(
-            psych::omega(subscale_data, 
-                         nfactors = 1,
-                         fm = "minres",
-                         plot = FALSE,
-                         flip = FALSE)
-          )
-          
-          subscale_results[[name]] <- list(
-            omega_total = subscale_omega_result$omega.tot,
-            omega_hierarchical = subscale_omega_result$omega_h,
-            alpha = subscale_omega_result$alpha,
-            n_items = length(available_items),
-            items = available_items,
-            name = subscale_info$name
-          )
-        }
+        subscale_omega_result <- suppressWarnings(
+          psych::omega(subscale_data, 
+                       nfactors = 1,
+                       fm = "minres",
+                       plot = FALSE,
+                       flip = FALSE)
+        )
+        
+        subscale_results[[name]] <- list(
+          omega_total = subscale_omega_result$omega.tot,
+          omega_hierarchical = subscale_omega_result$omega_h,
+          alpha = subscale_omega_result$alpha,
+          n_items = length(available_items),
+          items = available_items,
+          name = subscale_info$name
+        )
       }
     }
     
