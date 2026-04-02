@@ -3,7 +3,7 @@
 
 # ===== DATA SOURCE =====
 data_source:
-  dataset: items_29    
+  dataset: items_30-Q14-Q19    
                        # "items_30", "items_28","items_29"
                        # test data
                        # "satisficing_test_data"
@@ -27,6 +27,7 @@ data_keys:
   items_28: "患者ID"
   items_28-Q07: "患者ID"
   items_30-Q19: "患者ID"  
+  items_30-Q14-Q19: "患者ID" 
   rehab: "患者ID"
   interrater: "患者ID"
   #
@@ -226,22 +227,108 @@ cfa_models:
         self_expression =~ Q07 + Q11 + Q14 + Q25 + Q26
         illness_awareness =~ Q01 + Q02 + Q03
 
-  items_28:
-    five_factor_model:
-      name: "5-Factor Model (28 items) DUMMY"
+  items_30-Q14-Q19:
+    lrt_chain: ["icm_cfa", "rc_q20_q21", "rc_q20_q21_q08_q09",
+                "rc_q20_q21_q08_q09_q27_q28",
+                "rc_q20_q21_q08_q09_q27_q28_q24_q25"]
+    # --- M0: ICM-CFA (no residual covariances) ---
+    icm_cfa:
+      name: "5-Factor ICM-CFA (29 items)"
+      display_names: &display_names_29
+        factor_1: "精神生活の安定・自己調整"
+        factor_2: "疾患・治療理解"
+        factor_3: "退院準備への主体性・援助希求"
+        factor_4: "生活管理・地域生活技能"
+        factor_5: "現時点の危険行動の不在"
       model_syntax: |
-        self_management =~ Q04 + Q05 + Q06 + Q09 + Q12 + Q21 + Q22 + Q23
-        safety_awareness =~ Q08 + Q18 + Q19 + Q20 + Q24 + Q28
-        self_expression =~ Q07 + Q11 + Q14 + Q25 + Q26
-        mental_stability =~ Q10 + Q13 + Q15 + Q16 + Q17 + Q27
-        illness_awareness =~ Q01 + Q02 + Q03
-    four_factor_model:
-      name: "4-Factor Model (28 items) DUMMY"
+        factor_1 =~ Q10 + Q12 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+    # --- M1: +Q20~~Q21 ---
+    rc_q20_q21:
+      name: "5-Factor + Q20~~Q21"
+      display_names: *display_names_29
       model_syntax: |
-        self_management =~ Q04 + Q05 + Q06 + Q09 + Q12 + Q21 + Q22 + Q23
-        safety_and_stability =~ Q08 + Q10 + Q13 + Q15 + Q16 + Q17 + Q18 + Q19 + Q20 + Q24 + Q27 + Q28
-        self_expression =~ Q07 + Q11 + Q14 + Q25 + Q26
-        illness_awareness =~ Q01 + Q02 + Q03
+        factor_1 =~ Q10 + Q12 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+        Q20 ~~ Q21
+    # --- M2: +Q08~~Q09 ---
+    rc_q08_q09:
+      name: "5-Factor + Q08~~Q09"
+      display_names: *display_names_29
+      model_syntax: |
+        factor_1 =~ Q10 + Q12 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+        Q08 ~~ Q09
+    # --- M3: +Q27~~Q28 ---
+    rc_q27_q28:
+      name: "5-Factor + Q27~~Q28"
+      display_names: *display_names_29
+      model_syntax: |
+        factor_1 =~ Q10 + Q12 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+        Q27 ~~ Q28
+    # --- M4: +Q24~~Q25 ---
+    rc_q24_q25:
+      name: "5-Factor + Q24~~Q25"
+      display_names: *display_names_29
+      model_syntax: |
+        factor_1 =~ Q10 + Q12 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+        Q24 ~~ Q25
+    # --- M5: +Q20~~Q21, Q08~~Q09 ---
+    rc_q20_q21_q08_q09:
+      name: "5-Factor + Q20~~Q21 + Q08~~Q09"
+      display_names: *display_names_29
+      model_syntax: |
+        factor_1 =~ Q10 + Q12 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+        Q20 ~~ Q21
+        Q08 ~~ Q09
+    # --- M6: +Q20~~Q21, Q08~~Q09, Q27~~Q28 ---
+    rc_q20_q21_q08_q09_q27_q28:
+      name: "5-Factor + Q20~~Q21 + Q08~~Q09 + Q27~~Q28"
+      display_names: *display_names_29
+      model_syntax: |
+        factor_1 =~ Q10 + Q12 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+        Q20 ~~ Q21
+        Q08 ~~ Q09
+        Q27 ~~ Q28
+    # --- M7: +Q20~~Q21, Q08~~Q09, Q27~~Q28, Q24~~Q25 ---
+    rc_q20_q21_q08_q09_q27_q28_q24_q25:
+      name: "5-Factor + Q20~~Q21 + Q08~~Q09 + Q27~~Q28 + Q24~~Q25"
+      display_names: *display_names_29
+      model_syntax: |
+        factor_1 =~ Q10 + Q12 + Q15 + Q16
+        factor_2 =~ Q01 + Q02 + Q03
+        factor_3 =~ Q07 + Q11 + Q13 + Q24 + Q25 + Q30
+        factor_4 =~ Q04 + Q05 + Q06 + Q08 + Q09 + Q17 + Q18 + Q20 + Q21 + Q22 + Q23
+        factor_5 =~ Q26 + Q27 + Q28 + Q29
+        Q20 ~~ Q21
+        Q08 ~~ Q09
+        Q27 ~~ Q28
+        Q24 ~~ Q25
           
   items_29:
     lrt_chain: ["icm_cfa", "rc_q20_q21", "rc_q20_q21_q08_q09",
@@ -375,5 +462,21 @@ esem_models:
         factor_5: "現時点の危険行動の不在"
       items: ["Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "Q09",
               "Q10", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17", "Q18",
+              "Q20", "Q21", "Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28",
+              "Q29", "Q30"]
+
+  items_30-Q14-Q19:
+    five_factor_model:
+      name: "5-Factor ESEM (28 items)"
+      n_factors: 5
+      factor_names: ["factor_1", "factor_2", "factor_3", "factor_4", "factor_5"]
+      display_names:
+        factor_1: "精神生活の安定・自己調整"
+        factor_2: "疾患・治療理解"
+        factor_3: "退院準備への主体性・援助希求"
+        factor_4: "生活管理・地域生活技能"
+        factor_5: "現時点の危険行動の不在"
+      items: ["Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "Q09",
+              "Q10", "Q11", "Q12", "Q13", "Q15", "Q16", "Q17", "Q18",
               "Q20", "Q21", "Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28",
               "Q29", "Q30"]
