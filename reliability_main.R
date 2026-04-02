@@ -1,11 +1,11 @@
 # ===================================================
 # Reliability Analysis Main (Unified Controller)
-# Version: 3.1 - nfactors from scale_structure, omega_h NA handling
-# Changes from v3.0:
-#   - Fixed config path (config$analysis$...)
-#   - Derives nfactors from length(subscale_defs)
-#   - Passes nfactors to calculate_omega
-#   - omega_h displayed only when not NA
+# Version: 3.2 - display improvements
+# Changes from v3.1:
+#   - nfactors -> Group factors specified
+#   - Comparison table layout improved
+#   - Lowercase notation unified (Cronbach's alpha, McDonald's omega)
+#   - Subscale display notation unified
 # ===================================================
 
 analyze_reliability <- function(data_obj) {
@@ -29,13 +29,13 @@ analyze_reliability <- function(data_obj) {
   cat("RELIABILITY ANALYSIS\n")
   cat("========================================\n\n")
   
-  # Calculate Cronbach's Alpha
-  cat("--- Cronbach's Alpha ---\n")
+  # Calculate Cronbach's alpha
+  cat("--- Cronbach's alpha ---\n")
   alpha_results <- calculate_cronbach_alpha(data, subscale_defs = subscale_defs)
   alpha_display_overall(alpha_results$overall)
   
-  # Calculate McDonald's Omega
-  cat("\n--- McDonald's Omega ---\n")
+  # Calculate McDonald's omega
+  cat("\n--- McDonald's omega ---\n")
   omega_results <- calculate_omega(data, nfactors = nfactors, subscale_defs = subscale_defs)
   omega_display_overall(omega_results$overall)
   
@@ -54,26 +54,24 @@ analyze_reliability <- function(data_obj) {
       
       cat(sprintf("\nSubscale: %s (%d items)\n", alpha_sub$name, alpha_sub$n_items))
       cat("----------------------------------------\n")
-      cat(sprintf("Cronbach's Alpha (raw):  %.3f\n", alpha_sub$raw_alpha))
-      cat(sprintf("Cronbach's Alpha (std):  %.3f\n", alpha_sub$std_alpha))
+      cat(sprintf("Cronbach's alpha (raw):  %.3f\n", alpha_sub$raw_alpha))
+      cat(sprintf("Cronbach's alpha (std):  %.3f\n", alpha_sub$std_alpha))
       
       if (!is.null(omega_sub)) {
-        cat(sprintf("omega_total:             %.3f\n", omega_sub$omega_total))
+        cat(sprintf("McDonald's omega_total:  %.3f\n", omega_sub$omega_total))
       }
     }
   }
   
   # Display comparison table
   cat("\n========================================\n")
-  cat("RELIABILITY COMPARISON\n")
+  cat(sprintf("RELIABILITY COMPARISON (%d items; %d group factors specified)\n",
+              alpha_results$overall$n_items, nfactors))
   cat("========================================\n\n")
   
-  # Create comparison table
-  cat("Overall Scale:\n")
-  cat(sprintf("nfactors:                %d\n", nfactors))
-  cat("Method                   Value\n")
+  cat("Coefficient              Value\n")
   cat("-------------------------------\n")
-  cat(sprintf("Cronbach's alpha (raw)   %.3f\n", alpha_results$overall$raw_alpha))
+  cat(sprintf("Cronbach's alpha         %.3f\n", alpha_results$overall$raw_alpha))
   cat(sprintf("McDonald's omega_total   %.3f\n", omega_results$overall$omega_total))
   if (!is.na(omega_results$overall$omega_hierarchical)) {
     cat(sprintf("McDonald's omega_h       %.3f\n", omega_results$overall$omega_hierarchical))

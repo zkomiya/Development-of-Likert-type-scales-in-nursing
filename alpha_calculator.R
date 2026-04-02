@@ -1,10 +1,9 @@
 # ===================================================
 # Cronbach's Alpha Calculator (Model Layer)
-# Version: 7.0 - subscale_defs argument, removed load_config
-# Changes from v6.0:
-#   - Removed config parameter and load_config() call
-#   - Added subscale_defs parameter (list from scale_structure)
-#   - Subscales always calculated when subscale_defs is provided
+# Version: 8.0 - delta alpha in if_deleted
+# Changes from v7.0:
+#   - Added delta_alpha column to if_deleted
+#     (raw_alpha_if_deleted - overall raw_alpha)
 # ===================================================
 
 library(psych)
@@ -21,10 +20,13 @@ calculate_cronbach_alpha <- function(data, subscale_defs = NULL) {
   # Calculate using psych::alpha
   alpha_result <- psych::alpha(data, check.keys = FALSE)
   
-  # Format results to match existing structure
+  # Overall raw alpha for delta calculation
+  overall_raw_alpha <- alpha_result$total$raw_alpha
+  
+  # Format results
   results <- list(
     overall = list(
-      raw_alpha = alpha_result$total$raw_alpha,
+      raw_alpha = overall_raw_alpha,
       std_alpha = alpha_result$total$std.alpha,
       n_items = ncol(data),
       n_cases = n_complete,
@@ -35,6 +37,7 @@ calculate_cronbach_alpha <- function(data, subscale_defs = NULL) {
       item = rownames(alpha_result$alpha.drop),
       raw_alpha_if_deleted = alpha_result$alpha.drop[, "raw_alpha"],
       std_alpha_if_deleted = alpha_result$alpha.drop[, "std.alpha"],
+      delta_alpha = alpha_result$alpha.drop[, "raw_alpha"] - overall_raw_alpha,
       stringsAsFactors = FALSE
     ),
     item_data = data

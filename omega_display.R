@@ -1,15 +1,16 @@
 # ===================================================
 # McDonald's Omega Display (View Layer)
-# Version: 2.0 - omega_h NA handling
-# Changes from v1.0:
-#   - omega_h displayed only when not NA
-#   - nfactors displayed in overall output
+# Version: 3.0 - display improvements
+# Changes from v2.0:
+#   - Sample size -> Complete cases
+#   - nfactors -> Group factors specified
+#   - Cronbach's alpha (ref) -> Cronbach's alpha (for comparison)
 # ===================================================
 
 # Display header
 omega_display_header <- function() {
   cat("========================================\n")
-  cat("McDonald's Omega Analysis\n")
+  cat("McDonald's omega Analysis\n")
   cat("========================================\n\n")
 }
 
@@ -17,17 +18,17 @@ omega_display_header <- function() {
 omega_display_overall <- function(overall_results) {
   cat("OVERALL RELIABILITY (McDonald's omega)\n")
   cat("----------------------------------------\n")
-  cat(sprintf("Sample size:             %d / %d (%.1f%% complete)\n", 
+  cat(sprintf("Complete cases:          %d / %d (%.1f%%)\n", 
               overall_results$n_cases,
               overall_results$n_total_cases,
               overall_results$percent_complete))
   cat(sprintf("Number of items:         %d\n", overall_results$n_items))
-  cat(sprintf("nfactors:                %d\n", overall_results$nfactors))
-  cat(sprintf("omega_total:             %.3f\n", overall_results$omega_total))
+  cat(sprintf("Group factors specified: %d\n", overall_results$nfactors))
+  cat(sprintf("McDonald's omega_total:  %.3f\n", overall_results$omega_total))
   if (!is.na(overall_results$omega_hierarchical)) {
-    cat(sprintf("omega_hierarchical:      %.3f\n", overall_results$omega_hierarchical))
+    cat(sprintf("McDonald's omega_h:      %.3f\n", overall_results$omega_hierarchical))
   }
-  cat(sprintf("Cronbach's alpha (ref):  %.3f\n", overall_results$alpha))
+  cat(sprintf("Cronbach's alpha (for comparison): %.3f\n", overall_results$alpha))
 }
 
 # Display subscale omega results
