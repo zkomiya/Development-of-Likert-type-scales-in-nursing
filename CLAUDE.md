@@ -19,8 +19,13 @@ Data is pulled from Google Sheets at runtime.
 4. Do NOT change the `source()` order in `load_scripts.R`.
 5. Use project-root-relative paths; avoid `setwd()` in analysis code.
 6. Ask before adding R packages or running any `renv` command.
-7. NEVER push to `main`. Stop and ask before any push.
-8. Present a change plan and get explicit approval before editing.
+7. **GitHub (`origin/main`) is the source of truth.** `git pull` at the start of
+   a session; commit and push to `main` when work is done. Direct pushes to
+   `main` are the expected flow here (solo researcher across several machines:
+   Windows/Mac Codex, RStudio, Claude Code). Show what will be committed/pushed,
+   but you do not need to re-ask permission for the routine end-of-work push.
+   If a pull conflicts, treat the remote (GitHub) side as authoritative.
+8. Present a change plan and get explicit approval before editing analysis code.
 
 ## Execution check (Claude side — no data / no auth)
 `Rscript` is not on PATH. Use the full path. **Use R-4.4.0** — that is where the
@@ -38,8 +43,8 @@ parse + package load + sourcing only:
 If you change `analysis_config.yaml` on purpose, update the matching test.
 
 ## Division of labor
-- Claude Code: edit, smoke-check, testthat, review `git diff`, push to a WORK
-  BRANCH (never `main`).
+- Claude Code: `git pull` first, edit, smoke-check, testthat, review `git diff`,
+  commit, push to `main`.
 - RStudio: `pull`, full pipeline run, figures, final numerical verification.
 
 ## Notes
